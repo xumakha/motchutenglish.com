@@ -1,4 +1,5 @@
 DirectoryIndex index.php
+Options -MultiViews
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f

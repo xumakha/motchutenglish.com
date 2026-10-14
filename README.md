@@ -19,17 +19,20 @@ Trang chủ chạy bằng `index.php`; nếu còn `index.html` của bản cũ, 
 file đó để tránh hosting hiển thị nhầm trang cũ. Bật PHP cho tên miền trong
 bảng quản trị hosting. Không upload `node_modules` hoặc `.next`.
 
-Các liên kết dùng `index.php?page=courses`, nên không bắt buộc URL rewriting.
-File `.htaccess` hỗ trợ Apache/LiteSpeed chọn index.php và giữ đường dẫn cũ
-như `/courses/beginner/hello`. Nginx cần cấu hình PHP và fallback riêng nếu
-muốn giữ đường dẫn cũ; các liên kết query vẫn hoạt động bình thường.
+Routes: `/courses`, `/courses/beginner/hello`, `/listening/coffee`,
+`/placement`, `/toeic`, `/dashboard`. Deploy at the domain Document Root.
+Apache/LiteSpeed requires mod_rewrite and .htaccess overrides enabled.
+Upload `.htaccess` with `index.php` and `assets/`.
+Legacy `/index.php?page=courses` redirects permanently to `/courses`.
+Nginx: use `try_files $uri $uri/ /index.php?$query_string;` in location `/`
+with the hosting PHP handler.
 
 ## Chạy thử tại máy
 
 Nếu máy đã cài PHP:
 
 ```powershell
-php -S localhost:8080
+php -S localhost:8080 router.php
 ```
 
 Mở http://localhost:8080. Không cần chạy `npm run build`.
@@ -52,7 +55,7 @@ bản PHP tại JSON; sửa `lib/courses.ts` không tự cập nhật bản PHP.
 ## Đẩy lên Git
 
 ```powershell
-git add index.php .htaccess assets README.md
+git add index.php router.php .htaccess assets README.md
 git commit -m "Add PHP version for shared hosting"
 git push
 ```

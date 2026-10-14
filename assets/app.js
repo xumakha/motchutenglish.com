@@ -1,7 +1,7 @@
-﻿'use strict';
+'use strict';
 const data=JSON.parse(document.getElementById('learning-data').textContent);
 const $=(s,r=document)=>r.querySelector(s), all=(s,r=document)=>[...r.querySelectorAll(s)];
-const url=p=>'index.php?page='+encodeURIComponent(p);
+const url=p=>'/'+p.split('/').map(encodeURIComponent).join('/');
 function load(){try{const p=JSON.parse(localStorage.getItem('mce-progress'));if(p&&['completed','activity'].every(k=>Array.isArray(p[k])&&p[k].every(v=>typeof v==='string')))return p;}catch{}return{completed:[],activity:[]};}
 function sync(){const p=load();all('[data-completed]').forEach(e=>{if(p.completed.includes(e.dataset.completed)){e.textContent='✓';e.classList.add('finished');}});all('[data-completion]').forEach(e=>e.hidden=!p.completed.includes(e.dataset.completion));for(const c of data.courses){const n=c.lessons.filter(l=>p.completed.includes(c.id+'/'+l.id)).length;all('[data-course-progress]').filter(e=>e.dataset.courseProgress===c.id).forEach(e=>e.style.width=n/c.lessons.length*100+'%');all('[data-course-count]').filter(e=>e.dataset.courseCount===c.id).forEach(e=>e.textContent=n);all('[data-resume]').filter(e=>e.dataset.resume===c.id).forEach(e=>{const l=c.lessons.find(l=>!p.completed.includes(c.id+'/'+l.id))||c.lessons[0];e.href=url('courses/'+c.id+'/'+l.id);e.textContent=n===c.lessons.length?'Ôn tập →':'Tiếp tục học →';});}const stats={lessons:data.courses.reduce((n,c)=>n+c.lessons.filter(l=>p.completed.includes(c.id+'/'+l.id)).length,0),listening:data.listening.filter(l=>p.completed.includes('listening/'+l.id)).length,days:p.activity.length};all('[data-stat]').forEach(e=>e.textContent=stats[e.dataset.stat]);}
 function mark(id){const p=load(),d=new Date(),day=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');localStorage.setItem('mce-progress',JSON.stringify({completed:[...new Set([...p.completed,id])],activity:[...new Set([...p.activity,day])]}));sync();}

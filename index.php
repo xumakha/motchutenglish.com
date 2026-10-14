@@ -4,7 +4,7 @@ $data = json_decode(file_get_contents(__DIR__ . '/assets/courses.json'), true, 5
 $courses = $data['courses'];
 $listening = $data['listening'];
 function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
-function url(string $path = ''): string { return 'index.php' . ($path === '' ? '' : '?page=' . rawurlencode($path)); }
+function url(string $path = ''): string { return '/' . implode('/', array_map('rawurlencode', explode('/', trim($path, '/')))); }
 function linkTo(string $path, string $label, string $class = 'button'): void { echo '<a class="'.h($class).'" href="'.h(url($path)).'">'.h($label).'</a>'; }
 function heading(string $title, string $description = '', string $eyebrow = 'MỘT CHÚT MỖI NGÀY'): void { echo '<div class="page-heading"><span class="eyebrow">'.h($eyebrow).'</span><h1>'.h($title).'</h1><p>'.h($description).'</p></div>'; }
 function audio(string $text): void { echo '<div class="audio-player"><button class="button" data-audio="'.h($text).'">▶ Nghe mẫu</button><label class="speed">Tốc độ <select><option value="0.65">Chậm</option><option value="0.8" selected>Vừa</option><option value="1">Bình thường</option></select></label><span role="status" class="audio-error"></span></div>'; }
@@ -17,14 +17,20 @@ function card(array $c): void { ?>
 function overview(array $c): void { ?>
 <div class="learning-layout"><div class="lesson-list"><?php foreach ($c['lessons'] as $i => $l): ?><a class="lesson-row" href="<?=h(url('courses/'.$c['id'].'/'.$l['id']))?>"><span class="lesson-number" data-completed="<?=h($c['id'].'/'.$l['id'])?>"><?=sprintf('%02d', $i+1)?></span><div><h3><?=h($l['title'])?></h3><span>Đọc mẫu câu · Luyện nghe · Thực hành</span></div><span class="lesson-time">10–15 phút</span>→</a><?php endforeach ?></div><aside class="panel green"><span class="eyebrow">LỘ TRÌNH CỦA BẠN</span><h2><span data-course-count="<?=h($c['id'])?>">0</span>/<?=count($c['lessons'])?> bài hoàn thành</h2><div class="progress"><span data-course-progress="<?=h($c['id'])?>"></span></div><p>Mỗi bài học là một bước nhỏ. Hãy học theo thứ tự hoặc chọn chủ đề bạn cần.</p><a class="button" data-resume="<?=h($c['id'])?>" href="<?=h(url('courses/'.$c['id'].'/'.$c['lessons'][0]['id']))?>">Tiếp tục học →</a></aside></div>
 <?php }
-$rawPage = $_GET['page'] ?? '';
-$page = is_string($rawPage) ? trim($rawPage, '/') : 'invalid';
-// Keep existing bookmarked Next.js paths working when rewrite is available.
-if ($page === '' && !isset($_GET['page'])) {
-    $request = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-    $base = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
-    $relative = substr($request, $base === '/' ? 1 : strlen($base) + 1);
-    if ($relative !== '' && $relative !== 'index.php') $page = trim($relative, '/');
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$page = trim(is_string($requestPath) ? $requestPath : '/', '/');
+// Redirect bookmarks from the previous PHP version to the clean route.
+if ($page === 'index.php' || ($page === '' && isset($_GET['page']))) {
+    $legacyPage = $_GET['page'] ?? '';
+    if (!is_string($legacyPage)) {
+        $page = 'invalid';
+    } else {
+        header('Location: ' . url($legacyPage), true, 301);
+        exit;
+    }
+} elseif ($page !== '' && substr($requestPath, -1) === '/') {
+    header('Location: ' . url($page), true, 301);
+    exit;
 }
 $parts = explode('/', $page);
 $course = null; $lesson = null; $item = null;
@@ -38,7 +44,7 @@ if (!$valid) http_response_code(404);
 $titles = [''=>'Học mỗi ngày', 'courses'=>'Lộ trình học', 'listening'=>'Luyện nghe', 'placement'=>'Tìm lớp phù hợp', 'dashboard'=>'Góc học tập', 'toeic'=>'TOEIC cơ bản'];
 $title = !$valid ? 'Không tìm thấy trang' : ($lesson['title'] ?? $course['title'] ?? $item['title'] ?? $titles[$page] ?? 'Học mỗi ngày');
 ?><!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?=h($title)?> | Một chút English</title><meta name="description" content="Học tiếng Anh từ cơ bản, tiếng Anh công sở và TOEIC. Luyện nghe và theo dõi tiến độ mỗi ngày."><link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script></head><body>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?=h($title)?> | Một chút English</title><meta name="description" content="Học tiếng Anh từ cơ bản, tiếng Anh công sở và TOEIC. Luyện nghe và theo dõi tiến độ mỗi ngày."><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body>
 <header class="site-header"><a class="brand" href="<?=h(url())?>"><span class="brand-icon">▤</span>một chút english<span class="brand-dot">.</span></a><nav class="nav" id="navigation" aria-label="Điều hướng chính"><?php foreach (['courses'=>'Lộ trình học','listening'=>'Luyện nghe','toeic'=>'TOEIC','dashboard'=>'Góc học tập'] as $path=>$label) linkTo($path,$label,$parts[0]===$path?'active':''); ?></nav><?php linkTo('placement','Tìm lớp phù hợp ↗','button header-cta'); ?><button class="menu" aria-controls="navigation" aria-expanded="false" aria-label="Mở menu">☰</button></header>
 <main><div class="container page">
 <?php if (!$valid): heading('Không tìm thấy trang', 'Đường dẫn này không tồn tại.'); linkTo('', 'Về trang chủ');
