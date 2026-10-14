@@ -1,44 +1,62 @@
-# Một chút English
+﻿# Một chút English — PHP
 
-Website học tiếng Anh sử dụng **Next.js App Router, TypeScript, React**.
+Website học tiếng Anh chạy trực tiếp trên PHP 7.3 trở lên (khuyến nghị PHP 8.x).
+Không cần npm, Node.js, build hoặc cơ sở dữ liệu trên hosting.
 
-## Chạy tại máy
+## Đưa lên hosting
 
-Cài Node.js 20.9 trở lên, sau đó chạy tại thư mục dự án:
+Đặt các file sau vào thư mục gốc website (Document Root) của tên miền:
 
-```bash
-npm install
-npm run dev
-```
+- `index.php`
+- `.htaccess` (cần bật hiển thị file ẩn trong File Manager)
+- thư mục `assets/` và toàn bộ nội dung bên trong
 
-Mở http://localhost:3000.
+Ví dụ nếu Document Root là `domains/motchutenglish.com/public_html`, đặt
+`index.php` trực tiếp trong `public_html`. Nếu Document Root là
+`domains/motchutenglish.com`, đặt file tại đó.
 
-Trong workspace hiện tại đã có Node portable và dependencies. Có thể chạy trực tiếp trong PowerShell:
+Trang chủ chạy bằng `index.php`; nếu còn `index.html` của bản cũ, đổi tên
+file đó để tránh hosting hiển thị nhầm trang cũ. Bật PHP cho tên miền trong
+bảng quản trị hosting. Không upload `node_modules` hoặc `.next`.
+
+Các liên kết dùng `index.php?page=courses`, nên không bắt buộc URL rewriting.
+File `.htaccess` hỗ trợ Apache/LiteSpeed chọn index.php và giữ đường dẫn cũ
+như `/courses/beginner/hello`. Nginx cần cấu hình PHP và fallback riêng nếu
+muốn giữ đường dẫn cũ; các liên kết query vẫn hoạt động bình thường.
+
+## Chạy thử tại máy
+
+Nếu máy đã cài PHP:
 
 ```powershell
-.\dev.cmd
+php -S localhost:8080
 ```
 
-```bash
-npm run typecheck
-npm run build
-npm start
+Mở http://localhost:8080. Không cần chạy `npm run build`.
+
+## Nội dung và chức năng
+
+- Chỉnh bài học, bài nghe, câu hỏi trong `assets/courses.json`.
+- Giao diện trong `assets/style.css`.
+- Nghe bằng giọng đọc trình duyệt, kiểm tra đáp án, lọc lớp/bài nghe,
+  kiểm tra trình độ 6 câu và lưu tiến độ trong `assets/app.js`.
+- Tiến độ dùng cùng khóa localStorage `mce-progress` của phiên bản cũ;
+  được giữ khi dùng cùng trình duyệt và cùng origin (giao thức, tên miền, cổng).
+- Không có tài khoản hoặc đồng bộ giữa các thiết bị. JavaScript cần bật
+  để dùng các chức năng tương tác. Giọng đọc tùy trình duyệt/thiết bị.
+
+Mã nguồn Next.js cũ (`app`, `components`, `lib`, các file cấu hình npm) được
+để lại để đối chiếu. Bản PHP hoạt động độc lập với các file đó. Chỉnh nội dung
+bản PHP tại JSON; sửa `lib/courses.ts` không tự cập nhật bản PHP.
+
+## Đẩy lên Git
+
+```powershell
+git add index.php .htaccess assets README.md
+git commit -m "Add PHP version for shared hosting"
+git push
 ```
 
-## Các trang
-
-- `/`: trang chủ
-- `/courses`: phân lớp và lọc lộ trình
-- `/courses/[courseId]`: danh sách bài và tiến độ
-- `/courses/[courseId]/[lessonId]`: mẫu câu, từ vựng, nghe và câu hỏi
-- `/listening`: thư viện hội thoại
-- `/listening/[id]`: luyện nghe và trả lời câu hỏi
-- `/toeic`: nền tảng TOEIC
-- `/placement`: 6 câu kiểm tra để gợi ý lớp
-- `/dashboard`: tiến độ và tiếp tục học
-
-Nội dung nằm trong `lib/courses.ts`: 12 bài học, 3 bài nghe. Tiến độ lưu bằng localStorage, chưa có tài khoản, cơ sở dữ liệu hay đồng bộ thiết bị. Âm thanh dùng Web Speech API của trình duyệt. Bài kiểm tra chỉ gợi ý lộ trình; nội dung TOEIC là bài tự biên soạn.
-
-## Triển khai
-
-Có thể triển khai như dự án Next.js thông thường trên Vercel hoặc máy chủ Node.js. Không cần biến môi trường.
+Nếu hosting tự kéo Git vào đúng Document Root và đã bật PHP, bản này chạy
+trực tiếp sau khi cập nhật. Nếu chưa thiết lập tự triển khai, upload các file
+PHP, .htaccess và assets như hướng dẫn trên.
