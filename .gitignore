@@ -5,3 +5,12 @@ out/
 *.tsbuildinfo
 .env*
 !.env.example
+
+/config.php
+/tests/.auth-test-db
+
+/tests/.auth-test-pid
+/storage/
+
+/application/config/database.php
+/writable/

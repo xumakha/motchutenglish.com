@@ -1,0 +1,1 @@
+<?php heading('Tìm điểm bắt đầu của bạn.', '6 câu hỏi nhỏ để gợi ý lộ trình phù hợp.'); ?><section id="placement" class="panel narrow placement"><noscript>Hãy bật JavaScript để làm bài kiểm tra.</noscript></section>

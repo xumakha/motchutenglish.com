@@ -1,65 +1,137 @@
-﻿# Một chút English — PHP
+# Một chút English — PHP
 
-Website học tiếng Anh chạy trực tiếp trên PHP 7.3 trở lên (khuyến nghị PHP 8.x).
-Không cần npm, Node.js, build hoặc cơ sở dữ liệu trên hosting.
+Website PHP 8.x, MySQL, PDO MySQL và mbstring. Không cần Node.js hoặc build.
 
-## Đưa lên hosting
+## Cấu trúc dự án
 
-Đặt các file sau vào thư mục gốc website (Document Root) của tên miền:
+Áp dụng cách chia thư mục của dự án tham khảo `web-hen-ho`: `application`
+chứa mã PHP theo Controller / Model / View; assets tách CSS, JS, ảnh, JSON.
+Đây là ứng dụng PHP hiện tại được tổ chức lại, không yêu cầu cài CodeIgniter
+hay các thư viện của website tham khảo.
 
-- `index.php`
-- `.htaccess` (cần bật hiển thị file ẩn trong File Manager)
-- thư mục `assets/` và toàn bộ nội dung bên trong
+```text
+application/
+  config/
+    config.php          # Đọc cấu hình và biến môi trường
+    database.php        # Thông tin database riêng, không đưa lên Git
+    routes.php          # Bảng route
+  controllers/          # Home, Courses, Listening, Pages, Auth
+  core/                 # Bootstrap, router, database, render view
+  helpers/              # URL, heading, thẻ khóa học, quiz, audio
+  libraries/            # Phiên đăng nhập, CSRF và xử lý xác thực
+  models/               # Đọc bài học và truy vấn tài khoản/MySQL
+  views/
+    layouts/            # Header, footer
+    partials/           # Điều hướng tài khoản
+    home/
+    courses/
+    listening/
+    pages/              # TOEIC, kiểm tra trình độ, góc học tập
+    auth/
+    errors/
+assets/
+  css/style.css
+  js/app.js
+  images/logo.png
+  json/courses.json
+config-example/
+  database.php          # Mẫu cấu hình để copy
+database/              # Schema và script setup MySQL
+writable/               # Phiên đăng nhập, log test; không đưa lên Git
+legacy/nextjs/          # Mã Next.js cũ để đối chiếu
+tests/                 # Kiểm tra HTTP và authentication
+index.php               # Điểm vào website, không chứa giao diện
+router.php              # Router cho PHP server trên máy
+.htaccess               # Route trên Apache/LiteSpeed
+```
 
-Ví dụ nếu Document Root là `domains/motchutenglish.com/public_html`, đặt
-`index.php` trực tiếp trong `public_html`. Nếu Document Root là
-`domains/motchutenglish.com`, đặt file tại đó.
+Các file favicon và `site.webmanifest` ở thư mục gốc theo đường dẫn công khai.
 
-Trang chủ chạy bằng `index.php`; nếu còn `index.html` của bản cũ, đổi tên
-file đó để tránh hosting hiển thị nhầm trang cũ. Bật PHP cho tên miền trong
-bảng quản trị hosting. Không upload `node_modules` hoặc `.next`.
+## Chỉnh sửa website
 
-Routes: `/courses`, `/courses/beginner/hello`, `/listening/coffee`,
-`/placement`, `/toeic`, `/dashboard`. Deploy at the domain Document Root.
-Apache/LiteSpeed requires mod_rewrite and .htaccess overrides enabled.
-Upload `.htaccess` with `index.php` and `assets/`.
-Legacy `/index.php?page=courses` redirects permanently to `/courses`.
-Nginx: use `try_files $uri $uri/ /index.php?$query_string;` in location `/`
-with the hosting PHP handler.
+- Route: `application/config/routes.php`.
+- Trang chủ: `application/views/home/index.php`.
+- Header/logo/menu: `application/views/layouts/header.php`.
+- Footer: `application/views/layouts/footer.php`.
+- Bài học, bài nghe, câu hỏi: `assets/json/courses.json`.
+- Giao diện: `assets/css/style.css`.
+- Tương tác, nghe, quiz và tiến độ: `assets/js/app.js`.
+- Truy vấn tài khoản: `application/models/User_model.php`.
 
-## Chạy thử tại máy
+Các route giữ nguyên: `/courses`, `/courses/beginner/hello`, `/listening`,
+`/listening/coffee`, `/toeic`, `/placement`, `/dashboard`, `/login`,
+`/register`, `/account`. Đăng xuất là POST `/logout`.
+URL cũ `/index.php?page=courses` chuyển hướng 301 sang `/courses`.
+Đường dẫn CSS/JS/JSON cũ cũng chuyển hướng sang vị trí mới.
 
-Nếu máy đã cài PHP:
+## Cập nhật từ bản PHP trước
+
+1. Upload `application/`, `assets/`, `index.php`, `.htaccess` và favicon.
+2. Copy thông tin database cũ sang `application/config/database.php`.
+   Mẫu ở `config-example/database.php`. Mã vẫn đọc `config.php` tại gốc
+   nếu chưa có file cấu hình mới, để hỗ trợ chuyển đổi.
+3. Nếu cấu hình cũ có `session_path`, sửa về thư mục có quyền ghi trên
+   hosting. Có thể bỏ trường này để dùng nơi lưu phiên mặc định của PHP.
+4. Không cần import lại database; các bảng và tài khoản giữ nguyên.
+5. Các thư mục `includes/`, `storage/` và mã Next.js ở gốc không còn được
+   ứng dụng sử dụng. Sau khi kiểm tra bản mới, có thể dọn các file cũ trên
+   hosting. Không xóa database hoặc thông tin cấu hình chưa chuyển đổi.
+
+## Cài mới trên hosting
+
+1. Trong cPanel/DirectAdmin, tạo database MySQL và user, gán quyền cho user.
+2. Dùng phpMyAdmin chọn database và import `database/schema.sql`.
+3. Copy `config-example/database.php` thành `application/config/database.php`.
+   Điền tên database, user, mật khẩu, host và cổng do hosting cung cấp.
+   Dùng đúng tên đầy đủ có tiền tố tài khoản. Giữ `session_secure => true`
+   khi hosting đã bật HTTPS.
+4. Upload `index.php`, `.htaccess`, `application/`, `assets/`, favicon và
+   `site.webmanifest` vào Document Root của tên miền. Không cần upload
+   `legacy`, `tests`, `node_modules`, `.next`, hoặc chạy npm.
+5. Mở tên miền, thử `/register`, `/account` và đăng xuất.
+
+Database có hai bảng `users`, `auth_attempts`. Mật khẩu lưu bằng hash;
+biểu mẫu có CSRF và giới hạn 15 lần gửi xác thực từ một IP trong 15 phút.
+Tiến độ học vẫn lưu trên trình duyệt, chưa đồng bộ qua tài khoản.
+`application/config/database.php` đã được gitignore; tạo file riêng trên
+hosting, không copy tài khoản MySQL root từ máy tính lên hosting.
+
+Apache/LiteSpeed cần mod_rewrite và cho phép `.htaccess`. Các thư mục nội
+bộ được chặn truy cập HTTP. Với Nginx, đặt quy tắc chặn trước handler PHP:
+
+```nginx
+location ~ ^/(application|config-example|database|tests|writable|legacy|includes|storage|node_modules|\.git)(/|$) { deny all; }
+location ~ ^/config(\.example)?\.php$ { deny all; }
+location / { try_files $uri $uri/ /index.php?$query_string; }
+```
+
+Cấu hình xử lý PHP theo hosting. Website được đặt tại gốc tên miền.
+
+## Chạy tại máy
 
 ```powershell
 php -S localhost:8080 router.php
 ```
 
-Mở http://localhost:8080. Không cần chạy `npm run build`.
-
-## Nội dung và chức năng
-
-- Chỉnh bài học, bài nghe, câu hỏi trong `assets/courses.json`.
-- Giao diện trong `assets/style.css`.
-- Nghe bằng giọng đọc trình duyệt, kiểm tra đáp án, lọc lớp/bài nghe,
-  kiểm tra trình độ 6 câu và lưu tiến độ trong `assets/app.js`.
-- Tiến độ dùng cùng khóa localStorage `mce-progress` của phiên bản cũ;
-  được giữ khi dùng cùng trình duyệt và cùng origin (giao thức, tên miền, cổng).
-- Không có tài khoản hoặc đồng bộ giữa các thiết bị. JavaScript cần bật
-  để dùng các chức năng tương tác. Giọng đọc tùy trình duyệt/thiết bị.
-
-Mã nguồn Next.js cũ (`app`, `components`, `lib`, các file cấu hình npm) được
-để lại để đối chiếu. Bản PHP hoạt động độc lập với các file đó. Chỉnh nội dung
-bản PHP tại JSON; sửa `lib/courses.ts` không tự cập nhật bản PHP.
-
-## Đẩy lên Git
+Mở http://localhost:8080. Database cục bộ đã có cấu hình riêng.
+Khi cài ở máy mới, tạo cấu hình database trước rồi chạy:
 
 ```powershell
-git add index.php router.php .htaccess assets README.md
-git commit -m "Add PHP version for shared hosting"
+php database/setup-local.php
+```
+
+Script setup chỉ chạy CLI và cần quyền CREATE DATABASE/CREATE TABLE.
+Nếu dùng `session_path`, tạo thư mục đó và cấp quyền ghi cho PHP. Cấu hình
+máy hiện tại dùng `writable/sessions`.
+
+## Kiểm tra và Git
+
+```powershell
+python tests/run_auth.py
+git add -A
+git commit -m "Organize PHP website into application MVC folders"
 git push
 ```
 
-Nếu hosting tự kéo Git vào đúng Document Root và đã bật PHP, bản này chạy
-trực tiếp sau khi cập nhật. Nếu chưa thiết lập tự triển khai, upload các file
-PHP, .htaccess và assets như hướng dẫn trên.
+Bài kiểm tra dùng database riêng `mce_auth_test_*` và giữ lại sau khi chạy.
+Không chạy bài kiểm tra xác thực bằng database thật.

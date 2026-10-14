@@ -1253,3 +1253,17 @@ p {
 }
 
 [hidden] { display: none !important; }
+.auth-nav { display:flex; align-items:center; gap:16px; margin-left:auto; flex-shrink:0; }
+.auth-nav form { margin:0; }
+.auth-nav .text-link { font-size:12px; }
+.auth-form { display:grid; gap:12px; }
+.auth-form label { font-size:13px; font-weight:600; margin-top:10px; }
+.auth-form input:not([type=hidden]) { width:100%; border:1px solid var(--line); border-radius:8px; padding:13px; font:inherit; background:white; color:var(--ink); }
+.auth-form input:focus { outline:2px solid var(--green); outline-offset:2px; }
+.auth-form .button { margin-top:14px; justify-content:center; }
+.auth-switch { margin-top:25px; font-size:13px; }
+.auth-panel .feedback { margin:0 0 20px; }
+@media(max-width:1000px) { .site-header { flex-wrap:wrap; height:auto; min-height:90px; padding-top:16px; padding-bottom:16px; } }
+@media(max-width:760px) { .auth-nav { gap:10px; } .auth-nav .text-link { font-size:10px; } .site-header .nav { top:100%; } }
+.site-header .brand-logo { display:block; width:44px; height:44px; object-fit:contain; flex-shrink:0; }
+@media(max-width:400px) { .site-header .brand-logo { width:36px; height:36px; } }
