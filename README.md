@@ -135,3 +135,29 @@ git push
 
 Bài kiểm tra dùng database riêng `mce_auth_test_*` và giữ lại sau khi chạy.
 Không chạy bài kiểm tra xác thực bằng database thật.
+
+## Chẩn đoán lỗi đăng ký trên hosting
+
+Sau khi tạo database và điền cấu hình, chạy qua SSH tại thư mục dự án:
+
+```bash
+php database/check.php
+```
+
+Lệnh chỉ đọc: kiểm tra cấu hình, kết nối và cột cần thiết của hai bảng.
+Không in mật khẩu. File cấu hình mới `application/config/database.php`
+được ưu tiên hơn `config.php` cũ; các biến môi trường DB_* ghi đè cấu hình.
+
+Nếu thiếu bảng, chạy:
+
+```bash
+php database/migrate.php
+php database/check.php
+```
+
+Lệnh migrate dùng database đã cấu hình, chỉ tạo bảng chưa tồn tại; cần
+quyền CREATE TABLE. Không tự sửa cấu trúc bảng cũ khác schema.
+Nếu check thành công nhưng đăng ký vẫn lỗi, xem PHP error log của hosting,
+tìm dòng `Authentication database error:`. Kiểm tra user có quyền INSERT
+và UPDATE cho database. PHP CLI và PHP chạy website có thể có extension
+hoặc biến môi trường khác nhau; đối chiếu cấu hình PHP trong hosting panel.
