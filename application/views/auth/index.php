@@ -1,7 +1,7 @@
 <?php
 if ($page === 'account' && current_user()): $user = current_user();
     heading('Chào '.$user['name'].'!', 'Chào mừng bạn đến với Một chút English.', 'TÀI KHOẢN CỦA BẠN'); ?>
-    <section class="panel narrow"><h2>Thông tin tài khoản</h2><p>Tên: <?=h($user['name'])?></p><p>Email: <?=h($user['email'])?></p><p class="muted">Tiến độ học hiện vẫn lưu trên trình duyệt bạn đang sử dụng.</p><?php linkTo('dashboard', 'Đến góc học tập →'); ?></section>
+    <section class="panel narrow"><h2>Thông tin tài khoản</h2><p>Tên: <?=h($user['name'])?></p><p>Email: <?=h($user['email'])?></p><p class="muted">Bài học mới được đồng bộ cùng tài khoản. Các bài học thử cũ vẫn lưu trên trình duyệt.</p><?php linkTo('hoc', 'Đến trang học →'); ?></section>
 <?php else:
     $register = $page === 'register';
     heading($register ? 'Tạo tài khoản của bạn.' : 'Chào mừng bạn trở lại.', 'Học nhẹ nhàng, tiến bộ mỗi ngày.', $register ? 'ĐĂNG KÝ' : 'ĐĂNG NHẬP'); ?>
@@ -21,3 +21,5 @@ if ($page === 'account' && current_user()): $user = current_user();
     <?php endif ?>
     </section>
 <?php endif ?>
+
+<p><a href="/quen-mat-khau">Quên mật khẩu?</a> - <a href="/tai-khoan">Cài đặt và quyền riêng tư</a></p>

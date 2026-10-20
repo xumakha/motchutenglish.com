@@ -161,3 +161,26 @@ Nếu check thành công nhưng đăng ký vẫn lỗi, xem PHP error log của 
 tìm dòng `Authentication database error:`. Kiểm tra user có quyền INSERT
 và UPDATE cho database. PHP CLI và PHP chạy website có thể có extension
 hoặc biến môi trường khác nhau; đối chiếu cấu hình PHP trong hosting panel.
+
+## Hệ thống học có tài khoản - giai đoạn 1
+
+Luồng CMS → xuất bản → học → lưu kết quả đã được kiểm thử với MariaDB của XAMPP.
+Các bài mới tại `/hoc` lưu tiến độ trong database; bài cũ tại `/courses` vẫn là học thử trên trình duyệt.
+
+```powershell
+php database/migrate.php
+php database/check.php
+php -S localhost:8080 router.php
+```
+
+Đăng ký tài khoản ở `/register`, sau đó cấp quyền và tạo bài mẫu:
+
+```powershell
+php database/set-role.php EMAIL admin
+php database/seed-learning.php
+```
+
+Vào `/admin` sửa/xem trước/xuất bản bài mẫu; vào `/hoc` để học.
+Kiểm thử: `php tests/learning.php` và `python tests/run_auth.py`.
+Xem [tiến độ](docs/progress.md), [vận hành](docs/operations.md), [kiểm thử](docs/testing.md).
+Các tính năng giai đoạn 2/3 chưa hoàn thành; chưa triển khai production.

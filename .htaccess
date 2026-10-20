@@ -2,7 +2,8 @@ DirectoryIndex index.php
 Options -MultiViews
 <IfModule mod_rewrite.c>
 RewriteEngine On
-RewriteRule ^(?:application|config-example|database|tests|writable|legacy|includes|storage|node_modules|\.git)(?:/|$) - [F,L,NC]
+RewriteRule (^|/)\. - [F,L]
+RewriteRule ^(?:application|config-example|database|tests|docs|writable|legacy|includes|storage|node_modules|\.git)(?:/|$) - [F,L,NC]
 RewriteRule ^config(?:\.example)?\.php$ - [F,L,NC]
 RewriteRule ^assets/style\.css$ /assets/css/style.css [R=301,L]
 RewriteRule ^assets/app\.js$ /assets/js/app.js [R=301,L]

@@ -1,0 +1,30 @@
+name: PHP and MariaDB contracts
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-isolated-only
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install supported PHP runtime extensions
+        run: sudo apt-get update && sudo apt-get install -y php-cli php-mysql php-mbstring php-intl php-xml php-cgi python3 mariadb-client
+      - name: Lint PHP
+        run: find application database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Run isolated database and HTTP tests
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASSWORD: ci-isolated-only
+          RESTORE_TESTS: 1
+        run: python3 tests/run_auth.py

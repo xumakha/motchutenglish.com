@@ -12,11 +12,25 @@ function start_auth_session(): void
     if (!session_start()) throw new RuntimeException('Unable to start session');
     header('Cache-Control: no-store, private');
     header('X-Content-Type-Options: nosniff');
+    $_SERVER['MCE_REQUEST_ID']=bin2hex(random_bytes(8));
+    header('X-Request-ID: '.$_SERVER['MCE_REQUEST_ID']);
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
+    if ($secure) header('Strict-Transport-Security: max-age=31536000');
     if (!isset($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(32));
 }
 function current_user(): ?array
 {
     $u = $_SESSION['user'] ?? null;
+    if (is_array($u) && function_exists('mce_one')) {
+        static $checked=[];
+        $key=$u['id'].':'.($u['session_version']??0);
+        if (!array_key_exists($key,$checked)) {
+            $p=mce_one('SELECT session_version,deleted_at FROM mce_profiles WHERE user_id=?',[(int)$u['id']]);
+            $checked[$key]=!$p || (!$p['deleted_at']&&(int)$p['session_version']===(int)($u['session_version']??0));
+        }
+        if (!$checked[$key]) { unset($_SESSION['user']); return null; }
+    }
     return is_array($u) ? $u : null;
 }
 function post_value(string $key): string
@@ -35,7 +49,9 @@ function auth_redirect(string $path): void
 function sign_in(array $user): void
 {
     session_regenerate_id(true);
-    $_SESSION['user'] = ['id'=>(int)$user['id'], 'name'=>$user['name'], 'email'=>$user['email']];
+    $profile=function_exists('mce_profile')?mce_profile((int)$user['id']):[];
+    if (!empty($profile['deleted_at'])) throw new RuntimeException('Account deletion in progress');
+    $_SESSION['user'] = ['id'=>(int)$user['id'], 'name'=>$user['name'], 'email'=>$user['email'],'session_version'=>(int)($profile['session_version']??0)];
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
 }
 function auth_limit_key(): string
@@ -86,6 +102,7 @@ function handle_auth(string $page): array
                 throw $e;
             }
             sign_in(['id'=>$userId, 'name'=>$name, 'email'=>$email]);
+            if(function_exists('mce_event')) mce_event('signup:'.$userId,'signup_completed','account',$userId);
         } else {
             $user = User_model::findByEmail($email);
             // Run a password verification even when the email does not exist.
@@ -99,7 +116,7 @@ function handle_auth(string $page): array
         }
         auth_redirect('account');
     } catch (Throwable $e) {
-        error_log('Authentication database error: '.$e->getMessage());
+        error_log('Authentication database error ['.($_SERVER['MCE_REQUEST_ID']??'cli').']: '.get_class($e));
         http_response_code(503);
         return ['Tạm thời chưa kết nối được hệ thống tài khoản. Vui lòng thử lại sau.'];
     }

@@ -1,0 +1,19 @@
+{
+  "database": "mce_restore_test_7233918f41d7",
+  "seconds": 1.098,
+  "counts": {
+    "users": 15,
+    "mce_lessons": 17,
+    "mce_versions": 19,
+    "mce_attempts": 4,
+    "mce_progress": 3,
+    "mce_review_cards": 2,
+    "reward_ledger": 19
+  },
+  "originalDatabaseUnchanged": true,
+  "login": true,
+  "lessonCatalog": true,
+  "progress": true,
+  "attemptHistory": true,
+  "restart": true
+}

@@ -8,6 +8,11 @@ try {
     foreach (explode(';', file_get_contents(__DIR__.'/schema.sql')) as $statement) {
         if (trim($statement) !== '') $pdo->exec($statement);
     }
+    foreach (explode(';', file_get_contents(__DIR__.'/product.sql')) as $statement) {
+        if (trim($statement) !== '') $pdo->exec($statement);
+    }
+    $pdo->exec("INSERT IGNORE INTO mce_migrations(version) VALUES ('20261020_product_v1')");
+    require __DIR__.'/apply-migrations.php';apply_product_migrations($pdo);
     echo "Schema applied. Existing tables and data preserved. Run php database/check.php to verify columns.\n";
 } catch (Throwable $e) {
     $code = $e instanceof PDOException ? (int)($e->errorInfo[1]??0) : 0;

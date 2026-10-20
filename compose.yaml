@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: motchutenglish
+      MARIADB_USER: mce
+      MARIADB_PASSWORD: ${MCE_DB_PASSWORD:?Set MCE_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MCE_DB_ROOT_PASSWORD:?Set MCE_DB_ROOT_PASSWORD}
+    volumes:
+      - database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  web:
+    build: .
+    ports: ["127.0.0.1:8080:80"]
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: motchutenglish
+      DB_USER: mce
+      DB_PASSWORD: ${MCE_DB_PASSWORD:?Set MCE_DB_PASSWORD}
+      APP_URL: ${APP_URL:?Set an HTTPS APP_URL for production}
+      SESSION_SECURE: 1
+      MAIL_DRIVER: ${MAIL_DRIVER:-disabled}
+      MAIL_FROM: ${MAIL_FROM:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_ENCRYPTION: ${SMTP_ENCRYPTION:-starttls}
+    volumes:
+      - persistent:/var/www/html/writable
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  database:
+  persistent:

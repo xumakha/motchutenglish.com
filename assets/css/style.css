@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
 :root {
   --ink: #071f65;
   --primary: #075fe4;
@@ -19,7 +18,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: var(--background);
-  font-family: "Be Vietnam Pro", Arial, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   font-size: 14px;
 }
 a {
@@ -1269,3 +1268,10 @@ p {
 @media(max-width:760px) { .auth-nav { gap:10px; } .auth-nav .text-link { font-size:10px; } .site-header .nav { top:100%; } }
 .site-header .brand-logo { display:block; width:44px; height:44px; object-fit:contain; flex-shrink:0; }
 @media(max-width:400px) { .site-header .brand-logo { width:36px; height:36px; } }
+
+/* Persistent learning forms */
+.panel textarea { display:block; width:100%; min-height:90px; padding:12px; border:1px solid #b9c8bf; border-radius:10px; font:inherit; }
+.panel { margin-bottom:20px; }
+.panel fieldset { border:1px solid #b9c8bf; border-radius:12px; padding:16px; }
+.panel input[type=radio] { width:20px; height:20px; vertical-align:middle; }
+:focus-visible { outline:3px solid #075fe4; outline-offset:3px; }

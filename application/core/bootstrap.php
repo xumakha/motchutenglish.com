@@ -12,3 +12,8 @@ require APP_PATH.'/helpers/site_helper.php';
 require APP_PATH.'/core/Router.php';
 require APP_PATH.'/core/View.php';
 foreach (['Home','Courses','Listening','Pages','Auth'] as $controller) require APP_PATH.'/controllers/'.$controller.'.php';
+
+require APP_PATH.'/libraries/Learning.php';
+require APP_PATH.'/controllers/Learning.php';
+foreach (['ProductSupport','Assessment','Motivation','Review','Study','Identity','MailTransport','MarketingAnalytics','CatalogCache','AssetStorage','Content','Exports','Jobs'] as $library) require APP_PATH.'/libraries/'.$library.'.php';
+require APP_PATH.'/controllers/Product.php';

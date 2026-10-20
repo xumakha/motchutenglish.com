@@ -1,0 +1,1 @@
+<p role="alert"><?=h($error)?></p><a class="button" href="/hoc">Về trang học</a>

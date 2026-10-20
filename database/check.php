@@ -15,6 +15,18 @@ try {
     echo "PASS: users table and required columns exist.\n";
     $pdo->query('SELECT identifier, attempts, window_started_at FROM auth_attempts LIMIT 0');
     echo "PASS: auth_attempts table and required columns exist.\n";
+    foreach ([
+        'learning_roles'=>'user_id,role',
+        'learning_lessons'=>'id,title,body,question,choices,answer_id,explanation,status,created_by',
+        'learning_attempts'=>'id,user_id,lesson_id,snapshot,response,score,submitted_at',
+        'reward_ledger'=>'id,user_id,currency,amount,event_key,rule_version',
+        'learning_audit'=>'id,actor_id,action,target_id',
+        'learning_events'=>'id,event_key,user_id,lesson_id,attempt_id,event_type,payload',
+        'learning_seed_keys'=>'seed_key,lesson_id',
+    ] as $table=>$columns) {
+        $pdo->query('SELECT '.$columns.' FROM '.$table.' LIMIT 0');
+        echo 'PASS: '.$table." table and required columns exist.\n";
+    }
     echo "Read-only checks passed. If registration still fails, check INSERT/UPDATE permissions and the PHP error log.\n";
 } catch (Throwable $e) {
     $code = $e instanceof PDOException ? (int)($e->errorInfo[1]??0) : 0;

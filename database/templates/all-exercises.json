@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "objectives": "Luyện lời chào và giới thiệu bản thân.",
+  "minutes": 5,
+  "passThreshold": 80,
+  "preview": true,
+  "blocks": [
+    {
+      "id": "title",
+      "type": "heading",
+      "text": "Một chút kiến thức",
+      "required": true
+    },
+    {
+      "id": "example",
+      "type": "bilingual",
+      "text": "Hello! My name is Linh. - Xin chào! Tôi tên là Linh.\nNice to meet you. - Rất vui được gặp bạn.",
+      "required": true
+    },
+    {
+      "id": "tip",
+      "type": "tip",
+      "text": "Dùng Hello để chào, Good night để chúc ngủ ngon.",
+      "required": false
+    }
+  ],
+  "exercises": [
+    {
+      "id": "hello",
+      "type": "choice",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "Bạn chào người mới gặp bằng câu nào?",
+        "choices": {
+          "greeting": "Hello!",
+          "night": "Good night!"
+        },
+        "answerId": "greeting"
+      },
+      "explanation": "Hello dùng để chào; Good night dùng để chúc ngủ ngon.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "name",
+      "type": "true_false",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "My name is Linh có nghĩa là Tôi tên là Linh.",
+        "answer": true
+      },
+      "explanation": "My name is... dùng để giới thiệu tên.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "am",
+      "type": "fill",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "I ___ Linh.",
+        "blanks": {
+          "verb": [
+            "am"
+          ]
+        },
+        "whitespace": "collapse",
+        "caseSensitive": false,
+        "ignoreTerminalPunctuation": true
+      },
+      "explanation": "I đi với am.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "order",
+      "type": "order",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "Sắp xếp câu giới thiệu tên.",
+        "tokens": {
+          "my": "My",
+          "name": "name",
+          "is": "is",
+          "linh": "Linh."
+        },
+        "acceptedOrders": [
+          [
+            "my",
+            "name",
+            "is",
+            "linh"
+          ]
+        ]
+      },
+      "explanation": "Thứ tự: My name is Linh.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "pairs",
+      "type": "match",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "Ghép từ và nghĩa.",
+        "pairs": {
+          "hello": {
+            "left": "Hello",
+            "right": "Xin chào"
+          },
+          "thanks": {
+            "left": "Thank you",
+            "right": "Cảm ơn"
+          }
+        },
+        "partialCredit": true
+      },
+      "explanation": "Hello = Xin chào; Thank you = Cảm ơn.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "fix",
+      "type": "correction",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "I is Linh.",
+        "acceptedAnswers": [
+          "I am Linh."
+        ],
+        "errorSegment": {
+          "start": 2,
+          "length": 2
+        },
+        "ignoreTerminalPunctuation": true
+      },
+      "explanation": "Đại từ I đi với am.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "translate",
+      "type": "closed",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "Viết Xin chào bằng tiếng Anh.",
+        "acceptedAnswers": [
+          "Hello",
+          "Hi"
+        ],
+        "ignoreTerminalPunctuation": true
+      },
+      "explanation": "Hello và Hi là hai lời chào thông dụng.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "introduce",
+      "type": "self",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "Viết hai câu giới thiệu bản thân.",
+        "modelAnswer": "Hello! My name is Linh. I am from Vietnam.",
+        "criteria": [
+          "Có lời chào",
+          "Có tên",
+          "Câu dễ hiểu"
+        ]
+      },
+      "explanation": "Tự đối chiếu với mẫu; không có điểm khách quan.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    },
+    {
+      "id": "flash",
+      "type": "flashcard",
+      "schemaVersion": 1,
+      "contentVersion": 1,
+      "payload": {
+        "prompt": "Nhớ nghĩa của Hello.",
+        "modelAnswer": "Hello - Xin chào",
+        "criteria": [
+          "Nhớ nghĩa",
+          "Tự đặt được câu"
+        ]
+      },
+      "explanation": "Tự đánh giá mức nhớ, không chấm đúng/sai.",
+      "skillTags": [
+        "basics"
+      ],
+      "level": "A1"
+    }
+  ]
+}

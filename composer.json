@@ -1,0 +1,17 @@
+{
+  "name": "motchutenglish/website",
+  "description": "Vietnamese English learning modular PHP application",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.3 <8.6",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "ext-mbstring": "*",
+    "ext-intl": "*",
+    "ext-fileinfo": "*",
+    "ext-openssl": "*"
+  },
+  "repositories": [{"packagist.org": false}],
+  "config": {"sort-packages": true, "allow-plugins": {}}
+}

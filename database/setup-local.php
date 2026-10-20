@@ -12,4 +12,8 @@ $pdo->exec('USE `'.$name.'`');
 foreach (explode(';', file_get_contents(dirname(__DIR__).'/database/schema.sql')) as $statement) {
     if (trim($statement) !== '') $pdo->exec($statement);
 }
+foreach (explode(';', file_get_contents(__DIR__.'/product.sql')) as $statement) {
+    if (trim($statement) !== '') $pdo->exec($statement);
+}
+require __DIR__.'/apply-migrations.php';apply_product_migrations($pdo);
 echo "Database and authentication tables ready.\n";

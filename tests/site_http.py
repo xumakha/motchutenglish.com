@@ -6,6 +6,7 @@ BASE='http://127.0.0.1:8089'
 class Resources(HTMLParser):
     def __init__(self): super().__init__(); self.urls=[]
     def handle_starttag(self,tag,attrs):
+        if tag=='link' and dict(attrs).get('rel')=='canonical':return
         self.urls.extend(value for key,value in attrs if key in ('href','src','action'))
 data=json.loads(Path('assets/json/courses.json').read_text(encoding='utf-8'))
 paths=['/','/courses','/listening','/toeic','/placement','/dashboard','/login','/register']
@@ -31,7 +32,7 @@ for icon in manifest['icons']:
     with urllib.request.urlopen(BASE+icon['src']) as response:assert response.status==200
 for old,new in [('/assets/style.css','/assets/css/style.css'),('/assets/app.js','/assets/js/app.js'),('/assets/courses.json','/assets/json/courses.json'),('/index.php?page=courses/beginner/hello','/courses/beginner/hello'),('/courses/','/courses')]:
     with urllib.request.urlopen(BASE+old) as response:assert response.url==BASE+new,(old,response.url)
-for path in ['/application/config/database.php','/application/views/home/index.php','/config-example/database.php','/writable/sessions','/legacy/nextjs/package.json','/database/schema.sql','/courses/missing','/courses/beginner/missing','/listening/coffee/extra','/bad%20path']:
+for path in ['/.env.example','/docs/operations.md','/application/config/database.php','/application/views/home/index.php','/config-example/database.php','/writable/sessions','/legacy/nextjs/package.json','/database/schema.sql','/courses/missing','/courses/beginner/missing','/listening/coffee/extra','/bad%20path']:
     try: urllib.request.urlopen(BASE+path);raise AssertionError(path)
     except urllib.error.HTTPError as error:assert error.code==404,(path,error.code)
 print(f'PASS: {len(paths)} public routes, clean links, {len(assets)} assets, manifest icons, legacy redirects and private/missing paths')

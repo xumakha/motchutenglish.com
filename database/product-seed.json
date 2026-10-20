@@ -1,0 +1,2636 @@
+{
+  "paths": [
+    {
+      "slug": "bat-dau-tu-nen-tang",
+      "title": "Bắt đầu từ nền tảng",
+      "description": "Lời chào, câu ngắn và giới thiệu bản thân.",
+      "level": "A1"
+    },
+    {
+      "slug": "giao-tiep-hang-ngay",
+      "title": "Giao tiếp hằng ngày",
+      "description": "Thực hành tình huống quen thuộc.",
+      "level": "A1-A2"
+    },
+    {
+      "slug": "tieng-anh-cong-viec",
+      "title": "Tiếng Anh công việc",
+      "description": "Luyện câu giao tiếp nơi làm việc.",
+      "level": "A2"
+    },
+    {
+      "slug": "nen-tang-toeic",
+      "title": "Nền tảng TOEIC",
+      "description": "Củng cố ngữ pháp, chưa phải đề thi đầy đủ.",
+      "level": "A2"
+    }
+  ],
+  "lessons": [
+    {
+      "path": 0,
+      "slug": "chao-hoi-tung-buoc",
+      "title": "Chào hỏi từng bước - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Luyện lời chào và giới thiệu bản thân.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Chào hỏi từng bước - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "text",
+            "text": "Hello! My name is Linh. - Xin chào! Tôi tên là Linh.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "hello",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Bạn chào người mới gặp bằng câu nào?",
+              "choices": {
+                "greeting": "Hello!",
+                "night": "Good night!"
+              },
+              "answerId": "greeting"
+            },
+            "explanation": "Hello dùng để chào; Good night dùng để chúc ngủ ngon.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "name",
+            "type": "true_false",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "My name is Linh có nghĩa là Tôi tên là Linh.",
+              "answer": true
+            },
+            "explanation": "My name is... dùng để giới thiệu tên.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "am",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I ___ Linh.",
+              "blanks": {
+                "verb": [
+                  "am"
+                ]
+              },
+              "whitespace": "collapse",
+              "caseSensitive": false,
+              "ignoreTerminalPunctuation": true
+            },
+            "explanation": "I đi với am.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "order",
+            "type": "order",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Sắp xếp câu giới thiệu tên.",
+              "tokens": {
+                "my": "My",
+                "name": "name",
+                "is": "is",
+                "linh": "Linh."
+              },
+              "acceptedOrders": [
+                [
+                  "my",
+                  "name",
+                  "is",
+                  "linh"
+                ]
+              ]
+            },
+            "explanation": "Thứ tự: My name is Linh.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "pairs",
+            "type": "match",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Ghép từ và nghĩa.",
+              "pairs": {
+                "hello": {
+                  "left": "Hello",
+                  "right": "Xin chào"
+                },
+                "thanks": {
+                  "left": "Thank you",
+                  "right": "Cảm ơn"
+                }
+              },
+              "partialCredit": true
+            },
+            "explanation": "Hello = Xin chào; Thank you = Cảm ơn.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      },
+      "unit": 0
+    },
+    {
+      "path": 0,
+      "unit": 0,
+      "slug": "ten-va-que-quan",
+      "title": "Tên và quê quán - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Nói tên, quốc tịch và quê quán.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Tên và quê quán - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "bilingual",
+            "text": "My name is An. I am from Vietnam. - Tôi tên là An. Tôi đến từ Việt Nam.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "country",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I am ___ Vietnam.",
+              "choices": {
+                "from": "from",
+                "in": "on",
+                "at": "at"
+              },
+              "answerId": "from"
+            },
+            "explanation": "Dùng from để nói nơi xuất thân.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "nationality",
+            "type": "true_false",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I am Vietnamese nghĩa là Tôi là người Việt Nam.",
+              "answer": true
+            },
+            "explanation": "Vietnamese chỉ quốc tịch Việt Nam.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "where",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "___ are you from? (Bạn đến từ đâu?)",
+              "blanks": {
+                "question": [
+                  "Where"
+                ]
+              }
+            },
+            "explanation": "Where hỏi về nơi chốn.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "name-order",
+            "type": "order",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Sắp xếp câu hỏi tên.",
+              "tokens": {
+                "what": "What",
+                "is": "is",
+                "your": "your",
+                "name": "name?"
+              },
+              "acceptedOrders": [
+                [
+                  "what",
+                  "is",
+                  "your",
+                  "name"
+                ]
+              ]
+            },
+            "explanation": "What is your name? hỏi tên.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "introduce-self",
+            "type": "self",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Giới thiệu tên và quê quán của bạn.",
+              "modelAnswer": "My name is An. I am from Vietnam.",
+              "criteria": [
+                "Có tên",
+                "Có quê quán với from"
+              ]
+            },
+            "explanation": "Bạn có thể thay tên và quốc gia bằng thông tin của mình.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 0,
+      "unit": 0,
+      "slug": "dong-tu-to-be",
+      "title": "Am, is, are - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Dùng đúng am, is và are trong câu ngắn.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Am, is, are - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "table",
+            "text": "I | am\nHe / She | is\nYou / We / They | are",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "are",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "You ___ my friend.",
+              "blanks": {
+                "be": [
+                  "are"
+                ]
+              }
+            },
+            "explanation": "You đi với are.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "is",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "He ___ a teacher.",
+              "choices": {
+                "is": "is",
+                "are": "are",
+                "am": "am"
+              },
+              "answerId": "is"
+            },
+            "explanation": "He đi với is.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "fix-be",
+            "type": "correction",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "They is ready.",
+              "acceptedAnswers": [
+                "They are ready."
+              ],
+              "ignoreTerminalPunctuation": true,
+              "errorSegment": {
+                "start": 5,
+                "length": 2
+              }
+            },
+            "explanation": "They đi với are.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "be-pairs",
+            "type": "match",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Ghép chủ ngữ với dạng to be.",
+              "pairs": {
+                "i": {
+                  "left": "I",
+                  "right": "am"
+                },
+                "she": {
+                  "left": "She",
+                  "right": "is"
+                },
+                "we": {
+                  "left": "We",
+                  "right": "are"
+                }
+              },
+              "partialCredit": true
+            },
+            "explanation": "I am; she is; we are.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "we-ready",
+            "type": "closed",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết Chúng tôi đã sẵn sàng với We và ready.",
+              "acceptedAnswers": [
+                "We are ready."
+              ],
+              "ignoreTerminalPunctuation": true
+            },
+            "explanation": "We đi với are.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 0,
+      "unit": 1,
+      "slug": "gia-dinh-cua-toi",
+      "title": "Gia đình của tôi - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Giới thiệu một người trong gia đình.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Gia đình của tôi - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "dialogue",
+            "text": "This is my mother. - Đây là mẹ tôi.\nThis is my brother. - Đây là anh/em trai tôi.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "mother",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Mother nghĩa là gì?",
+              "choices": {
+                "me": "Mẹ",
+                "bo": "Bố",
+                "anh": "Anh trai"
+              },
+              "answerId": "me"
+            },
+            "explanation": "Mother nghĩa là mẹ.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "brother",
+            "type": "true_false",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Brother nghĩa là chị gái.",
+              "answer": false,
+              "correction": "Brother nghĩa là anh trai hoặc em trai."
+            },
+            "explanation": "Sister mới chỉ chị gái hoặc em gái.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "sister",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "She is my ___. (chị/em gái)",
+              "blanks": {
+                "family": [
+                  "sister"
+                ]
+              }
+            },
+            "explanation": "Sister là chị gái hoặc em gái.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "my-father",
+            "type": "order",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Sắp xếp câu giới thiệu bố.",
+              "tokens": {
+                "this": "This",
+                "is": "is",
+                "my": "my",
+                "father": "father."
+              },
+              "acceptedOrders": [
+                [
+                  "this",
+                  "is",
+                  "my",
+                  "father"
+                ]
+              ]
+            },
+            "explanation": "This is my father. nghĩa là Đây là bố tôi.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "family-card",
+            "type": "flashcard",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Nhớ nghĩa của family và tự đặt câu.",
+              "modelAnswer": "Family - gia đình. I love my family.",
+              "criteria": [
+                "Nhớ nghĩa gia đình",
+                "Đặt được câu phù hợp"
+              ]
+            },
+            "explanation": "Đối chiếu với mẫu, không tự động chấm điểm.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 0,
+      "unit": 1,
+      "slug": "gio-va-ngay",
+      "title": "Giờ và ngày - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Nói giờ và ngày của hoạt động quen thuộc.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Giờ và ngày - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "vocabulary",
+            "text": "We meet at nine on Monday. - Chúng tôi gặp nhau lúc chín giờ vào thứ Hai.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "at-nine",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "The class starts ___ nine.",
+              "choices": {
+                "at": "at",
+                "on": "on",
+                "in": "in"
+              },
+              "answerId": "at"
+            },
+            "explanation": "Dùng at trước giờ cụ thể.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "on-monday",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "We study ___ Monday.",
+              "blanks": {
+                "prep": [
+                  "on"
+                ]
+              }
+            },
+            "explanation": "Dùng on trước tên ngày.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "time-pairs",
+            "type": "match",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Ghép giờ và nghĩa.",
+              "pairs": {
+                "morning": {
+                  "left": "morning",
+                  "right": "buổi sáng"
+                },
+                "evening": {
+                  "left": "evening",
+                  "right": "buổi tối"
+                }
+              },
+              "partialCredit": true
+            },
+            "explanation": "Morning là buổi sáng; evening là buổi tối.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "fix-hour",
+            "type": "correction",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "We meet on ten.",
+              "acceptedAnswers": [
+                "We meet at ten."
+              ],
+              "ignoreTerminalPunctuation": true,
+              "errorSegment": {
+                "start": 8,
+                "length": 2
+              }
+            },
+            "explanation": "Dùng at ten để nói lúc mười giờ.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "schedule",
+            "type": "self",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết một câu về giờ học của bạn.",
+              "modelAnswer": "I study at seven in the evening.",
+              "criteria": [
+                "Có thời gian",
+                "Dùng at trước giờ"
+              ]
+            },
+            "explanation": "Có nhiều lịch học hợp lý; tự đối chiếu với tiêu chí.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 0,
+      "unit": 1,
+      "subtype": "checkpoint",
+      "slug": "checkpoint-nen-tang",
+      "title": "Checkpoint: Nền tảng đầu tiên",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Ôn lại tên, gia đình và giờ giấc với câu hỏi mới.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Checkpoint: Nền tảng đầu tiên",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "tip",
+            "text": "Ôn lời chào, gia đình và giờ giấc. Chưa đạt thì xem giải thích và thử lại.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "check-one",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Which question asks about your home country?",
+              "choices": {
+                "where": "Where are you from?",
+                "what": "What is your name?"
+              },
+              "answerId": "where"
+            },
+            "explanation": "Where are you from? hỏi quê quán.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "check-two",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "My parents ___ at home.",
+              "blanks": {
+                "be": [
+                  "are"
+                ]
+              }
+            },
+            "explanation": "My parents là số nhiều nên dùng are.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "check-three",
+            "type": "true_false",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "We meet at eight nói giờ gặp nhau.",
+              "answer": true
+            },
+            "explanation": "At eight nghĩa là lúc tám giờ.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "check-four",
+            "type": "closed",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết Đây là mẹ tôi bằng tiếng Anh.",
+              "acceptedAnswers": [
+                "This is my mother.",
+                "This is my mom.",
+                "This is my mum."
+              ],
+              "ignoreTerminalPunctuation": true
+            },
+            "explanation": "Mother, mom và mum đều có thể chỉ mẹ.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "check-five",
+            "type": "order",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Sắp xếp lời chào khi mới gặp.",
+              "tokens": {
+                "nice": "Nice",
+                "to": "to",
+                "meet": "meet",
+                "you": "you."
+              },
+              "acceptedOrders": [
+                [
+                  "nice",
+                  "to",
+                  "meet",
+                  "you"
+                ]
+              ]
+            },
+            "explanation": "Nice to meet you. dùng khi gặp người mới.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ],
+        "blueprint": {
+          "questionIds": [
+            "check-one",
+            "check-two",
+            "check-three",
+            "check-four",
+            "check-five"
+          ],
+          "skills": [
+            "basics"
+          ]
+        }
+      }
+    },
+    {
+      "path": 1,
+      "unit": 0,
+      "slug": "goi-do-uong",
+      "title": "Gọi đồ uống - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Gọi một đồ uống và nói lời cảm ơn.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Gọi đồ uống - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "text",
+            "text": "Customer: A coffee, please.\nStaff: Here you are.\nCustomer: Thank you.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "coffee",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Bạn muốn một ly cà phê. Chọn câu lịch sự.",
+              "choices": {
+                "please": "A coffee, please.",
+                "where": "Where is the station?"
+              },
+              "answerId": "please"
+            },
+            "explanation": "Please làm lời yêu cầu lịch sự hơn.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "tea",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "A cup of ___, please. (trà)",
+              "blanks": {
+                "drink": [
+                  "tea"
+                ]
+              }
+            },
+            "explanation": "Tea nghĩa là trà.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "drink-pairs",
+            "type": "match",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Ghép đồ uống.",
+              "pairs": {
+                "water": {
+                  "left": "water",
+                  "right": "nước"
+                },
+                "juice": {
+                  "left": "juice",
+                  "right": "nước ép"
+                }
+              },
+              "partialCredit": true
+            },
+            "explanation": "Water là nước; juice là nước ép.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "thanks-cafe",
+            "type": "closed",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Bạn nhận được đồ uống. Viết lời cảm ơn.",
+              "acceptedAnswers": [
+                "Thank you.",
+                "Thanks."
+              ],
+              "ignoreTerminalPunctuation": true
+            },
+            "explanation": "Có thể dùng Thank you hoặc Thanks.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "coffee-self",
+            "type": "self",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết yêu cầu gọi món của bạn.",
+              "modelAnswer": "A tea, please.",
+              "criteria": [
+                "Có đồ uống",
+                "Lời yêu cầu lịch sự"
+              ]
+            },
+            "explanation": "Có nhiều đồ uống hợp lý; tự đánh giá theo tiêu chí.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 1,
+      "unit": 0,
+      "slug": "mua-sam-ngan",
+      "title": "Mua sắm ngắn - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Hỏi giá và nói món đồ muốn mua.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Mua sắm ngắn - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "bilingual",
+            "text": "How much is this bag? - Chiếc túi này giá bao nhiêu?\nIt is ten dollars. - Nó có giá mười đô la.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "price",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Bạn hỏi giá bằng câu nào?",
+              "choices": {
+                "how": "How much is it?",
+                "where": "Where are you from?"
+              },
+              "answerId": "how"
+            },
+            "explanation": "How much is it? hỏi giá của vật.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "cheap",
+            "type": "true_false",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Cheap nghĩa là đắt.",
+              "answer": false,
+              "correction": "Cheap nghĩa là rẻ. Expensive nghĩa là đắt."
+            },
+            "explanation": "Đừng nhầm cheap và expensive.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "buy",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I want to ___ this bag. (mua)",
+              "blanks": {
+                "verb": [
+                  "buy"
+                ]
+              }
+            },
+            "explanation": "Buy là mua.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "price-order",
+            "type": "order",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Sắp xếp câu hỏi giá.",
+              "tokens": {
+                "how": "How",
+                "much": "much",
+                "is": "is",
+                "it": "it?"
+              },
+              "acceptedOrders": [
+                [
+                  "how",
+                  "much",
+                  "is",
+                  "it"
+                ]
+              ]
+            },
+            "explanation": "How much is it? hỏi giá.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "bag-card",
+            "type": "flashcard",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Nhớ nghĩa của bag.",
+              "modelAnswer": "Bag - túi. This bag is blue.",
+              "criteria": [
+                "Nhớ nghĩa",
+                "Có ví dụ với bag"
+              ]
+            },
+            "explanation": "Tự đánh giá, không có điểm khách quan.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 1,
+      "unit": 0,
+      "slug": "hoi-duong",
+      "title": "Hỏi đường - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Hỏi vị trí và hiểu chỉ dẫn đơn giản.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Hỏi đường - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "table",
+            "text": "left | trái\nright | phải\nstraight | thẳng",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "station",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Bạn hỏi nhà ga ở đâu.",
+              "choices": {
+                "where": "Where is the station?",
+                "when": "When is your birthday?"
+              },
+              "answerId": "where"
+            },
+            "explanation": "Where hỏi vị trí.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "left",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Turn ___. (rẽ trái)",
+              "blanks": {
+                "direction": [
+                  "left"
+                ]
+              }
+            },
+            "explanation": "Turn left là rẽ trái.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "directions",
+            "type": "match",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Ghép hướng đi.",
+              "pairs": {
+                "right": {
+                  "left": "right",
+                  "right": "phải"
+                },
+                "straight": {
+                  "left": "straight",
+                  "right": "thẳng"
+                }
+              },
+              "partialCredit": true
+            },
+            "explanation": "Turn right là rẽ phải; go straight là đi thẳng.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "fix-go",
+            "type": "correction",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Go straigt.",
+              "acceptedAnswers": [
+                "Go straight."
+              ],
+              "ignoreTerminalPunctuation": true,
+              "errorSegment": {
+                "start": 3,
+                "length": 7
+              }
+            },
+            "explanation": "Straight được viết có h: straight.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "excuse",
+            "type": "closed",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết Xin lỗi để mở đầu khi hỏi đường.",
+              "acceptedAnswers": [
+                "Excuse me."
+              ],
+              "ignoreTerminalPunctuation": true
+            },
+            "explanation": "Excuse me dùng để thu hút sự chú ý lịch sự.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 1,
+      "unit": 1,
+      "slug": "mot-ngay-di-lam",
+      "title": "Một ngày đi làm - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Mô tả một vài hoạt động công việc.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Một ngày đi làm - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "dialogue",
+            "text": "I start work at nine. I work in an office. - Tôi bắt đầu làm lúc chín giờ. Tôi làm ở văn phòng.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "work",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "She ___ at nine.",
+              "choices": {
+                "starts": "starts",
+                "start": "start"
+              },
+              "answerId": "starts"
+            },
+            "explanation": "She ở hiện tại đơn dùng starts.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "meeting",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "We have a ___. (cuộc họp)",
+              "blanks": {
+                "noun": [
+                  "meeting"
+                ]
+              }
+            },
+            "explanation": "Meeting là cuộc họp.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "office",
+            "type": "true_false",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Office nghĩa là văn phòng.",
+              "answer": true
+            },
+            "explanation": "Office là văn phòng, nơi làm việc.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "fix-work",
+            "type": "correction",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "He work here.",
+              "acceptedAnswers": [
+                "He works here."
+              ],
+              "ignoreTerminalPunctuation": true,
+              "errorSegment": {
+                "start": 3,
+                "length": 4
+              }
+            },
+            "explanation": "He đi với works ở hiện tại đơn.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "daily",
+            "type": "self",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết hai câu về một ngày làm việc.",
+              "modelAnswer": "I start work at eight. I have lunch at twelve.",
+              "criteria": [
+                "Hai hoạt động",
+                "Giờ phù hợp",
+                "Câu dễ hiểu"
+              ]
+            },
+            "explanation": "Bạn tự đánh giá, không dùng từ khóa để chấm viết tự do.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 1,
+      "unit": 1,
+      "slug": "nho-giup-do",
+      "title": "Nhờ giúp đỡ - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Nhờ giúp một việc nhỏ bằng câu lịch sự.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Nhờ giúp đỡ - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "vocabulary",
+            "text": "Help /help/ - giúp đỡ.\nCan you help me, please? - Bạn có thể giúp tôi không?",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "help",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Chọn lời nhờ giúp lịch sự.",
+              "choices": {
+                "can": "Can you help me, please?",
+                "night": "Good night."
+              },
+              "answerId": "can"
+            },
+            "explanation": "Can you... please? là mẫu nhờ giúp thông dụng.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "send",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Could you ___ me the file? (gửi)",
+              "blanks": {
+                "verb": [
+                  "send"
+                ]
+              }
+            },
+            "explanation": "Sau could dùng động từ nguyên mẫu send.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "please-order",
+            "type": "order",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Sắp xếp lời nhờ mở cửa.",
+              "tokens": {
+                "please": "Please",
+                "open": "open",
+                "the": "the",
+                "door": "door."
+              },
+              "acceptedOrders": [
+                [
+                  "please",
+                  "open",
+                  "the",
+                  "door"
+                ]
+              ]
+            },
+            "explanation": "Please open the door. là lời nhờ mở cửa.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "help-closed",
+            "type": "closed",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết Bạn có thể giúp tôi không? với Can.",
+              "acceptedAnswers": [
+                "Can you help me?",
+                "Can you help me, please?"
+              ],
+              "ignoreTerminalPunctuation": true
+            },
+            "explanation": "Hai câu đều hợp lý, có please thì lịch sự hơn.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "help-card",
+            "type": "flashcard",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Nhớ nghĩa của help.",
+              "modelAnswer": "Help - giúp đỡ. Thank you for your help.",
+              "criteria": [
+                "Nhớ nghĩa",
+                "Nêu được ví dụ"
+              ]
+            },
+            "explanation": "Tự đánh giá mức nhớ.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 1,
+      "unit": 1,
+      "slug": "ke-hoach-ngay-mai",
+      "title": "Kế hoạch ngày mai - bài mẫu",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Nói một dự định ngắn cho ngày mai.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "heading",
+            "type": "heading",
+            "text": "Kế hoạch ngày mai - bài mẫu",
+            "required": true
+          },
+          {
+            "id": "context",
+            "type": "tip",
+            "text": "Tomorrow là ngày mai, yesterday là hôm qua. Với will, dùng động từ nguyên mẫu.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "tomorrow",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Tomorrow nghĩa là gì?",
+              "choices": {
+                "mai": "Ngày mai",
+                "qua": "Hôm qua",
+                "nay": "Hôm nay"
+              },
+              "answerId": "mai"
+            },
+            "explanation": "Tomorrow là ngày mai.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "will",
+            "type": "fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I ___ call you tomorrow. (sẽ)",
+              "blanks": {
+                "future": [
+                  "will"
+                ]
+              }
+            },
+            "explanation": "Will dùng để nói về việc sẽ làm.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "plan-true",
+            "type": "true_false",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Yesterday nghĩa là ngày mai.",
+              "answer": false,
+              "correction": "Yesterday nghĩa là hôm qua."
+            },
+            "explanation": "Tomorrow mới là ngày mai.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "plan-match",
+            "type": "match",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Ghép cụm thời gian.",
+              "pairs": {
+                "next": {
+                  "left": "next week",
+                  "right": "tuần tới"
+                },
+                "today": {
+                  "left": "today",
+                  "right": "hôm nay"
+                }
+              },
+              "partialCredit": true
+            },
+            "explanation": "Next week là tuần tới; today là hôm nay.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "plan-self",
+            "type": "self",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Viết một câu về kế hoạch ngày mai.",
+              "modelAnswer": "I will visit my friend tomorrow.",
+              "criteria": [
+                "Có kế hoạch",
+                "Có will hoặc cấu trúc tương lai hợp lý",
+                "Nghĩa dễ hiểu"
+              ]
+            },
+            "explanation": "Có nhiều cách diễn đạt tương lai; bài này chỉ tự đánh giá.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 0,
+      "slug": "goi-y-hoc-20-cau",
+      "title": "Kiểm tra gợi ý học - 20 câu mẫu",
+      "subtype": "placement",
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Nhận gợi ý học từ 20 câu cố định chưa hiệu chuẩn.",
+        "minutes": 10,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [],
+        "exercises": [
+          {
+            "id": "placement-1",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I ___ a student.",
+              "choices": {
+                "opt-68d4e4b0e285": "am",
+                "opt-9c73ca122100": "is",
+                "opt-3c3be309bf25": "be"
+              },
+              "answerId": "opt-68d4e4b0e285"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: am.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-2",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "She ___ in Hanoi.",
+              "choices": {
+                "opt-0a19e0ae4644": "lives",
+                "opt-334966c1addc": "live",
+                "opt-307acf3679e7": "living"
+              },
+              "answerId": "opt-0a19e0ae4644"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: lives.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-3",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "They ___ friends.",
+              "choices": {
+                "opt-65724f3cd911": "are",
+                "opt-6a6f0b952f08": "is",
+                "opt-03b72c6ac889": "am"
+              },
+              "answerId": "opt-65724f3cd911"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: are.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-4",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "This is ___ apple.",
+              "choices": {
+                "opt-505703c572ff": "an",
+                "opt-7eaf2ae21ba7": "a",
+                "opt-91cb731ff5dd": "the one"
+              },
+              "answerId": "opt-505703c572ff"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: an.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-5",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I go to work ___ bus.",
+              "choices": {
+                "opt-c2adce475bff": "by",
+                "opt-8a293f1e46f6": "on the",
+                "opt-04dd9f1e410f": "at"
+              },
+              "answerId": "opt-c2adce475bff"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: by.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-6",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "We meet ___ Monday.",
+              "choices": {
+                "opt-7b892f0bfd3d": "on",
+                "opt-e2a1f3544dc3": "in",
+                "opt-a3dc0ebd2897": "at"
+              },
+              "answerId": "opt-7b892f0bfd3d"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: on.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-7",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "He ___ coffee every morning.",
+              "choices": {
+                "opt-59d994ff3b00": "drinks",
+                "opt-9f8f17e1125b": "drink",
+                "opt-71ed8879d440": "drinking"
+              },
+              "answerId": "opt-59d994ff3b00"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: drinks.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-8",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "There ___ two chairs.",
+              "choices": {
+                "opt-d4912c43da4a": "are",
+                "opt-50d73c352f49": "is",
+                "opt-0b1cbe6e8ebb": "am"
+              },
+              "answerId": "opt-d4912c43da4a"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: are.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-9",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "___ is your name?",
+              "choices": {
+                "opt-b47ffc4e7d7b": "What",
+                "opt-5c3d0643b16a": "Where",
+                "opt-35c6bad55b5b": "When"
+              },
+              "answerId": "opt-b47ffc4e7d7b"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: What.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-10",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I have ___ umbrella.",
+              "choices": {
+                "opt-256ec1e8c886": "an",
+                "opt-30519c52368d": "a",
+                "opt-61ea626c3f8b": "two"
+              },
+              "answerId": "opt-256ec1e8c886"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: an.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-11",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Yesterday I ___ at home.",
+              "choices": {
+                "opt-5896713ad0d8": "was",
+                "opt-9f80507f4ca9": "am",
+                "opt-726d6d8ca375": "were"
+              },
+              "answerId": "opt-5896713ad0d8"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: was.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-12",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "She can ___ English.",
+              "choices": {
+                "opt-a286fa9a21bd": "speak",
+                "opt-5b2c19dd5580": "speaks",
+                "opt-43e7da81dcf0": "speaking"
+              },
+              "answerId": "opt-a286fa9a21bd"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: speak.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-13",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Please ___ the door.",
+              "choices": {
+                "opt-ac5f0d53d0f4": "open",
+                "opt-d1c512faa781": "opens",
+                "opt-db7d4e97709a": "opened"
+              },
+              "answerId": "opt-ac5f0d53d0f4"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: open.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-14",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I am ___ than my brother.",
+              "choices": {
+                "opt-5f5d72ab7a84": "older",
+                "opt-91a219d425e6": "old",
+                "opt-aab6a04f2c62": "oldest"
+              },
+              "answerId": "opt-5f5d72ab7a84"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: older.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-15",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "How ___ water do you need?",
+              "choices": {
+                "opt-b00d39a43311": "much",
+                "opt-42332867a8b5": "many",
+                "opt-f1beeae56547": "a lot"
+              },
+              "answerId": "opt-b00d39a43311"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: much.",
+            "skillTags": [
+              "grammar"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-16",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "We ___ a meeting tomorrow.",
+              "choices": {
+                "opt-979652187458": "have",
+                "opt-5a79575b6c07": "has",
+                "opt-03cc0d15ebd2": "having"
+              },
+              "answerId": "opt-979652187458"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: have.",
+            "skillTags": [
+              "work"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-17",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "The report is ___ the desk.",
+              "choices": {
+                "opt-339ca877bd80": "on",
+                "opt-8699f4207141": "at the on",
+                "opt-ae7040ab390b": "with on"
+              },
+              "answerId": "opt-339ca877bd80"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: on.",
+            "skillTags": [
+              "work"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-18",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "If it rains, I ___ stay home.",
+              "choices": {
+                "opt-f2bc207e4fec": "will",
+                "opt-7c441e0d29ff": "would have",
+                "opt-a31b829a9874": "am"
+              },
+              "answerId": "opt-f2bc207e4fec"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: will.",
+            "skillTags": [
+              "work"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-19",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I have worked here ___ 2024.",
+              "choices": {
+                "opt-31c84692579a": "since",
+                "opt-f00e4208d6ff": "for",
+                "opt-c4e30d32a458": "during"
+              },
+              "answerId": "opt-31c84692579a"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: since.",
+            "skillTags": [
+              "work"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "placement-20",
+            "type": "choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Could you ___ me the file?",
+              "choices": {
+                "opt-10fd54dff2cc": "send",
+                "opt-672ebd7d0185": "sends",
+                "opt-15a796965135": "sent"
+              },
+              "answerId": "opt-10fd54dff2cc"
+            },
+            "explanation": "Đáp án phù hợp với cấu trúc câu: send.",
+            "skillTags": [
+              "work"
+            ],
+            "level": "A1"
+          }
+        ],
+        "blueprint": {
+          "questionCount": 20,
+          "skills": {
+            "grammar": 15,
+            "work": 5
+          },
+          "calibrated": false,
+          "rules": [
+            {
+              "minPercent": 0,
+              "pathSlug": "bat-dau-tu-nen-tang"
+            },
+            {
+              "minPercent": 50,
+              "pathSlug": "giao-tiep-hang-ngay"
+            },
+            {
+              "minPercent": 80,
+              "pathSlug": "tieng-anh-cong-viec"
+            }
+          ]
+        }
+      },
+      "unit": 1
+    },
+    {
+      "path": 1,
+      "unit": 0,
+      "slug": "nghe-mau-1",
+      "title": "Bản nháp nghe 1 - cần audio có quyền sử dụng",
+      "requiresAudio": true,
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Luyện nghe với audio do quản trị viên cung cấp và có quyền sử dụng.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "audio",
+            "type": "audio",
+            "audioId": null,
+            "transcript": "A cup of tea, please.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "listen-choice-0",
+            "type": "listening_choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Chọn đồ uống bạn nghe được.",
+              "audioId": null,
+              "transcript": "A tea, please.",
+              "choices": {
+                "a": "Tea",
+                "b": "Coffee"
+              },
+              "answerId": "a"
+            },
+            "explanation": "Nghe từ khóa trong câu.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "listen-fill-0",
+            "type": "listening_fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "A cup of ___, please.",
+              "audioId": null,
+              "transcript": "A cup of tea, please.",
+              "blanks": {
+                "word": [
+                  "tea"
+                ]
+              }
+            },
+            "explanation": "Điền đúng từ trong đoạn nghe.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    },
+    {
+      "path": 1,
+      "unit": 1,
+      "slug": "nghe-mau-2",
+      "title": "Bản nháp nghe 2 - cần audio có quyền sử dụng",
+      "requiresAudio": true,
+      "document": {
+        "schemaVersion": 1,
+        "objectives": "Luyện nghe với audio do quản trị viên cung cấp và có quyền sử dụng.",
+        "minutes": 5,
+        "passThreshold": 80,
+        "preview": true,
+        "blocks": [
+          {
+            "id": "audio",
+            "type": "audio",
+            "audioId": null,
+            "transcript": "I work in an office.",
+            "required": true
+          }
+        ],
+        "exercises": [
+          {
+            "id": "listen-choice-1",
+            "type": "listening_choice",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "Chọn nơi làm việc bạn nghe được.",
+              "audioId": null,
+              "transcript": "I work in an office.",
+              "choices": {
+                "a": "An office",
+                "b": "A school"
+              },
+              "answerId": "a"
+            },
+            "explanation": "Nghe từ khóa trong câu.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          },
+          {
+            "id": "listen-fill-1",
+            "type": "listening_fill",
+            "schemaVersion": 1,
+            "contentVersion": 1,
+            "payload": {
+              "prompt": "I work in an ___.",
+              "audioId": null,
+              "transcript": "I work in an office.",
+              "blanks": {
+                "word": [
+                  "office"
+                ]
+              }
+            },
+            "explanation": "Điền đúng từ trong đoạn nghe.",
+            "skillTags": [
+              "basics"
+            ],
+            "level": "A1"
+          }
+        ]
+      }
+    }
+  ],
+  "vocabulary": [
+    {
+      "slug": "hello-greetings",
+      "lemma": "hello",
+      "ipa": "/həˈləʊ/",
+      "part_of_speech": "thán từ",
+      "topic": "greetings",
+      "meaning": "xin chào",
+      "example": "Hello, An!",
+      "translation": "Xin chào An!",
+      "level": "A1"
+    },
+    {
+      "slug": "name-greetings",
+      "lemma": "name",
+      "ipa": "/neɪm/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "tên",
+      "example": "My name is Linh.",
+      "translation": "Tôi tên là Linh.",
+      "level": "A1"
+    },
+    {
+      "slug": "friend-greetings",
+      "lemma": "friend",
+      "ipa": "/frend/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "bạn",
+      "example": "She is my friend.",
+      "translation": "Cô ấy là bạn tôi.",
+      "level": "A1"
+    },
+    {
+      "slug": "family-greetings",
+      "lemma": "family",
+      "ipa": "/ˈfæməli/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "gia đình",
+      "example": "I love my family.",
+      "translation": "Tôi yêu gia đình mình.",
+      "level": "A1"
+    },
+    {
+      "slug": "mother-greetings",
+      "lemma": "mother",
+      "ipa": "/ˈmʌðə/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "mẹ",
+      "example": "My mother is kind.",
+      "translation": "Mẹ tôi tốt bụng.",
+      "level": "A1"
+    },
+    {
+      "slug": "father-greetings",
+      "lemma": "father",
+      "ipa": "/ˈfɑːðə/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "bố",
+      "example": "My father is at home.",
+      "translation": "Bố tôi đang ở nhà.",
+      "level": "A1"
+    },
+    {
+      "slug": "sister-greetings",
+      "lemma": "sister",
+      "ipa": "/ˈsɪstə/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "chị/em gái",
+      "example": "This is my sister.",
+      "translation": "Đây là chị/em gái tôi.",
+      "level": "A1"
+    },
+    {
+      "slug": "brother-greetings",
+      "lemma": "brother",
+      "ipa": "/ˈbrʌðə/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "anh/em trai",
+      "example": "My brother is tall.",
+      "translation": "Anh/em trai tôi cao.",
+      "level": "A1"
+    },
+    {
+      "slug": "country-greetings",
+      "lemma": "country",
+      "ipa": "/ˈkʌntri/",
+      "part_of_speech": "danh từ",
+      "topic": "greetings",
+      "meaning": "quốc gia",
+      "example": "Vietnam is my country.",
+      "translation": "Việt Nam là quốc gia của tôi.",
+      "level": "A1"
+    },
+    {
+      "slug": "welcome-greetings",
+      "lemma": "welcome",
+      "ipa": "/ˈwelkəm/",
+      "part_of_speech": "thán từ",
+      "topic": "greetings",
+      "meaning": "chào mừng",
+      "example": "Welcome to our class.",
+      "translation": "Chào mừng đến lớp chúng tôi.",
+      "level": "A1"
+    },
+    {
+      "slug": "water-daily",
+      "lemma": "water",
+      "ipa": "/ˈwɔːtə/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "nước",
+      "example": "I drink water.",
+      "translation": "Tôi uống nước.",
+      "level": "A1"
+    },
+    {
+      "slug": "tea-daily",
+      "lemma": "tea",
+      "ipa": "/tiː/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "trà",
+      "example": "A tea, please.",
+      "translation": "Cho tôi một trà.",
+      "level": "A1"
+    },
+    {
+      "slug": "coffee-daily",
+      "lemma": "coffee",
+      "ipa": "/ˈkɒfi/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "cà phê",
+      "example": "This coffee is hot.",
+      "translation": "Cà phê này nóng.",
+      "level": "A1"
+    },
+    {
+      "slug": "juice-daily",
+      "lemma": "juice",
+      "ipa": "/dʒuːs/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "nước ép",
+      "example": "I like orange juice.",
+      "translation": "Tôi thích nước cam ép.",
+      "level": "A1"
+    },
+    {
+      "slug": "bread-daily",
+      "lemma": "bread",
+      "ipa": "/bred/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "bánh mì",
+      "example": "We have bread for breakfast.",
+      "translation": "Chúng tôi ăn bánh mì vào bữa sáng.",
+      "level": "A1"
+    },
+    {
+      "slug": "rice-daily",
+      "lemma": "rice",
+      "ipa": "/raɪs/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "cơm/gạo",
+      "example": "I eat rice at lunch.",
+      "translation": "Tôi ăn cơm vào bữa trưa.",
+      "level": "A1"
+    },
+    {
+      "slug": "bag-daily",
+      "lemma": "bag",
+      "ipa": "/bæɡ/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "túi",
+      "example": "My bag is blue.",
+      "translation": "Túi của tôi màu xanh.",
+      "level": "A1"
+    },
+    {
+      "slug": "shop-daily",
+      "lemma": "shop",
+      "ipa": "/ʃɒp/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "cửa hàng",
+      "example": "The shop is open.",
+      "translation": "Cửa hàng đang mở.",
+      "level": "A1"
+    },
+    {
+      "slug": "price-daily",
+      "lemma": "price",
+      "ipa": "/praɪs/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "giá",
+      "example": "What is the price?",
+      "translation": "Giá là bao nhiêu?",
+      "level": "A1"
+    },
+    {
+      "slug": "ticket-daily",
+      "lemma": "ticket",
+      "ipa": "/ˈtɪkɪt/",
+      "part_of_speech": "danh từ",
+      "topic": "daily",
+      "meaning": "vé",
+      "example": "I have a train ticket.",
+      "translation": "Tôi có vé tàu.",
+      "level": "A1"
+    },
+    {
+      "slug": "meeting-work",
+      "lemma": "meeting",
+      "ipa": "/ˈmiːtɪŋ/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "cuộc họp",
+      "example": "The meeting starts at nine.",
+      "translation": "Cuộc họp bắt đầu lúc chín giờ.",
+      "level": "A2"
+    },
+    {
+      "slug": "office-work",
+      "lemma": "office",
+      "ipa": "/ˈɒfɪs/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "văn phòng",
+      "example": "I work in an office.",
+      "translation": "Tôi làm trong văn phòng.",
+      "level": "A2"
+    },
+    {
+      "slug": "report-work",
+      "lemma": "report",
+      "ipa": "/rɪˈpɔːt/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "báo cáo",
+      "example": "The report is ready.",
+      "translation": "Báo cáo đã sẵn sàng.",
+      "level": "A2"
+    },
+    {
+      "slug": "file-work",
+      "lemma": "file",
+      "ipa": "/faɪl/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "tệp",
+      "example": "Please send the file.",
+      "translation": "Hãy gửi tệp.",
+      "level": "A2"
+    },
+    {
+      "slug": "email-work",
+      "lemma": "email",
+      "ipa": "/ˈiːmeɪl/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "thư điện tử",
+      "example": "I have a new email.",
+      "translation": "Tôi có thư mới.",
+      "level": "A2"
+    },
+    {
+      "slug": "desk-work",
+      "lemma": "desk",
+      "ipa": "/desk/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "bàn làm việc",
+      "example": "The file is on my desk.",
+      "translation": "Tệp ở trên bàn làm việc của tôi.",
+      "level": "A2"
+    },
+    {
+      "slug": "colleague-work",
+      "lemma": "colleague",
+      "ipa": "/ˈkɒliːɡ/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "đồng nghiệp",
+      "example": "My colleague is helpful.",
+      "translation": "Đồng nghiệp của tôi hay giúp đỡ.",
+      "level": "A2"
+    },
+    {
+      "slug": "project-work",
+      "lemma": "project",
+      "ipa": "/ˈprɒdʒekt/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "dự án",
+      "example": "This project is new.",
+      "translation": "Dự án này mới.",
+      "level": "A2"
+    },
+    {
+      "slug": "task-work",
+      "lemma": "task",
+      "ipa": "/tɑːsk/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "nhiệm vụ",
+      "example": "This task is simple.",
+      "translation": "Nhiệm vụ này đơn giản.",
+      "level": "A2"
+    },
+    {
+      "slug": "break-work",
+      "lemma": "break",
+      "ipa": "/breɪk/",
+      "part_of_speech": "danh từ",
+      "topic": "work",
+      "meaning": "giờ nghỉ",
+      "example": "We have a short break.",
+      "translation": "Chúng tôi có giờ nghỉ ngắn.",
+      "level": "A2"
+    },
+    {
+      "slug": "today-time",
+      "lemma": "today",
+      "ipa": "/təˈdeɪ/",
+      "part_of_speech": "trạng từ",
+      "topic": "time",
+      "meaning": "hôm nay",
+      "example": "I study today.",
+      "translation": "Tôi học hôm nay.",
+      "level": "A1"
+    },
+    {
+      "slug": "tomorrow-time",
+      "lemma": "tomorrow",
+      "ipa": "/təˈmɒrəʊ/",
+      "part_of_speech": "trạng từ",
+      "topic": "time",
+      "meaning": "ngày mai",
+      "example": "I will call tomorrow.",
+      "translation": "Tôi sẽ gọi ngày mai.",
+      "level": "A1"
+    },
+    {
+      "slug": "yesterday-time",
+      "lemma": "yesterday",
+      "ipa": "/ˈjestədeɪ/",
+      "part_of_speech": "trạng từ",
+      "topic": "time",
+      "meaning": "hôm qua",
+      "example": "I was at home yesterday.",
+      "translation": "Tôi ở nhà hôm qua.",
+      "level": "A1"
+    },
+    {
+      "slug": "morning-time",
+      "lemma": "morning",
+      "ipa": "/ˈmɔːnɪŋ/",
+      "part_of_speech": "danh từ",
+      "topic": "time",
+      "meaning": "buổi sáng",
+      "example": "I walk in the morning.",
+      "translation": "Tôi đi bộ vào buổi sáng.",
+      "level": "A1"
+    },
+    {
+      "slug": "evening-time",
+      "lemma": "evening",
+      "ipa": "/ˈiːvnɪŋ/",
+      "part_of_speech": "danh từ",
+      "topic": "time",
+      "meaning": "buổi tối",
+      "example": "I read in the evening.",
+      "translation": "Tôi đọc vào buổi tối.",
+      "level": "A1"
+    },
+    {
+      "slug": "week-time",
+      "lemma": "week",
+      "ipa": "/wiːk/",
+      "part_of_speech": "danh từ",
+      "topic": "time",
+      "meaning": "tuần",
+      "example": "See you next week.",
+      "translation": "Hẹn gặp tuần tới.",
+      "level": "A1"
+    },
+    {
+      "slug": "month-time",
+      "lemma": "month",
+      "ipa": "/mʌnθ/",
+      "part_of_speech": "danh từ",
+      "topic": "time",
+      "meaning": "tháng",
+      "example": "This month is busy.",
+      "translation": "Tháng này bận.",
+      "level": "A1"
+    },
+    {
+      "slug": "hour-time",
+      "lemma": "hour",
+      "ipa": "/ˈaʊə/",
+      "part_of_speech": "danh từ",
+      "topic": "time",
+      "meaning": "giờ",
+      "example": "I study for one hour.",
+      "translation": "Tôi học trong một giờ.",
+      "level": "A1"
+    },
+    {
+      "slug": "minute-time",
+      "lemma": "minute",
+      "ipa": "/ˈmɪnɪt/",
+      "part_of_speech": "danh từ",
+      "topic": "time",
+      "meaning": "phút",
+      "example": "Wait a minute, please.",
+      "translation": "Vui lòng đợi một phút.",
+      "level": "A1"
+    },
+    {
+      "slug": "monday-time",
+      "lemma": "Monday",
+      "ipa": "/ˈmʌndeɪ/",
+      "part_of_speech": "danh từ",
+      "topic": "time",
+      "meaning": "thứ Hai",
+      "example": "We meet on Monday.",
+      "translation": "Chúng tôi gặp vào thứ Hai.",
+      "level": "A1"
+    }
+  ]
+}

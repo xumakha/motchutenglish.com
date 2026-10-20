@@ -18,12 +18,24 @@ function request_page(): string
 }
 function dispatch(string $page): array
 {
+    try {
+        if(function_exists('mce_one')) {
+            $redirect=mce_one('SELECT new_path FROM mce_redirects WHERE old_path=?',['/'.$page]);
+            if($redirect&&$redirect['new_path']!=='/'.$page) {header('Location: '.$redirect['new_path'],true,301);exit;}
+        }
+    } catch(Throwable $e) { /* Routes stay available during an unconfigured database. */ }
     foreach (require APP_PATH.'/config/routes.php' as $pattern=>$target) {
         if (preg_match($pattern, $page, $matches)) {
             array_shift($matches);
             return (new $target[0])->{$target[1]}(...$matches);
         }
     }
+    try {
+        if (function_exists('mce_one')) {
+            $redirect=mce_one('SELECT new_path FROM mce_redirects WHERE old_path=?',['/'.$page]);
+            if ($redirect) { header('Location: '.$redirect['new_path'],true,301);exit; }
+        }
+    } catch(Throwable $e) { /* Missing database must not break the public 404 page. */ }
     return not_found();
 }
 function not_found(): array
