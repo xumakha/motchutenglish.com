@@ -9,3 +9,5 @@
 .button {max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .brand-name {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px}
 @media(max-width:600px){.brand-name{max-width:100px}}
+
+.path-image{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:var(--radius,16px);margin-bottom:16px}

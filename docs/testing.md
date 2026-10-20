@@ -1,23 +1,16 @@
-# Kiểm thử thực tế - 20/10/2026
+# Kiểm thử và bằng chứng
 
-Môi trường: PHP CLI 8.5.11, XAMPP MariaDB 10.4.32, Python 3.13. Database test riêng với tên mce_auth_test_*; không dùng database học thật. Database test giữ lại để kiểm tra.
+`python tests/run_auth.py` tạo DB riêng mce_auth_test_* và server local8089. Không xóa/seed database ứng dụng. Test fixture CLI từ chối DB không có prefix test. PHP extension ini và logs ở private writable. Các DB thử giữ lại để kiểm tra, không công khai credentials hoặc cookie.
 
-    php tests/learning.php
-    python tests/run_auth.py
-    php database/check.php
+- product_unit.php: schema/type validation, grading/partial/null, Unicode NFC/space/punctuation/apostrophe, stable duplicate-text IDs, answer redaction, fixed-clock UTC review/DST/cap.
+- product_http.py: real MariaDB, 4roles, CSRF/IDOR, multiple question lesson, version snapshot, draft/revision409, retry/finish unique, notes XSS/private, review unique, concurrent purchase, import dry-run/atomic/CSV/queue, real WAV upload và reject SVG/PHP, missingaudio, archive/history.
+- motivation.php: clock cố định,7ngày thật/ticket, protect đồng thời2process, ngàymissed/backward timezone, quest snapshot, ledger reconciliation.
+- account_http.py: local mail sink qua worker, verification/reset once/session revoke, safe emailchange, reminder/unsubscribe, password change, queued export/ownership và queued erase.
+- learning_http.py/auth_http.py/auth_hash.php/site_http.py: regression cũ, password/session/CSRF/rate limit và26publicroutes/10assets.
+- browser.mjs: Chrome thật qua CDP, viewport360/390/768/1440, không tràn ngang, lesson chọn/nộp bằng bàn phím, guest finish -> đăng ký -> chỉ chuyển attempt khi xác nhận, exception check và screenshots.
+- performance.py:55 authenticatedsessions độc lập,5warmup+50concurrent grading requests, p95/error report. Đây là local CGI/PHP/XAMPP, không staging load hoặc đảm bảo SLA production.
+- restore.py: dump và restore DB mới, login và progress/score từ process mới; media backup/restore so SHA, không sửa DB gốc.
 
-Đã đạt:
-- Grading stable IDs, đảo thứ tự, snapshot JSON, response không hợp lệ.
-- Editor tạo/sửa draft, preview chấm thử, admin publish, editor publish 403, published không sửa.
-- Learner không vào admin/preview; user khác đọc/nộp attempt trả 404.
-- CSRF, GET start 405, request key dùng lại không tạo thêm lượt; key của user khác trả 409.
-- Không render explanation/answer key trước nộp; escape script trong nội dung.
-- Source bị thay đổi vẫn chấm theo snapshot cũ.
-- Retry cùng response giữ kết quả; response khác 409.
-- Hai PHP process với PDO độc lập nộp cùng một lượt: chỉ một completion event; tổng XP vẫn 25 sau nhiều lượt học.
-- Seed chạy hai lần giữ một seed key; publish lặp có một audit event.
-- Đăng ký/đăng nhập/logout, password hash, session rotation, rate limit, 26 public routes, 8 assets và legacy redirects.
+Bật các biến BROWSER_TESTS/PERFORMANCE_TESTS/RESTORE_TESTS/THREADED_TESTS theo README. Chrome local test profile dùng no-sandbox/disable-gpu để tương thích môi trường kiểm thử, không áp dụng website production hay profile cá nhân. Không cần cài npm package.
 
-Lần chạy đạt lưu database mce_auth_test_fab19ea4b8c4; lần chạy cuối có thể tạo tên mới. Lint PHP và git diff --check được kiểm tra sau chỉnh sửa.
-
-Chưa có kiểm thử trình duyệt trực quan/keyboard, performance, restart DB, restore backup hoặc staging trên MySQL production. Chưa nghiệm thu các yêu cầu giai đoạn 2/3.
+Báo cáo thực tế: docs/artifacts/browser-report.json, performance.json, restore-report.json và ảnh; xem thời gian/env trong từng artifact. CI PHP/MariaDB10.11 được chuẩn bị trong .github/workflows/php.yml nhưng chưa có kết quả remote. Staging chưa có host/domain, nên chưa nghiệm thu production, SMTP provider, GA4 ingestion, hạ tầng backup/alert hoặc accessibility với screen reader thật. Kiểm keyboard/responsive tự động không thay thế toàn bộ WCAG audit.

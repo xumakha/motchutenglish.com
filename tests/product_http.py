@@ -27,12 +27,13 @@ class Client:
         body=r.read().decode();assert r.code==expected,(r.code,body);j=json.loads(body);return j.get('data',j.get('error'))
 users=json.loads(fixture('setup'))
 for _ in range(2):subprocess.run(['php','database/seed-product.php','--publish-reviewed-samples'],check=True,capture_output=True)
-catalog=json.loads(fixture('catalog'));assert len(catalog['paths'])==2 and len(catalog['lessons'])==13 and len(catalog['vocabulary'])==40
+catalog=json.loads(fixture('catalog'));assert len(catalog['paths'])==2 and len(catalog['lessons'])==16 and len(catalog['vocabulary'])==40
 clients={r:Client() for r in users}
 for role,c in clients.items():c.login(users[role]['email'])
 admin,editor,learner,other=(clients[r] for r in ['admin','editor','learner','other'])
-for path in ['/lo-trinh','/tu-vung','/kien-thuc','/tim-kiem?q=hello','/hoc','/bat-dau','/so-tu-vung','/on-tap','/tien-do','/tai-khoan','/reward-shop','/admin/lessons','/admin/paths','/admin/operations']:
-    client=admin if path.startswith('/admin/') else learner
+assert sum(l['subtype']=='checkpoint' for l in catalog['lessons'])==4
+for path in ['/du-lieu/template-paths','/du-lieu/template-units','/du-lieu/template-articles','/du-lieu/template-vocabulary_sets','/chien-dich/'+catalog['paths'][0]['slug']+'?utm_source=test','/tu-vung?page=2','/lo-trinh','/tu-vung','/kien-thuc','/tim-kiem?q=hello','/hoc','/bat-dau','/so-tu-vung','/on-tap','/tien-do','/tai-khoan','/reward-shop','/admin/lessons','/admin/paths','/admin/operations']:
+    client=admin if path.startswith(('/admin/','/du-lieu/template-')) else learner
     code,body,url=client.req(path);assert code==200 and not url.endswith('/login'),(path,code,url)
 assert learner.req('/admin/lessons')[0]==403
 editor.api('admin/role',dict(userId=users['learner']['id'],role='admin'),403)
@@ -132,3 +133,26 @@ bulk=editor.api('admin/import-preview',dict(raw=json.dumps(dict(schemaVersion=1,
 editor.api('admin/import-commit',dict(importId=bulk['id']));subprocess.run(['php','database/worker.php','run','50'],check=True,capture_output=True)
 assert 'committed' in editor.req('/admin/imports')[1]
 print('PASS: versioned learning, all product pages, optimistic conflicts, idempotent submit/finish, notes ownership, review, concurrent shop, atomic import and test-mode redaction')
+
+# Every metadata import template passes the same validator as CMS and commits once.
+from pathlib import Path
+for kind in ['paths','units','articles','vocabulary_sets']:
+    batch=json.loads(Path('database/templates/'+kind+'.json').read_text(encoding='utf-8'))
+    batch['namespace']='template-'+kind.replace('_','-')
+    if kind=='units':batch[kind][0]['path_id']=catalog['paths'][0]['id']
+    preview=admin.api('admin/import-preview',dict(raw=json.dumps(batch)));assert preview['errors']==[],(kind,preview)
+    admin.api('admin/import-commit',dict(importId=preview['id']));admin.api('admin/import-commit',dict(importId=preview['id']))
+    assert admin.api('admin/import-preview',dict(raw=json.dumps(batch)))['errors']
+set_id=editor.api('admin/entity',dict(kind='vocabulary_sets',slug='integration-set',title='Integration set',description='Owned fixture',status='draft',sort_order=2))['id']
+editor.api('admin/set-items',dict(setId=set_id,ids=[v['id']]))
+admin.api('admin/entity',dict(kind='vocabulary_sets',id=set_id,slug='integration-set',title='Integration set',description='Owned fixture',status='published',sort_order=2))
+assert learner.req('/tu-vung/chu-de/integration-set')[0]==200
+# Daily limit applies server-side and explicit extra study is voluntary.
+learner.api('profile',dict(goal='foundation',selfLevel='beginner',minutes=10,timezone='Asia/Ho_Chi_Minh',reviewLimit=1,gamification=False,animations=False))
+learner.api('vocabulary/save',dict(senseId=catalog['vocabulary'][1]['id'],notes='',review=True))
+assert learner.api('review/queue')==[]
+card=learner.api('review/queue?more=1')[0]
+rating=dict(cardId=card['id'],revision=int(card['revision']),requestKey=secrets.token_hex(16),rating='easy')
+learner.api('review/rate',rating,422);rating['extra']=True;learner.api('review/rate',rating);learner.api('review/rate',rating)
+assert learner.req('/on-tap?manage=1')[0]==200
+print('PASS: metadata templates, vocabulary-set membership, daily review limit, explicit extra and gamification-disabled review')

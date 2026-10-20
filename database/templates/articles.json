@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "namespace": "example-articles",
+  "articles": [
+    {
+      "externalId": "article-example",
+      "slug": "bai-viet-moi",
+      "title": "Bài viết mới",
+      "body": "Nội dung gốc đã kiểm tra quyền sử dụng."
+    }
+  ]
+}

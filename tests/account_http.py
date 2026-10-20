@@ -38,6 +38,13 @@ worker();unsubscribe=fixture('mail-token',new_email,'Một chút English hôm na
 new_password2='Changed-password-789!';a.api('password/change',dict(current=new_password,password=new_password2));a.api('progress',expected=401)
 a=Client();a.login(new_email,new_password2)
 assert a.req('/du-lieu/export')[0]==200
+export_key=secrets.token_hex(16)
+a.api('exports/request',dict(kind='personal',requestKey=export_key));a.api('exports/request',dict(kind='personal',requestKey=export_key));worker()
+code,exported=a.req('/du-lieu/export-file/'+export_key);assert code==200,(code,exported)
+export_doc=json.loads(exported);assert export_doc['kind']=='personal' and export_doc['user'][0]['email']==new_email
+assert 'password_hash' not in exported and 'presented_order' not in exported
+anonymous=Client();assert anonymous.req('/du-lieu/export-file/'+export_key)[0] in [401,403]
+
 # Create private learner data before controlled deletion.
 catalog=json.loads(fixture('catalog'));a.api('vocabulary/save',dict(senseId=catalog['vocabulary'][0]['id'],notes='Private erasure test',review=True))
 a.api('account/delete',dict(password=new_password2));a.api('progress',expected=401);worker()

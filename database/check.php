@@ -7,6 +7,8 @@ $configFile = is_file(APP_PATH.'/config/database.php') ? 'application/config/dat
 echo 'Configuration: '.$configFile.PHP_EOL;
 try {
     if (!extension_loaded('pdo_mysql')) throw new RuntimeException('PDO_MYSQL_MISSING');
+    foreach(['mbstring','intl','fileinfo'] as $extension)if(!extension_loaded($extension))throw new RuntimeException('REQUIRED_EXTENSION_MISSING');
+    if(PHP_VERSION_ID<80300||PHP_VERSION_ID>=80600)throw new RuntimeException('PHP_VERSION_UNSUPPORTED');
     $config = app_config();
     if (empty($config['db_name']) || empty($config['db_user'])) throw new RuntimeException('CONFIG_MISSING');
     $pdo = db();
@@ -27,6 +29,8 @@ try {
         $pdo->query('SELECT '.$columns.' FROM '.$table.' LIMIT 0');
         echo 'PASS: '.$table." table and required columns exist.\n";
     }
+    foreach(['profiles','paths','units','lessons','versions','attempts','items','progress','vocabulary','vocabulary_sets','vocabulary_set_items','review_cards','review_events','jobs','exports','audit','migrations'] as $table)$pdo->query('SELECT * FROM mce_'.$table.' LIMIT 0');
+    echo "PASS: product schema and required extensions exist.\n";
     echo "Read-only checks passed. If registration still fails, check INSERT/UPDATE permissions and the PHP error log.\n";
 } catch (Throwable $e) {
     $code = $e instanceof PDOException ? (int)($e->errorInfo[1]??0) : 0;
@@ -43,6 +47,8 @@ try {
         2005=>'Unknown MySQL host. Check db_host.',
     ];
     if ($e->getMessage()==='PDO_MYSQL_MISSING') $hint='Enable the pdo_mysql PHP extension for the website and CLI.';
+    elseif ($e->getMessage()==='REQUIRED_EXTENSION_MISSING') $hint='Enable mbstring, intl and fileinfo; use php-local.ps1 for local commands.';
+    elseif ($e->getMessage()==='PHP_VERSION_UNSUPPORTED') $hint='Supported PHP range: >=8.3 and <8.6.';
     elseif ($e->getMessage()==='CONFIG_MISSING' || $e->getMessage()==='Database is not configured') $hint='Missing db_name/db_user. Copy config-example/database.php to application/config/database.php and fill in hosting credentials.';
     else $hint=$hints[$code]??'Check the server PHP error log for the detailed cause. No credentials are printed by this command.';
     fwrite(STDERR, 'FAIL'.($code ? ' [MySQL '.$code.']' : '').': '.$hint.PHP_EOL);

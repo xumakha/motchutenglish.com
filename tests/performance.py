@@ -1,17 +1,17 @@
 """Measured local benchmark, not a staging capacity claim."""
-import json,os,statistics,subprocess,time,urllib.request,urllib.error
+import json,os,statistics,subprocess,time,urllib.request,urllib.error,traceback
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 sessions=json.loads(subprocess.check_output(['php','tests/product_fixture.php','performance'],text=True,encoding='utf-8'))
 def submit(s):
-    start=time.perf_counter();error=None
+    start=time.perf_counter();error=None;details=None
     try:
         body=json.dumps(dict(revision=0,exerciseId='hello',response='greeting')).encode()
         req=urllib.request.Request('http://127.0.0.1:8089/api/v1/attempts/'+s['attempt']+'/submit',body,{'Content-Type':'application/json','X-CSRF-Token':s['csrf'],'Cookie':s['cookie']})
         with urllib.request.urlopen(req,timeout=30) as response:
             data=json.load(response);assert response.status==200 and data['data']['items'][0]['feedback']['isCorrect'] is True
-    except Exception as e:error=type(e).__name__
-    return dict(ms=round((time.perf_counter()-start)*1000,2),error=error)
+    except Exception as e:error=type(e).__name__;details={'errno':getattr(e,'errno',None),'frames':[dict(file=Path(f.filename).name,line=f.lineno,function=f.name) for f in traceback.extract_tb(e.__traceback__)[-5:]]}
+    return dict(ms=round((time.perf_counter()-start)*1000,2),error=error,details=details)
 for s in sessions[:5]:assert submit(s)['error'] is None,'Warmup failed'
 start=time.perf_counter()
 with ThreadPoolExecutor(max_workers=50) as pool:results=list(pool.map(submit,sessions[5:]))

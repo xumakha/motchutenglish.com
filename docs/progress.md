@@ -18,7 +18,7 @@
 - SEO render server, canonical/noindex, sitemap/robots, breadcrumb; số liệu vận hành/cohort từ DB. Adapter GA4 opt-in, mặc định tắt, chưa xác nhận gửi thật.
 
 ## Nội dung mẫu
-12 bài học thật thuộc 2 lộ trình x 2 chương x 3 bài. Ngoài ra có 1 bài kiểm tra gợi ý 20 câu và 2 bản nháp nghe cần audio. Tổng 84 exercises, tối thiểu 2 ví dụ/type, 40 nghĩa từ trong 4 chủ đề và 3 bài kiến thức gốc. Seed idempotent, không tạo học viên hoặc thành tích giả. Hai lộ trình mở rộng không có bài thì không quảng cáo là sẵn sàng.
+15 bài học/checkpoint thật thuộc 2 lộ trình x 2 chương, mỗi chương ít nhất 3 bài và có checkpoint cuối chương. Ngoài ra có 1 bài kiểm tra gợi ý 20 câu và 2 bản nháp nghe cần audio. Tổng 90 exercises, tối thiểu 2 ví dụ/type, 40 nghĩa từ trong 4 chủ đề và 3 bài kiến thức gốc. Seed idempotent, không tạo học viên hoặc thành tích giả. Hai lộ trình mở rộng không có bài thì không quảng cáo là sẵn sàng.
 
 ## Bằng chứng đã chạy
 - Bộ kiểm thử HTTP + database riêng đã chạy qua luồng học, quyền, CSRF, IDOR, idempotency, notes, review, shop đồng thời và import.

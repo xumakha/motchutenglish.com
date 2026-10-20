@@ -1,0 +1,72 @@
+{
+  "timestamp": "2026-10-20T10:30:34.620412+00:00",
+  "environment": "isolated local database; external mail/analytics disabled",
+  "checks": [
+    {
+      "check": "command",
+      "status": "passed",
+      "seconds": 0.051
+    },
+    {
+      "check": "database/setup-local.php",
+      "status": "passed",
+      "seconds": 3.06
+    },
+    {
+      "check": "tests/product_unit.php",
+      "status": "passed",
+      "seconds": 0.066
+    },
+    {
+      "check": "tests/product_http.py",
+      "status": "passed",
+      "seconds": 19.146
+    },
+    {
+      "check": "tests/motivation.php",
+      "status": "passed",
+      "seconds": 0.47
+    },
+    {
+      "check": "tests/browser.mjs",
+      "status": "passed",
+      "seconds": 13.988
+    },
+    {
+      "check": "tests/learning_http.py",
+      "status": "passed",
+      "seconds": 8.943
+    },
+    {
+      "check": "tests/product_fixture.php",
+      "status": "passed",
+      "seconds": 0.093
+    },
+    {
+      "check": "tests/auth_http.py",
+      "status": "passed",
+      "seconds": 9.045
+    },
+    {
+      "check": "tests/auth_hash.php",
+      "status": "passed",
+      "seconds": 0.285
+    },
+    {
+      "check": "tests/site_http.py",
+      "status": "passed",
+      "seconds": 4.812
+    },
+    {
+      "check": "tests/account_http.py",
+      "status": "passed",
+      "seconds": 9.218
+    },
+    {
+      "check": "tests/restore.py",
+      "status": "passed",
+      "seconds": 2.728
+    }
+  ],
+  "all_passed": true
+}

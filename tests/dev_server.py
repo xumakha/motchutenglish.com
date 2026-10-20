@@ -1,7 +1,7 @@
 """Local PHP CGI dev server. Never expose publicly; production uses Apache/PHP-FPM.
 Avoids Windows PHP built-in server's single-worker preconnection stalls in browser tests.
 """
-import http.server,mimetypes,os,shutil,subprocess,sys,urllib.parse
+import http.server,mimetypes,os,shutil,subprocess,sys,urllib.parse,time
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 PHP=Path(shutil.which('php'))
@@ -13,7 +13,8 @@ settings+='session.save_path="'+str(ROOT/'writable/sessions').replace('\\','/')+
 (INI/'runtime.ini').write_text(settings,encoding='utf-8')
 STATIC={'/assets/css/style.css','/assets/css/product.css','/assets/js/app.js','/assets/js/product.js','/assets/json/courses.json','/assets/images/logo.png','/favicon.ico','/favicon-16x16.png','/favicon-32x32.png','/apple-touch-icon.png','/android-chrome-192x192.png','/android-chrome-512x512.png','/site.webmanifest'}
 class Handler(http.server.BaseHTTPRequestHandler):
-    protocol_version='HTTP/1.1'
+    protocol_version='HTTP/1.0'
+    disable_nagle_algorithm=True
     def handle(self):
         try:super().handle()
         except (BrokenPipeError,ConnectionResetError):pass
@@ -27,6 +28,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             content=(ROOT/path.lstrip('/')).read_bytes();self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(path)[0] or 'application/octet-stream');self.send_header('Content-Length',str(len(content)));self.end_headers()
             if self.command!='HEAD':self.wfile.write(content)
             return
+        started=time.perf_counter()
+        if os.environ.get('DEV_TIMING')=='1':print('cgi-request-accepted',flush=True)
         length=int(self.headers.get('Content-Length','0'))
         if length>12*1024*1024:self.send_error(413);return
         body=self.rfile.read(length) if length else b''
@@ -43,12 +46,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             key,colon,value=line.partition(':')
             if key.lower()=='status':status=int(value.strip().split()[0])
             elif colon and key.lower() not in ['content-length','connection']:headers.append((key,value.strip()))
+        if os.environ.get('DEV_TIMING')=='1':print('cgi-response',status,round(time.perf_counter()-started,3),flush=True)
         self.send_response(status)
         for key,value in headers:self.send_header(key,value)
         self.send_header('Content-Length',str(len(content)));self.send_header('Connection','close');self.end_headers()
         if self.command!='HEAD':self.wfile.write(content)
     do_GET=do_POST=do_PUT=do_PATCH=do_DELETE=do_HEAD=handle_request
+class LocalServer(http.server.ThreadingHTTPServer):
+    request_queue_size=128
+    daemon_threads=True
+
 if __name__=='__main__':
     (ROOT/'writable/sessions').mkdir(parents=True,exist_ok=True)
     print('Local PHP CGI server on http://127.0.0.1:'+str(sys.argv[1] if len(sys.argv)>1 else 8080),flush=True)
-    http.server.ThreadingHTTPServer(('127.0.0.1',int(sys.argv[1]) if len(sys.argv)>1 else 8080),Handler).serve_forever()
+    LocalServer(('127.0.0.1',int(sys.argv[1]) if len(sys.argv)>1 else 8080),Handler).serve_forever()

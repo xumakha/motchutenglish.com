@@ -1,186 +1,56 @@
-# Một chút English — PHP
+# Một Chút English
 
-Website PHP 8.x, MySQL, PDO MySQL và mbstring. Không cần Node.js hoặc build.
+Ứng dụng học tiếng Anh cho người Việt, PHP MVC/PDO và MariaDB. Code hiện hữu và lịch sử cũ được giữ lại; hệ thống học mới dùng các bảng `mce_`. Không cần Node hoặc build frontend để chạy website. Node/Chrome chỉ phục vụ kiểm thử trình duyệt.
 
-## Cấu trúc dự án
+## Chạy local Windows/XAMPP
 
-Áp dụng cách chia thư mục của dự án tham khảo `web-hen-ho`: `application`
-chứa mã PHP theo Controller / Model / View; assets tách CSS, JS, ảnh, JSON.
-Đây là ứng dụng PHP hiện tại được tổ chức lại, không yêu cầu cài CodeIgniter
-hay các thư viện của website tham khảo.
-
-```text
-application/
-  config/
-    config.php          # Đọc cấu hình và biến môi trường
-    database.php        # Thông tin database riêng, không đưa lên Git
-    routes.php          # Bảng route
-  controllers/          # Home, Courses, Listening, Pages, Auth
-  core/                 # Bootstrap, router, database, render view
-  helpers/              # URL, heading, thẻ khóa học, quiz, audio
-  libraries/            # Phiên đăng nhập, CSRF và xử lý xác thực
-  models/               # Đọc bài học và truy vấn tài khoản/MySQL
-  views/
-    layouts/            # Header, footer
-    partials/           # Điều hướng tài khoản
-    home/
-    courses/
-    listening/
-    pages/              # TOEIC, kiểm tra trình độ, góc học tập
-    auth/
-    errors/
-assets/
-  css/style.css
-  js/app.js
-  images/logo.png
-  json/courses.json
-config-example/
-  database.php          # Mẫu cấu hình để copy
-database/              # Schema và script setup MySQL
-writable/               # Phiên đăng nhập, log test; không đưa lên Git
-legacy/nextjs/          # Mã Next.js cũ để đối chiếu
-tests/                 # Kiểm tra HTTP và authentication
-index.php               # Điểm vào website, không chứa giao diện
-router.php              # Router cho PHP server trên máy
-.htaccess               # Route trên Apache/LiteSpeed
-```
-
-Các file favicon và `site.webmanifest` ở thư mục gốc theo đường dẫn công khai.
-
-## Chỉnh sửa website
-
-- Route: `application/config/routes.php`.
-- Trang chủ: `application/views/home/index.php`.
-- Header/logo/menu: `application/views/layouts/header.php`.
-- Footer: `application/views/layouts/footer.php`.
-- Bài học, bài nghe, câu hỏi: `assets/json/courses.json`.
-- Giao diện: `assets/css/style.css`.
-- Tương tác, nghe, quiz và tiến độ: `assets/js/app.js`.
-- Truy vấn tài khoản: `application/models/User_model.php`.
-
-Các route giữ nguyên: `/courses`, `/courses/beginner/hello`, `/listening`,
-`/listening/coffee`, `/toeic`, `/placement`, `/dashboard`, `/login`,
-`/register`, `/account`. Đăng xuất là POST `/logout`.
-URL cũ `/index.php?page=courses` chuyển hướng 301 sang `/courses`.
-Đường dẫn CSS/JS/JSON cũ cũng chuyển hướng sang vị trí mới.
-
-## Cập nhật từ bản PHP trước
-
-1. Upload `application/`, `assets/`, `index.php`, `.htaccess` và favicon.
-2. Copy thông tin database cũ sang `application/config/database.php`.
-   Mẫu ở `config-example/database.php`. Mã vẫn đọc `config.php` tại gốc
-   nếu chưa có file cấu hình mới, để hỗ trợ chuyển đổi.
-3. Nếu cấu hình cũ có `session_path`, sửa về thư mục có quyền ghi trên
-   hosting. Có thể bỏ trường này để dùng nơi lưu phiên mặc định của PHP.
-4. Không cần import lại database; các bảng và tài khoản giữ nguyên.
-5. Các thư mục `includes/`, `storage/` và mã Next.js ở gốc không còn được
-   ứng dụng sử dụng. Sau khi kiểm tra bản mới, có thể dọn các file cũ trên
-   hosting. Không xóa database hoặc thông tin cấu hình chưa chuyển đổi.
-
-## Cài mới trên hosting
-
-1. Trong cPanel/DirectAdmin, tạo database MySQL và user, gán quyền cho user.
-2. Dùng phpMyAdmin chọn database và import `database/schema.sql`.
-3. Copy `config-example/database.php` thành `application/config/database.php`.
-   Điền tên database, user, mật khẩu, host và cổng do hosting cung cấp.
-   Dùng đúng tên đầy đủ có tiền tố tài khoản. Giữ `session_secure => true`
-   khi hosting đã bật HTTPS.
-4. Upload `index.php`, `.htaccess`, `application/`, `assets/`, favicon và
-   `site.webmanifest` vào Document Root của tên miền. Không cần upload
-   `legacy`, `tests`, `node_modules`, `.next`, hoặc chạy npm.
-5. Mở tên miền, thử `/register`, `/account` và đăng xuất.
-
-Database có hai bảng `users`, `auth_attempts`. Mật khẩu lưu bằng hash;
-biểu mẫu có CSRF và giới hạn 15 lần gửi xác thực từ một IP trong 15 phút.
-Tiến độ học vẫn lưu trên trình duyệt, chưa đồng bộ qua tài khoản.
-`application/config/database.php` đã được gitignore; tạo file riêng trên
-hosting, không copy tài khoản MySQL root từ máy tính lên hosting.
-
-Apache/LiteSpeed cần mod_rewrite và cho phép `.htaccess`. Các thư mục nội
-bộ được chặn truy cập HTTP. Với Nginx, đặt quy tắc chặn trước handler PHP:
-
-```nginx
-location ~ ^/(application|config-example|database|tests|writable|legacy|includes|storage|node_modules|\.git)(/|$) { deny all; }
-location ~ ^/config(\.example)?\.php$ { deny all; }
-location / { try_files $uri $uri/ /index.php?$query_string; }
-```
-
-Cấu hình xử lý PHP theo hosting. Website được đặt tại gốc tên miền.
-
-## Chạy tại máy
+Bật MySQL trong XAMPP. Copy `config-example/database.php` sang `application/config/database.php`, điền database local. Không đưa file này lên Git. PHP hỗ trợ >=8.3 <8.6, cần pdo_mysql, mbstring, intl, fileinfo; `php-local.ps1` bật extension cục bộ nếu DLL có sẵn.
 
 ```powershell
-php -S localhost:8080 router.php
+.\php-local.ps1 database/setup-local.php
+.\php-local.ps1 database/check.php
+.\php-local.ps1 database/create-admin.php --local
+.\php-local.ps1 database/seed-product.php --publish-reviewed-samples
+.\start.ps1
 ```
 
-Mở http://localhost:8080. Database cục bộ đã có cấu hình riêng.
-Khi cài ở máy mới, tạo cấu hình database trước rồi chạy:
+Nếu PowerShell chặn script theo policy của máy, chạy từng lệnh bằng `powershell -NoProfile -ExecutionPolicy Bypass -File .\php-local.ps1 ...` hoặc launcher `powershell -NoProfile -ExecutionPolicy Bypass -File .\start.ps1`; không đổi policy toàn máy.
+
+Mở http://localhost:8080. CLI `create-admin` in vị trí tệp mật khẩu riêng trong `writable/`, không có mật khẩu seed cố định. Trên production dùng chế độ nhập tương tác, không dùng `--local`. Nếu đã có admin, không tạo lại. Mẫu seed mặc định là draft; flag xuất bản chỉ dành cho nội dung mẫu đã được người vận hành xem xét. Bản nháp nghe thiếu file vẫn không được xuất bản.
+
+Trang chính: `/lo-trinh`, `/hoc`, `/on-tap`, `/so-tu-vung`, `/tien-do`, `/tai-khoan`, `/reward-shop`. CMS `/admin/lessons`; có lộ trình, chương, bài, câu hỏi, từ, bộ từ, kiến thức, media, import, báo lỗi, roles, settings, audit, vận hành. Luồng cũ `/courses`, `/listening`, `/dashboard` vẫn được giữ để tương thích.
+
+## Lệnh vận hành
 
 ```powershell
-php database/setup-local.php
+.\php-local.ps1 database/migrate.php
+.\php-local.ps1 database/worker.php tick
+.\php-local.ps1 database/worker.php run 50
+.\php-local.ps1 database/worker.php cleanup
+.\php-local.ps1 database/worker.php reconcile
 ```
 
-Script setup chỉ chạy CLI và cần quyền CREATE DATABASE/CREATE TABLE.
-Nếu dùng `session_path`, tạo thư mục đó và cấp quyền ghi cho PHP. Cấu hình
-máy hiện tại dùng `writable/sessions`.
+Email mặc định tắt và UI báo đúng trạng thái. Để thử email, đặt `MAIL_DRIVER=log` trong môi trường development rồi chạy worker; liên kết chỉ nằm trong tệp private. Production bắt buộc SMTP thật. Biến môi trường xem `.env.example`; ứng dụng PHP không tự đọc `.env`.
 
-## Kiểm tra và Git
+## Kiểm thử
 
 ```powershell
+$env:THREADED_TESTS='1'
+$env:BROWSER_TESTS='1'
+$env:PERFORMANCE_TESTS='1'
+$env:RESTORE_TESTS='1'
+$env:MYSQLDUMP_BIN='C:\xampp\mysql\bin\mysqldump.exe'
+$env:MYSQL_BIN='C:\xampp\mysql\bin\mysql.exe'
 python tests/run_auth.py
-git add -A
-git commit -m "Organize PHP website into application MVC folders"
-git push
 ```
 
-Bài kiểm tra dùng database riêng `mce_auth_test_*` và giữ lại sau khi chạy.
-Không chạy bài kiểm tra xác thực bằng database thật.
+Runner tạo database riêng `mce_auth_test_*`, không reset database ứng dụng. Cần quyền CREATE DATABASE cho local test. Database kiểm thử được giữ để kiểm tra; không chạy suite bằng tài khoản production. Báo cáo và ảnh ở `docs/artifacts/`.
 
-## Chẩn đoán lỗi đăng ký trên hosting
+## Tài liệu
 
-Sau khi tạo database và điền cấu hình, chạy qua SSH tại thư mục dự án:
+- [Kiến trúc](docs/architecture.md), [quyết định](docs/decisions.md), [dữ liệu](docs/data-model.md).
+- [Biên tập và import](docs/content-authoring.md), [API](docs/api.md).
+- [Deploy, worker, backup, restore](docs/operations.md), [kiểm thử](docs/testing.md).
+- [Đối chiếu spec](docs/spec-traceability.md), [tiến độ và điều kiện ra mắt](docs/progress.md).
 
-```bash
-php database/check.php
-```
-
-Lệnh chỉ đọc: kiểm tra cấu hình, kết nối và cột cần thiết của hai bảng.
-Không in mật khẩu. File cấu hình mới `application/config/database.php`
-được ưu tiên hơn `config.php` cũ; các biến môi trường DB_* ghi đè cấu hình.
-
-Nếu thiếu bảng, chạy:
-
-```bash
-php database/migrate.php
-php database/check.php
-```
-
-Lệnh migrate dùng database đã cấu hình, chỉ tạo bảng chưa tồn tại; cần
-quyền CREATE TABLE. Không tự sửa cấu trúc bảng cũ khác schema.
-Nếu check thành công nhưng đăng ký vẫn lỗi, xem PHP error log của hosting,
-tìm dòng `Authentication database error:`. Kiểm tra user có quyền INSERT
-và UPDATE cho database. PHP CLI và PHP chạy website có thể có extension
-hoặc biến môi trường khác nhau; đối chiếu cấu hình PHP trong hosting panel.
-
-## Hệ thống học có tài khoản - giai đoạn 1
-
-Luồng CMS → xuất bản → học → lưu kết quả đã được kiểm thử với MariaDB của XAMPP.
-Các bài mới tại `/hoc` lưu tiến độ trong database; bài cũ tại `/courses` vẫn là học thử trên trình duyệt.
-
-```powershell
-php database/migrate.php
-php database/check.php
-php -S localhost:8080 router.php
-```
-
-Đăng ký tài khoản ở `/register`, sau đó cấp quyền và tạo bài mẫu:
-
-```powershell
-php database/set-role.php EMAIL admin
-php database/seed-learning.php
-```
-
-Vào `/admin` sửa/xem trước/xuất bản bài mẫu; vào `/hoc` để học.
-Kiểm thử: `php tests/learning.php` và `python tests/run_auth.py`.
-Xem [tiến độ](docs/progress.md), [vận hành](docs/operations.md), [kiểm thử](docs/testing.md).
-Các tính năng giai đoạn 2/3 chưa hoàn thành; chưa triển khai production.
+Dockerfile/Compose và CI là cấu hình chuẩn bị cho staging; chưa có staging/production được triển khai trong phiên làm việc này. Cần domain, hosting, HTTPS, SMTP, lịch backup ngoài máy, media hợp lệ và nội dung pháp lý do chủ dự án duyệt.

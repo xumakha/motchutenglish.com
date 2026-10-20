@@ -1,8 +1,24 @@
 """Run with: python tests/run_auth.py (local MySQL CREATE DATABASE permission required)."""
-import os, secrets, subprocess, time, sys
+import os, secrets, subprocess, time, sys, json, datetime, atexit
 from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
+results=[]
+original_run=subprocess.run
+def checked_run(command,**kwargs):
+    started=time.perf_counter()
+    try:
+        result=original_run(command,**kwargs)
+        results.append(dict(check=next((str(x) for x in command if str(x).endswith(('.php','.py','.mjs'))),'command'),status='passed' if result.returncode==0 else 'failed',seconds=round(time.perf_counter()-started,3)))
+        return result
+    except Exception:
+        results.append(dict(check=next((str(x) for x in command if str(x).endswith(('.php','.py','.mjs'))),'command'),status='failed',seconds=round(time.perf_counter()-started,3)))
+        raise
+subprocess.run=checked_run
+def write_report():
+    directory=root/'docs/artifacts';directory.mkdir(parents=True,exist_ok=True)
+    (directory/'test-report.json').write_text(json.dumps(dict(timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),environment='isolated local database; external mail/analytics disabled',checks=results,all_passed=bool(results) and all(r['status']=='passed' for r in results)),indent=2),encoding='utf-8')
+atexit.register(write_report)
 os.chdir(root)
 name='mce_auth_test_'+secrets.token_hex(6)
 env=dict(os.environ,DB_NAME=name,SESSION_SECURE='0',APP_ENV='test',MAIL_DRIVER='disabled',GA4_MEASUREMENT_ID='',GA4_API_SECRET='')

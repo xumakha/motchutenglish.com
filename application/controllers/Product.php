@@ -147,7 +147,8 @@ final class Product {
             mce_transaction(function()use($uid,$role){if($role==='learner')mce_query('DELETE FROM learning_roles WHERE user_id=?',[$uid]);else mce_query('INSERT INTO learning_roles(user_id,role) VALUES (?,?) ON DUPLICATE KEY UPDATE role=VALUES(role)',[$uid,$role]);mce_audit('role_changed','user:'.$uid,['role'=>$role]);});return ['saved'=>true];
         }
         if($route==='admin/settings') {
-            mce_staff(true);$allowed=['site_name','primary','accent','logo_media_id','favicon_media_id','social_url','default_minutes','gamification'];$key=$d['name']??'';if(!in_array($key,$allowed,true))throw new ProductError(422,'Cấu hình không được phép.');$value=mce_text($d['value']??'',200,false);
+            mce_staff(true);$allowed=['site_name','primary','accent','logo_media_id','favicon_media_id','social_url','default_minutes','gamification','contact_email','privacy_text','terms_text'];$key=$d['name']??'';if(!in_array($key,$allowed,true))throw new ProductError(422,'Cấu hình không được phép.');$value=mce_text($d['value']??'',in_array($key,['privacy_text','terms_text'],true)?15000:200,false);
+            if($key==='contact_email'&&$value!==''&&!filter_var($value,FILTER_VALIDATE_EMAIL))throw new ProductError(422,'Email liên hệ không hợp lệ.');
             if(in_array($key,['primary','accent'],true)&&!preg_match('/^#[a-fA-F0-9]{6}$/D',$value))throw new ProductError(422,'Màu phải ở dạng #RRGGBB.');
             if($key==='social_url'&&$value!==''&&(!filter_var($value,FILTER_VALIDATE_URL)||parse_url($value,PHP_URL_SCHEME)!=='https'))throw new ProductError(422,'Đường dẫn phải dùng HTTPS.');
             if(in_array($key,['logo_media_id','favicon_media_id'],true)&&$value!=='') { $m=mce_one('SELECT mime FROM mce_media WHERE id=?',[(int)$value]);if(!$m||!str_starts_with($m['mime'],'image/'))throw new ProductError(422,'Logo/favicon cần tệp ảnh đã tải lên.'); }
@@ -217,17 +218,20 @@ final class Product {
                 else $result['title']='Chọn nhịp học của bạn';
             } elseif($root==='lo-trinh') {
                 $result['paths']=Content::paths();$result['title']='Lộ trình học';
-                if($slug){$p=mce_one("SELECT * FROM mce_paths WHERE slug=? AND status='published'",[$slug]);if(!$p||!Content::lessons((int)$p['id']))throw new ProductError(404,'Lộ trình chưa có nội dung khả dụng.');$result['path']=$p;$result['lessons']=Content::lessons((int)$p['id']);$result['title']=$p['title'];$result['metaDescription']=$p['description'];if(current_user())$result['progress']=mce_all('SELECT * FROM mce_progress WHERE user_id=?',[mce_uid()]);}
+                if($slug){$p=mce_one("SELECT * FROM mce_paths WHERE slug=? AND status='published'",[$slug]);if(!$p||!Content::lessons((int)$p['id']))throw new ProductError(404,'Lộ trình chưa có nội dung khả dụng.');$result['path']=$p;$result['lessons']=Content::lessons((int)$p['id']);$result['title']=$p['title'];$result['metaDescription']=$p['description'];if(current_user()){$result['progress']=mce_all('SELECT * FROM mce_progress WHERE user_id=?',[mce_uid()]);$result['activeLessons']=array_column(mce_all("SELECT DISTINCT lesson_id FROM mce_attempts WHERE user_id=? AND status='active'",[mce_uid()]),'lesson_id');}}
+            } elseif($root==='chien-dich') {
+                $p=mce_one("SELECT * FROM mce_paths WHERE slug=? AND status='published'",[$slug]);if(!$p||!($lessons=Content::lessons((int)$p['id'])))throw new ProductError(404,'Chiến dịch chưa có bài học khả dụng.');$result['campaign']=$p;$result['campaignLesson']=$lessons[0];$result['title']=$p['title'];$result['metaDescription']=$p['description'];
             } elseif($root==='bai-hoc') {
                 $lesson=null;foreach(Content::lessons() as $l)if($l['slug']===$slug)$lesson=$l;if(!$lesson)throw new ProductError(404,'Không tìm thấy bài học.');$result['lesson']=$lesson;$doc=mce_decode($lesson['document']);$result['title']=$doc['seo']['title']??$lesson['title'];$result['metaDescription']=$doc['seo']['description']??$doc['objectives'];
             } elseif($root==='tu-vung') {
-                $result['title']='Từ vựng theo chủ đề';$topic=$slug==='chu-de'?($segments[2]??''):null;
+                $page=max(1,min(10000,(int)($_GET['page']??1)));$offset=($page-1)*30;$result['pageNumber']=$page;$result['title']='Từ vựng theo chủ đề';$topic=$slug==='chu-de'?($segments[2]??''):null;
                 $result['sets']=mce_all("SELECT s.*,COUNT(*) AS sense_count FROM mce_vocabulary_sets s JOIN mce_vocabulary_set_items i ON i.set_id=s.id JOIN mce_vocabulary v ON v.id=i.sense_id WHERE s.status='published' AND v.status='published' GROUP BY s.id ORDER BY s.sort_order,s.id");
-                if($topic!==null){$set=mce_one("SELECT * FROM mce_vocabulary_sets WHERE slug=? AND status='published'",[$topic]);if(!$set)throw new ProductError(404,'Bộ từ chưa khả dụng.');$result['title']=$set['title'];$result['metaDescription']=$set['description'];$result['words']=mce_all("SELECT v.* FROM mce_vocabulary v JOIN mce_vocabulary_set_items i ON i.sense_id=v.id WHERE i.set_id=? AND v.status='published' ORDER BY v.lemma LIMIT 100",[$set['id']]);}
-                else $result['words']=mce_all("SELECT * FROM mce_vocabulary WHERE status='published'".($slug?' AND slug=?':'').' ORDER BY topic,lemma LIMIT 100',$slug?[$slug]:[]);
+                if($topic!==null){$set=mce_one("SELECT * FROM mce_vocabulary_sets WHERE slug=? AND status='published'",[$topic]);if(!$set)throw new ProductError(404,'Bộ từ chưa khả dụng.');$result['title']=$set['title'];$result['metaDescription']=$set['description'];$result['words']=mce_all("SELECT v.* FROM mce_vocabulary v JOIN mce_vocabulary_set_items i ON i.sense_id=v.id WHERE i.set_id=? AND v.status='published' ORDER BY v.lemma LIMIT 31 OFFSET ".$offset,[$set['id']]);}
+                else $result['words']=mce_all("SELECT * FROM mce_vocabulary WHERE status='published'".($slug?' AND slug=?':'').' ORDER BY topic,lemma LIMIT 31 OFFSET '.$offset,$slug?[$slug]:[]);
+                $result['hasNext']=count($result['words'])>30;$result['words']=array_slice($result['words'],0,30);
                 if($slug&&!$result['words'])throw new ProductError(404,'Không tìm thấy bộ từ hoặc nghĩa từ.');
             } elseif($root==='kien-thuc') {
-                $result['title']='Một chút kiến thức';$result['articles']=mce_all("SELECT * FROM mce_articles WHERE status='published'".($slug?' AND slug=?':'').' ORDER BY updated_at DESC LIMIT 50',$slug?[$slug]:[]);if($slug&&!$result['articles'])throw new ProductError(404,'Không tìm thấy bài viết.');if($slug)$result['title']=$result['articles'][0]['title'];
+                $page=max(1,min(10000,(int)($_GET['page']??1)));$offset=($page-1)*30;$result['pageNumber']=$page;$result['title']='Một chút kiến thức';$result['articles']=mce_all("SELECT * FROM mce_articles WHERE status='published'".($slug?' AND slug=?':'').' ORDER BY updated_at DESC,id DESC LIMIT 31 OFFSET '.$offset,$slug?[$slug]:[]);if($slug&&!$result['articles'])throw new ProductError(404,'Không tìm thấy bài viết.');if($slug)$result['title']=$result['articles'][0]['title'];$result['hasNext']=count($result['articles'])>30;$result['articles']=array_slice($result['articles'],0,30);
             } elseif($root==='tim-kiem') {
                 $result['title']='Tìm nội dung học';$q=is_string($_GET['q']??null)?mb_substr(trim($_GET['q']),0,100):'';$result['query']=$q;$result['matches']=[];
                 if($q!=='') {
@@ -279,7 +283,7 @@ final class Product {
     public function download(string $what): never {
         try {
             if(str_starts_with($what,'template-')) {
-                mce_staff();$file=match($what){'template-lesson'=>'lesson.json','template-import'=>'import.json','template-exercises'=>'all-exercises.json','template-csv'=>'vocabulary.csv',default=>throw new ProductError(404,'Không tìm thấy mẫu.')};
+                mce_staff();$file=match($what){'template-lesson'=>'lesson.json','template-import'=>'import.json','template-exercises'=>'all-exercises.json','template-csv'=>'vocabulary.csv','template-paths'=>'paths.json','template-units'=>'units.json','template-articles'=>'articles.json','template-vocabulary_sets'=>'vocabulary_sets.json',default=>throw new ProductError(404,'Không tìm thấy mẫu.')};
                 header('Content-Type: '.($file==='vocabulary.csv'?'text/csv':'application/json').'; charset=utf-8');header('Content-Disposition: attachment; filename="'.$file.'"');readfile(ROOT_PATH.'/database/templates/'.$file);exit;
             }
             if($what==='export'){$uid=mce_uid();$data=Identity::export($uid);mce_audit('personal_export','user:'.$uid);$name='my-learning.json';}
@@ -293,6 +297,7 @@ final class Product {
         $public=(string)$id===mce_setting('logo_media_id')||(string)$id===mce_setting('favicon_media_id');
         if(mce_one("SELECT id FROM mce_vocabulary WHERE audio_id=? AND status='published' LIMIT 1",[(int)$id]))$public=true;
         if(current_user()&&mce_one('SELECT id FROM mce_review_cards WHERE user_id=? AND JSON_EXTRACT(snapshot,\'$.audioId\')=? LIMIT 1',[mce_uid(),(int)$id]))$public=true;
+        if(mce_one("SELECT id FROM mce_paths WHERE image_id=? AND status='published' LIMIT 1",[(int)$id]))$public=true;
         $versions=Content::lessons();
         if(current_user())$versions=[...$versions,...mce_all('SELECT DISTINCT v.document FROM mce_attempts a JOIN mce_versions v ON v.id=a.version_id WHERE a.user_id=?',[mce_uid()])];
         foreach($versions as $v){$d=mce_decode($v['document']);foreach([...$d['blocks'],...array_map(fn($e)=>$e['payload'],$d['exercises'])] as $b)if((int)($b['audioId']??0)===(int)$id)$public=true;}

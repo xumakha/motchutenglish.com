@@ -1,13 +1,13 @@
 {
-  "database": "mce_restore_test_7233918f41d7",
-  "seconds": 1.098,
+  "database": "mce_restore_test_eb38320121b0",
+  "seconds": 1.128,
   "counts": {
     "users": 15,
     "mce_lessons": 17,
     "mce_versions": 19,
     "mce_attempts": 4,
     "mce_progress": 3,
-    "mce_review_cards": 2,
+    "mce_review_cards": 3,
     "reward_ledger": 19
   },
   "originalDatabaseUnchanged": true,
@@ -15,5 +15,7 @@
   "lessonCatalog": true,
   "progress": true,
   "attemptHistory": true,
-  "restart": true
+  "restart": true,
+  "mediaFiles": 6,
+  "mediaRestoreHashesMatch": true
 }
