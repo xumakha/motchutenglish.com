@@ -145,7 +145,47 @@ for kind in ['paths','units','articles','vocabulary_sets']:
     assert admin.api('admin/import-preview',dict(raw=json.dumps(batch)))['errors']
 set_id=editor.api('admin/entity',dict(kind='vocabulary_sets',slug='integration-set',title='Integration set',description='Owned fixture',status='draft',sort_order=2))['id']
 editor.api('admin/set-items',dict(setId=set_id,ids=[v['id']]))
-admin.api('admin/entity',dict(kind='vocabulary_sets',id=set_id,slug='integration-set',title='Integration set',description='Owned fixture',status='published',sort_order=2))
+set_data=dict(kind='vocabulary_sets',id=set_id,slug='integration-set',title='Integration set',description='Owned fixture',status='published',sort_order=2)
+admin.api('admin/entity',set_data,409)
+editor.api('admin/entity',dict(set_data,status='in_review'))
+state=lambda kind,id:json.loads(fixture('cms-state',kind,id))
+draft=state('vocabulary_sets',set_id)['draft']['id']
+editor.api('admin/entity-workflow',dict(draftId=draft,action='publish'),403)
+admin.api('admin/entity-workflow',dict(draftId=draft,action='publish'))
+# Both staff roles propose changes; public membership remains untouched until approval.
+old_items=state('vocabulary_sets',set_id)['items']
+new_ids=[catalog['vocabulary'][1]['id']]
+editor.api('admin/set-items',dict(setId=set_id,ids=new_ids))
+proposal=state('vocabulary_sets',set_id)['draft']['id']
+assert state('vocabulary_sets',set_id)['items']==old_items
+admin.api('admin/entity-workflow',dict(draftId=proposal,action='publish'),409)
+editor.api('admin/entity-workflow',dict(draftId=proposal,action='review'))
+admin.api('admin/set-items',dict(setId=set_id,ids=[catalog['vocabulary'][2]['id']]))
+stale=state('vocabulary_sets',set_id)['draft']['id']
+editor.api('admin/entity-workflow',dict(draftId=stale,action='review'))
+admin.api('admin/entity-workflow',dict(draftId=proposal,action='publish'))
+assert [int(x['sense_id']) for x in state('vocabulary_sets',set_id)['items']]==new_ids
+admin.api('admin/entity-workflow',dict(draftId=proposal,action='publish'))
+admin.api('admin/entity-workflow',dict(draftId=stale,action='publish'),409)
+admin.api('admin/set-items',dict(setId=set_id,ids=['1x']),422)
+learner.api('admin/set-items',dict(setId=set_id,ids=new_ids),403)
+# Initial publication of every metadata type must use a submitted snapshot.
+for kind,fields in [
+    ('paths',dict(title='Workflow path',description='Fixture',level='A1',objectives='Learn',prerequisites='',sort_order=0)),
+    ('articles',dict(title='Workflow article',body='Fixture body')),
+    ('vocabulary',dict(lemma='fixture',ipa='',part_of_speech='noun',topic='workflow',meaning='Fixture meaning',example='A fixture.',translation='Fixture.',level='A1')),
+]:
+    data=dict(fields,kind=kind,slug='workflow-'+kind,status='published')
+    admin.api('admin/entity',data,409)
+    data['status']='draft';entity=editor.api('admin/entity',data)['id'];data['id']=entity
+    admin.api('admin/entity',dict(data,status='published'),409)
+    editor.api('admin/entity',dict(data,status='in_review'))
+    snap=state(kind,entity);version=snap['article' if kind=='articles' else 'draft']['id']
+    endpoint='admin/article-workflow' if kind=='articles' else 'admin/entity-workflow'
+    action=dict(action='publish',**{('versionId' if kind=='articles' else 'draftId'):version})
+    editor.api(endpoint,action,403);admin.api(endpoint,action)
+    assert state(kind,entity)['row']['status']=='published'
+print('PASS: A03 reviewed snapshots, role checks, unchanged public membership and stale proposal rejection')
 assert learner.req('/tu-vung/chu-de/integration-set')[0]==200
 # Daily limit applies server-side and explicit extra study is voluntary.
 learner.api('profile',dict(goal='foundation',selfLevel='beginner',minutes=10,timezone='Asia/Ho_Chi_Minh',reviewLimit=1,gamification=False,animations=False))

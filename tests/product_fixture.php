@@ -3,6 +3,10 @@ declare(strict_types=1);
 require dirname(__DIR__).'/application/core/bootstrap.php';
 if(!preg_match('/^mce_auth_test_[a-f0-9]+$/D',app_config()['db_name']??''))throw new RuntimeException('Isolated test DB required');
 $op=$argv[1]??'';
+if($op==='cms-state') {
+    $kind=$argv[2];if(!in_array($kind,['paths','articles','vocabulary','vocabulary_sets'],true))throw new RuntimeException('Invalid fixture kind');$id=(int)$argv[3];
+    echo mce_json(['row'=>mce_one('SELECT * FROM mce_'.$kind.' WHERE id=?',[$id]),'draft'=>mce_one('SELECT * FROM mce_entity_drafts WHERE kind=? AND entity_id=? ORDER BY id DESC LIMIT 1',[$kind,$id]),'article'=>mce_one('SELECT * FROM mce_article_versions WHERE article_id=? ORDER BY id DESC LIMIT 1',[$id]),'items'=>mce_all('SELECT sense_id FROM mce_vocabulary_set_items WHERE set_id=? ORDER BY sense_id',[$id])]);exit;
+}
 if($op==='authclear'){mce_query('DELETE FROM auth_attempts');exit;}
 if($op==='streak') {
     $uid=(int)$argv[2];mce_transaction(function()use($uid,$argv){$p=Motivation::lock($uid);Motivation::streak($uid,$p,false,new DateTimeImmutable($argv[3],new DateTimeZone('UTC')));});echo "ok\n";exit;

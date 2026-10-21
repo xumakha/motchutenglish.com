@@ -50,3 +50,12 @@ Idempotency: start/request/job keys cùng owner+resource dùng lại, không nh�
 Response shapes theo exercise: choice string stableID; true_false bool; fill object blankID->string; order array tokenIDs; match object leftID->opaque rightID; correction/closed string; self/flashcard object theo template. `Assessment::publicExercise` và mẫu `all-exercises.json` là nguồn schema cụ thể. Không suy ra ID từ chữ hiển thị.
 
 Routes SSR cũ `/courses`, `/listening`, `/dashboard`, `/hoc/bai/{id}`, `/ket-qua/{id}`, `/admin` giữ tương thích. Catalog public mới `/lo-trinh`, `/bai-hoc/{slug}`, `/tu-vung[/chu-de/{slug}]`, `/kien-thuc`; `/chien-dich/{pathSlug}?utm_source=...` CTA tới bài/lộ trình published. UTM không được đưa raw vào analytics hoặc canonical. Pagination vocabulary/article page=1..., CMS pageNo=1...; search/private không index.
+
+
+### CMS A03: duyệt nội dung và thành viên bộ từ
+
+- `admin/entity`: tạo/lưu `draft`, chọn `in_review` để gửi snapshot chờ duyệt. Không nhận chuyển trực tiếp từ nội dung mới/draft/archived sang `published` (409; editor không có quyền publish trả 403). Nội dung đang chờ duyệt không cho sửa trực tiếp. Admin xuất bản snapshot qua `admin/entity-workflow` hoặc `admin/article-workflow`.
+- Bản sửa nội dung published tiếp tục giữ projection công khai đến lúc duyệt. Với bộ từ, snapshot metadata cũng giữ danh sách thành viên tại thời điểm gửi duyệt.
+- `admin/set-items`: kiểm danh sách ID nguyên dương, tồn tại, không trùng, tối đa 1.000. Bộ draft lưu trực tiếp; in_review/archived trả 409; published tạo đề xuất `draft` cho cả editor/admin, trả `{saved:true}`. Gửi duyệt rồi admin xuất bản từ CMS. Publish yêu cầu ít nhất một nghĩa từ published và danh sách gốc vẫn khớp; xung đột trả 409, không ghi đè. Mọi cập nhật nằm trong transaction, audit đi cùng thay đổi.
+- Tự gắn từ theo topic cũng tạo đề xuất khi bộ topic đã published; không tự thay membership công khai. Seed được duyệt bằng cờ CLI riêng giữ nguyên hành vi.
+- Mở lại sửa/return proposal thuộc A04, chưa triển khai trong đợt này.

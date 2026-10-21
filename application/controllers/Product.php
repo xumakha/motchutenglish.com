@@ -123,12 +123,11 @@ final class Product {
         if($route==='admin/workflow'){Content::workflow((int)($d['versionId']??0),(string)($d['action']??''));return ['saved'=>true];}
         if($route==='admin/entity')return ['id'=>Content::saveEntity((string)($d['kind']??''),$d)];
         if($route==='admin/set-items') {
-            mce_staff();$set=(int)($d['setId']??0);$record=mce_one('SELECT status FROM mce_vocabulary_sets WHERE id=?',[$set]);if(!$record)throw new ProductError(404,'Không tìm thấy bộ từ.');if($record['status']!=='draft')mce_staff(true);
-            $ids=$d['ids']??[];if(is_string($ids))$ids=trim($ids)===''?[]:array_map('intval',explode(',',$ids));if(!is_array($ids)||count($ids)>1000||count(array_unique($ids))!==count($ids))throw new ProductError(422,'Danh sách nghĩa từ không hợp lệ.');
-            mce_transaction(function()use($set,$ids,$record){$published=0;foreach($ids as $id){$v=mce_one('SELECT status FROM mce_vocabulary WHERE id=?',[(int)$id]);if(!$v)throw new ProductError(422,'Có ID nghĩa từ không tồn tại.');$published+=$v['status']==='published'?1:0;}if($record['status']==='published'&&!$published)throw new ProductError(422,'Lưu trữ bộ từ trước khi bỏ toàn bộ nội dung đã xuất bản.');mce_query('DELETE FROM mce_vocabulary_set_items WHERE set_id=?',[$set]);foreach($ids as $id)mce_query('INSERT INTO mce_vocabulary_set_items(set_id,sense_id) VALUES (?,?)',[$set,(int)$id]);mce_audit('set_membership_saved','set:'.$set);});return ['saved'=>true];
+            Content::saveSetItems((int)($d['setId']??0),$d['ids']??[]);return ['saved'=>true];
         }
-        if($route==='admin/article-workflow'){Content::articleWorkflow((int)($d['versionId']??0),(string)($d['action']??''));return ['saved'=>true];}
-        if($route==='admin/entity-workflow'){Content::entityWorkflow((int)($d['draftId']??0),(string)($d['action']??''));return ['saved'=>true];}
+        if($route==='admin/draft-save'){Content::saveDraft((string)($d['type']??''),(int)($d['draftId']??0),$d);return ['saved'=>true];}
+        if($route==='admin/article-workflow'){Content::articleWorkflow((int)($d['versionId']??0),(string)($d['action']??''),(string)($d['reason']??''));return ['saved'=>true];}
+        if($route==='admin/entity-workflow'){Content::entityWorkflow((int)($d['draftId']??0),(string)($d['action']??''),(string)($d['reason']??''));return ['saved'=>true];}
         if($route==='admin/upload')return ['id'=>Content::upload($_FILES['file']??[],$d)];
         if($route==='admin/import-preview')return Content::importPreview((string)($d['raw']??''));
         if($route==='admin/import-commit'){Content::importCommit((string)($d['importId']??''));return ['saved'=>true];}

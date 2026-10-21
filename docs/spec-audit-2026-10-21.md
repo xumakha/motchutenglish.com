@@ -53,3 +53,12 @@ Auth/roles/CSRF/IDOR; onboarding;2paths/units/15lessons gồm4checkpoint; placem
 ## Thứ tự xử lý đề xuất
 
 A01 và A13 (độ ổn định queue/thời gian) → A03/A04 (biên tập) → A05/A06/A07 (học/ôn và lịch sử) → A08–A11 (analytics/SEO/form/import) → A12/A14 (hướng dẫn/evidence) → nghiệm thu staging và đo lại A02. Cập nhật bảng đối chiếu theo yêu cầu con; không dùng một dòng “đã có CMS” để thay cho toàn bộ mục16.
+
+
+## Cập nhật A03 — 21/10/2026
+
+Đã chặn xuất bản entity mới/draft trực tiếp cho path, nghĩa từ, bài viết và bộ từ. Gửi `in_review` tạo snapshot; thao tác publish của admin kiểm trạng thái đã gửi duyệt. Không sửa trực tiếp projection đang chờ duyệt; nội dung archived không được xuất bản qua proposal cũ.
+
+Thành viên bộ từ published có đề xuất snapshot riêng, không thay danh sách công khai trước duyệt. Snapshot giữ cả danh sách gốc để từ chối đề xuất lỗi thời (409); xuất bản lặp không thay dữ liệu lần nữa. Bộ đang chờ duyệt không cho sửa membership. Tự gắn nghĩa từ theo topic cũng tuân thủ đề xuất khi bộ đã published. Không cần migration, dùng bảng proposal hiện có.
+
+Kiểm chứng: `tests/product_http.py` bổ sung A03 qua HTTP thật cho cả bốn entity, quyền editor/admin, draft publish bị từ chối, membership không đổi trước duyệt, publish lặp, đề xuất stale, ID không hợp lệ và quyền học viên. A04 (mở lại sửa/return draft) vẫn để riêng, chưa xử lý.

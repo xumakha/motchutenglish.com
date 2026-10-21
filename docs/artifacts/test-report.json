@@ -1,81 +1,76 @@
 {
-  "timestamp": "2026-10-21T09:19:27.171839+00:00",
+  "timestamp": "2026-10-21T09:41:14.731723+00:00",
   "environment": "isolated local database; external mail/analytics disabled",
   "checks": [
     {
       "check": "command",
       "status": "passed",
-      "seconds": 0.053
+      "seconds": 0.051
     },
     {
       "check": "database/setup-local.php",
       "status": "passed",
-      "seconds": 1.896
+      "seconds": 1.787
     },
     {
       "check": "tests/product_unit.php",
       "status": "passed",
-      "seconds": 0.08
+      "seconds": 0.065
     },
     {
       "check": "tests/jobs_recovery.php",
       "status": "passed",
-      "seconds": 0.984
+      "seconds": 0.954
     },
     {
       "check": "tests/timezone.php",
       "status": "passed",
-      "seconds": 1.249
+      "seconds": 1.166
     },
     {
       "check": "tests/timezone_http.py",
       "status": "passed",
-      "seconds": 1.664
+      "seconds": 1.605
     },
     {
       "check": "tests/product_http.py",
       "status": "passed",
-      "seconds": 21.06
+      "seconds": 26.161
     },
     {
       "check": "tests/motivation.php",
       "status": "passed",
-      "seconds": 0.506
-    },
-    {
-      "check": "tests/browser.mjs",
-      "status": "passed",
-      "seconds": 14.607
+      "seconds": 0.524
     },
     {
       "check": "tests/learning_http.py",
       "status": "passed",
-      "seconds": 9.606
+      "seconds": 10.073
     },
     {
       "check": "tests/product_fixture.php",
       "status": "passed",
-      "seconds": 0.096
+      "seconds": 0.074
     },
     {
       "check": "tests/auth_http.py",
       "status": "passed",
-      "seconds": 8.845
+      "seconds": 8.995
     },
     {
       "check": "tests/auth_hash.php",
       "status": "passed",
-      "seconds": 0.279
+      "seconds": 0.28
     },
     {
       "check": "tests/site_http.py",
       "status": "passed",
-      "seconds": 5.303
+      "seconds": 5.358
     },
     {
       "check": "tests/account_http.py",
       "status": "passed",
-      "seconds": 9.864
+      "seconds": 10.252
     }
   ],
   "all_passed": true

@@ -535,7 +535,7 @@ Hiện biên tập document JSON, chưa full block builder/drag-and-drop editor.
 
 Lesson workflow: draft → in_review → published; return về draft; archive/restore. Sửa published tạo version khác; attempt giữ snapshot. Preview cùng player, không reward.
 
-Metadata/article proposals chưa đủ luồng mở lại sửa/return; membership published chưa versioning hoàn chỉnh. Không coi workflow mọi entity đã đồng nhất.
+Metadata/article proposals chưa đủ luồng mở lại sửa/return (A04). A03 đã bổ sung gửi duyệt trước lần xuất bản đầu tiên; thay đổi thành viên bộ từ published dùng snapshot đề xuất riêng, chỉ admin được xuất bản sau review. Đề xuất có membership cũ khác danh sách hiện tại bị từ chối để tránh ghi đè.
 
 ### 8.4 Media và import/export
 
@@ -717,7 +717,7 @@ Cập nhật sau audit: A01 (phục hồi queue) và A13 (múi giờ API/HTML/nh
 1. Notebook/reviewmanage chưa pagination quá100.
 2. Audio/POS trong thẻ ôn và flashcard lật trong lesson chưa hoàn chỉnh.
 3. Thống kê tuần/lịch sử đầy đủ các lượt học chưa có đầy đủ.
-4. Draft metadata/bài viết edit/return và phiên bản thành viên bộ từ đã xuất bản còn thiếu.
+4. Draft metadata/bài viết còn thiếu mở lại sửa/return (A04); snapshot duyệt thành viên bộ từ đã bổ sung trong A03.
 5. Field errors/accessibility cần hoàn thiện.
 6. Import processed/total và fieldpaths chưa đầy đủ.
 7. SEOoverride toànpublic và marketingfunnel chưa đầy đủ.
