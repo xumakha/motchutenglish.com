@@ -1,5 +1,7 @@
 # Kiểm thử và bằng chứng
 
+Bổ sung 21/10/2026: runner hiện chạy `tests/jobs_recovery.php` (ngắt/khởi động lại worker CLI thật) và `tests/timezone.php` + `tests/timezone_http.py`. Bộ múi giờ kiểm clock cố định trước/đúng ranh giới hiệu lực, snapshot bất biến, daily cap/DST 23–25 giờ, cron dùng ngày/giờ mới, suppression reminder ngày cũ và kết quả API/SSR thống nhất. Các phép thử chỉ dùng database riêng và mail sink local; không gửi SMTP thật.
+
 `python tests/run_auth.py` tạo DB riêng mce_auth_test_* và server local8089. Không xóa/seed database ứng dụng. Test fixture CLI từ chối DB không có prefix test. PHP extension ini và logs ở private writable. Các DB thử giữ lại để kiểm tra, không công khai credentials hoặc cookie.
 
 - product_unit.php: schema/type validation, grading/partial/null, Unicode NFC/space/punctuation/apostrophe, stable duplicate-text IDs, answer redaction, fixed-clock UTC review/DST/cap.

@@ -18,11 +18,11 @@ final class Product {
         try {
             if(($_SERVER['REQUEST_METHOD']??'GET')==='GET') {
                 if(preg_match('#^attempts/([a-f0-9]{32})$#D',$route,$m))$result=Study::publicAttempt(Study::read($m[1]));
-                elseif($route==='review/queue'){$uid=mce_uid();$p=mce_profile($uid);$limit=isset($_GET['more'])?100:max(0,(int)$p['review_limit']-Review::usedToday($uid,$p));$result=mce_all('SELECT id,snapshot,revision,due_at FROM mce_review_cards WHERE user_id=? AND hidden=0 AND due_at<=? ORDER BY due_at,id LIMIT '.$limit,[$uid,mce_sqltime()]);}
+                elseif($route==='review/queue')$result=Review::queue(mce_uid(),isset($_GET['more']))['cards'];
                 elseif($route==='catalog')$result=Content::paths();
                 elseif($route==='progress'){$uid=mce_uid();$result=mce_all('SELECT * FROM mce_progress WHERE user_id=?',[$uid]);}
                 elseif(in_array($route,['me/rewards','me/quests','me/streak'],true)){
-                    $uid=mce_uid();$p=mce_profile($uid);$result=match($route){'me/rewards'=>mce_all('SELECT currency,SUM(amount) AS amount FROM reward_ledger WHERE user_id=? GROUP BY currency',[$uid]),'me/quests'=>mce_all('SELECT * FROM mce_quests WHERE user_id=? AND local_date=?',[$uid,Motivation::day($p)]),'me/streak'=>mce_one('SELECT * FROM mce_streak_state WHERE user_id=?',[$uid])};
+                    $uid=mce_uid();$p=mce_transaction(function()use($uid){$p=Motivation::lock($uid);Motivation::quests($uid,$p);return $p;});$result=match($route){'me/rewards'=>mce_all('SELECT currency,SUM(amount) AS amount FROM reward_ledger WHERE user_id=? GROUP BY currency',[$uid]),'me/quests'=>mce_all('SELECT * FROM mce_quests WHERE user_id=? AND local_date=?',[$uid,Motivation::day($p)]),'me/streak'=>mce_one('SELECT * FROM mce_streak_state WHERE user_id=?',[$uid])};
                 } else throw new ProductError(404,'Không tìm thấy chức năng.');
             } else {
                 if(!in_array($_SERVER['REQUEST_METHOD'],['POST','PUT','PATCH','DELETE'],true))throw new ProductError(405,'Phương thức không hợp lệ.');
@@ -203,8 +203,7 @@ final class Product {
                     $result['balances']=mce_all('SELECT currency,SUM(amount) AS amount FROM reward_ledger WHERE user_id=? GROUP BY currency',[$uid]);
                     $result['guestImports']=mce_all('SELECT a.id,v.title FROM mce_attempts a JOIN mce_versions v ON v.id=a.version_id WHERE a.user_id IS NULL AND a.guest_key=? ORDER BY a.started_at DESC LIMIT 5',[Study::guestKey()]);
                 } elseif($root==='on-tap') {
-                    $p=mce_transaction(function()use($uid){$p=Motivation::lock($uid);Motivation::quests($uid,$p);return $p;});$result['profile']=$p;$result['title']='Ôn lại một chút';$used=Review::usedToday($uid,$p);$limit=isset($_GET['more'])?100:max(0,(int)$p['review_limit']-$used);$result['reviewUsed']=$used;
-                    $result['cards']=isset($_GET['manage'])?mce_all('SELECT * FROM mce_review_cards WHERE user_id=? ORDER BY hidden,due_at,id LIMIT 100',[$uid]):mce_all('SELECT * FROM mce_review_cards WHERE user_id=? AND hidden=0 AND due_at<=? ORDER BY due_at,id LIMIT '.$limit,[$uid,mce_sqltime()]);
+                    $queue=Review::queue($uid,isset($_GET['more']),isset($_GET['manage']));$result['profile']=$queue['profile'];$result['title']='Ôn lại một chút';$result['reviewUsed']=$queue['used'];$result['cards']=$queue['cards'];
                 } elseif($root==='so-tu-vung') {
                     $result['title']='Sổ từ vựng của bạn';$filter=$_GET['filter']??'all';$q=is_string($_GET['q']??null)?mb_substr($_GET['q'],0,100):'';
                     $result['words']=mce_all('SELECT v.*,uv.notes,uv.hidden,c.id AS card_id,c.due_at,c.hidden AS card_hidden,c.interval_days FROM mce_user_vocabulary uv JOIN mce_vocabulary v ON v.id=uv.sense_id LEFT JOIN mce_review_cards c ON c.user_id=uv.user_id AND c.target_key=CONCAT(\'sense:\',v.id) WHERE uv.user_id=? AND (v.lemma LIKE ? OR v.meaning LIKE ?)'.($filter==='review'?' AND c.id IS NOT NULL AND c.hidden=0':($filter==='hidden'?' AND c.hidden=1':'')).' ORDER BY uv.created_at DESC LIMIT 100',[$uid,'%'.$q.'%','%'.$q.'%']);
@@ -315,9 +314,9 @@ final class Product {
     }
     public function sitemap(string $type): never {
         if($type==='theme.css') {
-            header('Content-Type: text/css; charset=utf-8');$p=mce_setting('primary','#146b50');$a=mce_setting('accent','#f7ce53');
+            header('Content-Type: text/css; charset=utf-8');$p=mce_setting('primary','#2864dc');$a=mce_setting('accent','#f5823b');
             if(!preg_match('/^#[a-fA-F0-9]{6}$/D',$p))$p='#146b50';if(!preg_match('/^#[a-fA-F0-9]{6}$/D',$a))$a='#f7ce53';
-            echo ':root{--primary:'.$p.';--accent:'.$a.';}';exit;
+            echo ':root{--primary:'.$p.';--accent:'.$a.';--brand-primary:'.$p.';--brand-accent:'.$a.';}';exit;
         }
         if($type==='health'){try{db()->query('SELECT 1');http_response_code(200);echo 'ok';}catch(Throwable $e){http_response_code(503);echo 'unavailable';}exit;}
         if($type==='robots.txt'){header('Content-Type: text/plain');echo "User-agent: *\nDisallow: /admin\nDisallow: /api/\nSitemap: ".Identity::base()."/sitemap.xml\n";exit;}

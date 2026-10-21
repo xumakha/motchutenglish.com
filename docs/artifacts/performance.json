@@ -3,263 +3,263 @@
   "concurrency": 50,
   "samples": 50,
   "operation": "authenticated server submit + grading + attempt read",
-  "p50_ms": 1020.3599999999999,
-  "p95_ms": 1131.67,
-  "max_ms": 1151.96,
+  "p50_ms": 954.925,
+  "p95_ms": 1145.16,
+  "max_ms": 1153.63,
   "errors": 0,
   "error_rate": 0.0,
-  "seconds": 1.222,
+  "seconds": 1.201,
   "target_p95_ms": 800,
   "target_error_rate": 0.01,
   "target_met": false,
   "results": [
     {
-      "ms": 985.49,
+      "ms": 475.21,
       "error": null,
       "details": null
     },
     {
-      "ms": 730.44,
+      "ms": 622.28,
       "error": null,
       "details": null
     },
     {
-      "ms": 717.73,
+      "ms": 763.87,
       "error": null,
       "details": null
     },
     {
-      "ms": 482.36,
+      "ms": 783.83,
       "error": null,
       "details": null
     },
     {
-      "ms": 858.94,
+      "ms": 736.14,
       "error": null,
       "details": null
     },
     {
-      "ms": 722.66,
+      "ms": 1077.36,
       "error": null,
       "details": null
     },
     {
-      "ms": 525.79,
+      "ms": 799.35,
       "error": null,
       "details": null
     },
     {
-      "ms": 548.13,
+      "ms": 479.42,
       "error": null,
       "details": null
     },
     {
-      "ms": 1083.9,
+      "ms": 371.0,
       "error": null,
       "details": null
     },
     {
-      "ms": 981.43,
+      "ms": 1150.65,
       "error": null,
       "details": null
     },
     {
-      "ms": 858.4,
+      "ms": 1007.17,
       "error": null,
       "details": null
     },
     {
-      "ms": 1085.76,
+      "ms": 1046.06,
       "error": null,
       "details": null
     },
     {
-      "ms": 1061.07,
+      "ms": 768.94,
       "error": null,
       "details": null
     },
     {
-      "ms": 1093.26,
+      "ms": 645.85,
       "error": null,
       "details": null
     },
     {
-      "ms": 707.93,
+      "ms": 654.35,
       "error": null,
       "details": null
     },
     {
-      "ms": 1083.23,
+      "ms": 1030.26,
       "error": null,
       "details": null
     },
     {
-      "ms": 943.98,
+      "ms": 552.26,
       "error": null,
       "details": null
     },
     {
-      "ms": 1052.57,
+      "ms": 783.2,
       "error": null,
       "details": null
     },
     {
-      "ms": 1037.85,
+      "ms": 1033.11,
       "error": null,
       "details": null
     },
     {
-      "ms": 1151.96,
+      "ms": 995.07,
       "error": null,
       "details": null
     },
     {
-      "ms": 1131.67,
+      "ms": 1153.63,
       "error": null,
       "details": null
     },
     {
-      "ms": 688.48,
+      "ms": 966.79,
       "error": null,
       "details": null
     },
     {
-      "ms": 706.11,
+      "ms": 1115.65,
       "error": null,
       "details": null
     },
     {
-      "ms": 1006.43,
+      "ms": 892.43,
       "error": null,
       "details": null
     },
     {
-      "ms": 1078.58,
+      "ms": 907.02,
       "error": null,
       "details": null
     },
     {
-      "ms": 1020.55,
+      "ms": 1145.16,
       "error": null,
       "details": null
     },
     {
-      "ms": 1017.15,
+      "ms": 942.7,
       "error": null,
       "details": null
     },
     {
-      "ms": 1129.03,
+      "ms": 982.37,
       "error": null,
       "details": null
     },
     {
-      "ms": 963.17,
+      "ms": 1131.0,
       "error": null,
       "details": null
     },
     {
-      "ms": 1077.46,
+      "ms": 1058.42,
       "error": null,
       "details": null
     },
     {
-      "ms": 1086.87,
+      "ms": 702.43,
       "error": null,
       "details": null
     },
     {
-      "ms": 1105.48,
+      "ms": 895.6,
       "error": null,
       "details": null
     },
     {
-      "ms": 1136.5,
+      "ms": 1074.44,
       "error": null,
       "details": null
     },
     {
-      "ms": 1027.24,
+      "ms": 995.9,
       "error": null,
       "details": null
     },
     {
-      "ms": 1120.72,
+      "ms": 599.38,
       "error": null,
       "details": null
     },
     {
-      "ms": 1074.35,
+      "ms": 1029.33,
       "error": null,
       "details": null
     },
     {
-      "ms": 1005.76,
+      "ms": 982.92,
       "error": null,
       "details": null
     },
     {
-      "ms": 1124.83,
+      "ms": 922.54,
       "error": null,
       "details": null
     },
     {
-      "ms": 1050.34,
+      "ms": 1062.17,
       "error": null,
       "details": null
     },
     {
-      "ms": 1080.63,
+      "ms": 735.66,
       "error": null,
       "details": null
     },
     {
-      "ms": 1118.94,
+      "ms": 996.29,
       "error": null,
       "details": null
     },
     {
-      "ms": 1014.77,
+      "ms": 980.45,
       "error": null,
       "details": null
     },
     {
-      "ms": 1020.17,
+      "ms": 1007.92,
       "error": null,
       "details": null
     },
     {
-      "ms": 1093.58,
+      "ms": 967.92,
       "error": null,
       "details": null
     },
     {
-      "ms": 990.82,
+      "ms": 946.88,
       "error": null,
       "details": null
     },
     {
-      "ms": 1026.41,
+      "ms": 962.97,
       "error": null,
       "details": null
     },
     {
-      "ms": 1015.62,
+      "ms": 896.18,
       "error": null,
       "details": null
     },
     {
-      "ms": 1016.97,
+      "ms": 996.92,
       "error": null,
       "details": null
     },
     {
-      "ms": 993.06,
+      "ms": 931.9,
       "error": null,
       "details": null
     },
     {
-      "ms": 962.91,
+      "ms": 922.55,
       "error": null,
       "details": null
     }

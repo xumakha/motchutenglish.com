@@ -20,7 +20,9 @@ for path in paths:
         body=response.read().decode('utf-8')
         assert response.status==200 and 'Warning:' not in body and 'Fatal error' not in body,path
         parser=Resources();parser.feed(body)
-        assert all(url.startswith('/') and 'index.php' not in url for url in parser.urls),(path,parser.urls)
+        assert all(url.startswith(('/', '#')) and 'index.php' not in url for url in parser.urls),(path,parser.urls)
+        for anchor in (u[1:] for u in parser.urls if u.startswith('#')):
+            assert ('id="'+anchor+'"') in body,(path,'Missing in-page link target',anchor)
         assets.update(url for url in parser.urls if url.startswith('/assets/') or url.endswith(('.png','.ico','.webmanifest')))
 for path in assets:
     with urllib.request.urlopen(BASE+path) as response:

@@ -1,17 +1,53 @@
 <?php
 declare(strict_types=1);
 final class Jobs {
-    public static function tick(): void {
-        $now=mce_now();
-        foreach(mce_all('SELECT p.*,r.hour,r.enabled FROM mce_profiles p LEFT JOIN mce_reminders r ON r.user_id=p.user_id WHERE p.deleted_at IS NULL') as $profile) {
+    private static function recoveryDelay(int $attempts): int {
+        return min(3600,30*2**min(7,max(0,$attempts)));
+    }
+    // Called only after acquiring the exclusive worker lock. A live worker holds
+    // that lock even during long jobs, so elapsed time alone never steals work.
+    private static function recoverInterrupted(): array {
+        $counts=['requeued'=>0,'completed'=>0,'failed'=>0];
+        foreach(mce_all("SELECT id FROM mce_jobs WHERE status='running' ORDER BY id") as $candidate) {
+            $outcome=mce_transaction(function()use($candidate){
+                $job=mce_one("SELECT * FROM mce_jobs WHERE id=? AND status='running' FOR UPDATE",[$candidate['id']]);
+                if(!$job)return null;
+                try{$payload=mce_decode($job['payload']);}catch(Throwable $e){$payload=null;}
+                $completed=false;
+                if(is_array($payload)) {
+                    if($job['type']==='import')$completed=(bool)mce_one("SELECT id FROM mce_imports WHERE id=? AND status='committed'",[$payload['importId']??'']);
+                    elseif($job['type']==='export')$completed=(bool)mce_one("SELECT id FROM mce_exports WHERE id=? AND status='ready'",[$payload['exportId']??'']);
+                    elseif($job['type']==='reminder')$completed=(bool)mce_one("SELECT user_id FROM mce_deliveries WHERE user_id=? AND local_date=? AND type='reminder' AND status IN ('sent','skipped')",[$payload['userId']??0,$payload['localDate']??'']);
+                }
+                if($completed) {
+                    mce_query("UPDATE mce_jobs SET status='done',payload='{}',locked_at=NULL,last_error=NULL WHERE id=?",[$job['id']]);
+                    return 'completed';
+                }
+                $retryable=is_array($payload)&&in_array($job['type'],['import','export','delete_account'],true);
+                $retry=$retryable&&(int)$job['attempts']<5;
+                $error=$retry?'Worker interrupted - safe retry scheduled':($retryable?'Worker interrupted - retry limit reached':(in_array($job['type'],['mail','reminder','analytics'],true)?'Delivery uncertain - worker interrupted; manual reconciliation required':'Worker interrupted - unsupported or invalid payload; manual inspection required'));
+                mce_query('UPDATE mce_jobs SET status=?,available_at=?,locked_at=NULL,last_error=? WHERE id=?',[$retry?'pending':'failed',mce_sqltime(mce_now()->modify('+'.self::recoveryDelay((int)$job['attempts']).' seconds')),$error,$job['id']]);
+                if(is_array($payload)&&$job['type']==='import')mce_query("UPDATE mce_imports SET status=? WHERE id=? AND status<>'committed'",[$retry?'queued':'failed',$payload['importId']??'']);
+                if(is_array($payload)&&$job['type']==='export')mce_query("UPDATE mce_exports SET status=? WHERE id=? AND status<>'ready'",[$retry?'queued':'failed',$payload['exportId']??'']);
+                return $retry?'requeued':'failed';
+            });
+            if($outcome!==null)$counts[$outcome]++;
+        }
+        return $counts;
+    }
+    public static function tick(?DateTimeImmutable $now=null): void {
+        $now??=mce_now();
+        foreach(mce_all('SELECT user_id FROM mce_profiles WHERE deleted_at IS NULL') as $profile) {
             $uid=(int)$profile['user_id'];
-            mce_transaction(function()use($uid){$p=Motivation::lock($uid);Motivation::streak($uid,$p);});
-            if(!Identity::mailConfigured()||!$profile['enabled']||!$profile['verified_at'])continue;
-            $date=Motivation::day($profile,$now);$hour=(int)$now->setTimezone(new DateTimeZone($profile['quest_timezone']))->format('G');
-            if($hour<(int)$profile['hour']||mce_one('SELECT user_id FROM mce_activities WHERE user_id=? AND local_date=?',[$uid,$date]))continue;
-            mce_transaction(function()use($uid,$date){
+            mce_transaction(function()use($uid,$now){
+                $p=Motivation::lock($uid,true,$now);if($p['deleted_at'])return;
+                Motivation::streak($uid,$p,false,$now);
+                $reminder=mce_one('SELECT enabled,hour FROM mce_reminders WHERE user_id=?',[$uid]);
+                if(!Identity::mailConfigured()||!$reminder||!$reminder['enabled']||!$p['verified_at'])return;
+                $date=Motivation::day($p,$now);$hour=(int)$now->setTimezone(new DateTimeZone($p['quest_timezone']))->format('G');
+                if($hour<(int)$reminder['hour']||mce_one('SELECT user_id FROM mce_activities WHERE user_id=? AND local_date=?',[$uid,$date]))return;
                 if(!mce_query("INSERT IGNORE INTO mce_deliveries(user_id,local_date,type,status) VALUES (?,?,'reminder','queued')",[$uid,$date])->rowCount())return;
-                mce_query("INSERT IGNORE INTO mce_jobs(type,payload,event_key,available_at) VALUES ('reminder',?,?,?)",[mce_json(['userId'=>$uid,'localDate'=>$date]),'reminder:'.$uid.':'.$date,mce_sqltime()]);
+                mce_query("INSERT IGNORE INTO mce_jobs(type,payload,event_key,available_at) VALUES ('reminder',?,?,?)",[mce_json(['userId'=>$uid,'localDate'=>$date]),'reminder:'.$uid.':'.$date,mce_sqltime($now)]);
             });
         }
     }
@@ -19,6 +55,7 @@ final class Jobs {
         if(!(int)mce_query("SELECT GET_LOCK('mce_worker',0)")->fetchColumn())return ['processed'=>0,'busy'=>true];
         $done=0;$failed=0;
         try {
+            $recovery=self::recoverInterrupted();
             for($i=0;$i<$limit;$i++) {
                 $job=mce_one("SELECT * FROM mce_jobs WHERE status='pending' AND available_at<=? ORDER BY id LIMIT 1",[mce_sqltime()]);if(!$job)break;
                 mce_query("UPDATE mce_jobs SET status='running',locked_at=?,attempts=attempts+1 WHERE id=?",[mce_sqltime(),$job['id']]);
@@ -43,21 +80,22 @@ final class Jobs {
                     }
                     elseif($job['type']==='delete_account')Identity::erase((int)$payload['userId']);
                     else throw new RuntimeException('Unsupported job');
-                    mce_query("UPDATE mce_jobs SET status='done',payload='{}',last_error=NULL WHERE id=?",[$job['id']]);$done++;
+                    mce_query("UPDATE mce_jobs SET status='done',payload='{}',locked_at=NULL,last_error=NULL WHERE id=?",[$job['id']]);$done++;
                 } catch(Throwable $e) {
                     $tries=(int)$job['attempts']+1;$uncertain=str_contains($e->getMessage(),'delivery uncertain');
-                    mce_query('UPDATE mce_jobs SET status=?,available_at=?,last_error=? WHERE id=?',[$tries>=5||$uncertain?'failed':'pending',mce_sqltime(mce_now()->modify('+'.min(3600,30*2**$tries).' seconds')),$uncertain?'Delivery uncertain - manual reconciliation required':get_class($e).' - transport or job failed',$job['id']]);$failed++;
+                    mce_query('UPDATE mce_jobs SET status=?,available_at=?,locked_at=NULL,last_error=? WHERE id=?',[$tries>=5||$uncertain?'failed':'pending',mce_sqltime(mce_now()->modify('+'.self::recoveryDelay($tries).' seconds')),$uncertain?'Delivery uncertain - manual reconciliation required':get_class($e).' - transport or job failed',$job['id']]);$failed++;
                     if($job['type']==='import')mce_query("UPDATE mce_imports SET status='failed' WHERE id=? AND status<>'committed'",[$payload['importId']??'']);
                     if($job['type']==='export')mce_query("UPDATE mce_exports SET status='failed' WHERE id=? AND status<>'ready'",[$payload['exportId']??'']);
                 }
             }
         } finally {mce_query("SELECT RELEASE_LOCK('mce_worker')");}
-        return ['processed'=>$done,'failed'=>$failed];
+        return ['processed'=>$done,'failed'=>$failed,'recovery'=>$recovery];
     }
     private static function reminder(array $payload): void {
         $uid=(int)$payload['userId'];$date=$payload['localDate'];
-        $p=mce_profile($uid);$r=mce_one('SELECT enabled FROM mce_reminders WHERE user_id=?',[$uid]);
-        if($p['deleted_at']||!$r||!$r['enabled']||Motivation::day($p)!==$date||mce_one('SELECT user_id FROM mce_activities WHERE user_id=? AND local_date=?',[$uid,$date])) {
+        $now=mce_now();
+        [$p,$r]=mce_transaction(function()use($uid,$now){return [Motivation::lock($uid,true,$now),mce_one('SELECT enabled FROM mce_reminders WHERE user_id=?',[$uid])];});
+        if($p['deleted_at']||!$r||!$r['enabled']||Motivation::day($p,$now)!==$date||mce_one('SELECT user_id FROM mce_activities WHERE user_id=? AND local_date=?',[$uid,$date])) {
             mce_query("UPDATE mce_deliveries SET status='skipped' WHERE user_id=? AND local_date=? AND type='reminder'",[$uid,$date]);return;
         }
         $delivery=mce_one("SELECT status FROM mce_deliveries WHERE user_id=? AND local_date=? AND type='reminder'",[$uid,$date]);

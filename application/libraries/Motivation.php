@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 final class Motivation {
-    public static function lock(int $uid,bool $allowDeleted=false): array {
+    public static function lock(int $uid,bool $allowDeleted=false,?DateTimeImmutable $now=null): array {
+        $now??=mce_now();
         mce_profile($uid);$p=mce_one('SELECT * FROM mce_profiles WHERE user_id=? FOR UPDATE',[$uid]);
         if($p['deleted_at']&&!$allowDeleted)throw new ProductError(401,'Tài khoản đang được xóa.');
         $pending=mce_one('SELECT * FROM mce_timezone_changes WHERE user_id=?',[$uid]);
-        if($pending&&$pending['effective_after']<=mce_sqltime()) {
+        if($pending&&$pending['effective_after']<=mce_sqltime($now)) {
             mce_query('UPDATE mce_profiles SET quest_timezone=? WHERE user_id=?',[$pending['timezone'],$uid]);
             $p['quest_timezone']=$pending['timezone'];mce_query('DELETE FROM mce_timezone_changes WHERE user_id=?',[$uid]);
         }
@@ -24,11 +25,11 @@ final class Motivation {
         return $inserted;
     }
     public static function day(array $profile,?DateTimeImmutable $now=null): string { return ($now??mce_now())->setTimezone(new DateTimeZone($profile['quest_timezone']))->format('Y-m-d'); }
-    public static function quests(int $uid,array $p): void {
-        $date=self::day($p);
+    public static function quests(int $uid,array $p,?DateTimeImmutable $now=null): void {
+        $now??=mce_now();$date=self::day($p,$now);
         if (mce_one('SELECT user_id FROM mce_quests WHERE user_id=? AND local_date=? LIMIT 1',[$uid,$date])) return;
         $available=Content::lessons();$count=count($available);
-        $due=(int)mce_query('SELECT COUNT(*) FROM mce_review_cards WHERE user_id=? AND hidden=0 AND due_at<=?',[$uid,mce_sqltime()])->fetchColumn();
+        $due=(int)mce_query('SELECT COUNT(*) FROM mce_review_cards WHERE user_id=? AND hidden=0 AND due_at<=?',[$uid,mce_sqltime($now)])->fetchColumn();
         if(!$count&&!$due)return;
         $objective=0;
         foreach($available as $v)foreach(mce_decode($v['document'])['exercises'] as $e)if(!in_array($e['type'],['self','flashcard'],true))$objective++;

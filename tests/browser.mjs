@@ -61,6 +61,9 @@ try {
   await evaluate(`(()=>{document.querySelector('#name').value='Browser learner';document.querySelector('#email').value='browser-'+Date.now()+'@example.com';document.querySelector('#password').value='Browser-test-123!';document.querySelector('#password_confirm').value='Browser-test-123!';document.querySelector('.auth-form').requestSubmit();})()`);
   await waitFor('location.pathname === "/account" && document.readyState === "complete"');
   await navigate('/hoc');
+  await evaluate('document.querySelector(".menu").click()');
+  assert(await evaluate('document.querySelector("#navigation .mobile-auth button[type=submit]")?.getBoundingClientRect().height>=44'),'Mobile logout must remain accessible');
+  await evaluate('document.querySelector(".menu").click()');
   assert(await evaluate('!!document.querySelector(\'input[name="command"][value="guest/claim"]\')'),'Explicit guest import consent missing');
   assert(await evaluate('(async()=> (await(await fetch("/api/v1/progress")).json()).data.length === 0)()'),'Guest progress merged without consent');
   await evaluate('document.querySelector(\'input[name="command"][value="guest/claim"]\').form.requestSubmit()');

@@ -1,71 +1,81 @@
 {
-  "timestamp": "2026-10-20T10:30:34.620412+00:00",
+  "timestamp": "2026-10-21T09:19:27.171839+00:00",
   "environment": "isolated local database; external mail/analytics disabled",
   "checks": [
     {
       "check": "command",
       "status": "passed",
-      "seconds": 0.051
+      "seconds": 0.053
     },
     {
       "check": "database/setup-local.php",
       "status": "passed",
-      "seconds": 3.06
+      "seconds": 1.896
     },
     {
       "check": "tests/product_unit.php",
       "status": "passed",
-      "seconds": 0.066
+      "seconds": 0.08
+    },
+    {
+      "check": "tests/jobs_recovery.php",
+      "status": "passed",
+      "seconds": 0.984
+    },
+    {
+      "check": "tests/timezone.php",
+      "status": "passed",
+      "seconds": 1.249
+    },
+    {
+      "check": "tests/timezone_http.py",
+      "status": "passed",
+      "seconds": 1.664
     },
     {
       "check": "tests/product_http.py",
       "status": "passed",
-      "seconds": 19.146
+      "seconds": 21.06
     },
     {
       "check": "tests/motivation.php",
       "status": "passed",
-      "seconds": 0.47
+      "seconds": 0.506
     },
     {
       "check": "tests/browser.mjs",
       "status": "passed",
-      "seconds": 13.988
+      "seconds": 14.607
     },
     {
       "check": "tests/learning_http.py",
       "status": "passed",
-      "seconds": 8.943
+      "seconds": 9.606
     },
     {
       "check": "tests/product_fixture.php",
       "status": "passed",
-      "seconds": 0.093
+      "seconds": 0.096
     },
     {
       "check": "tests/auth_http.py",
       "status": "passed",
-      "seconds": 9.045
+      "seconds": 8.845
     },
     {
       "check": "tests/auth_hash.php",
       "status": "passed",
-      "seconds": 0.285
+      "seconds": 0.279
     },
     {
       "check": "tests/site_http.py",
       "status": "passed",
-      "seconds": 4.812
+      "seconds": 5.303
     },
     {
       "check": "tests/account_http.py",
       "status": "passed",
-      "seconds": 9.218
-    },
-    {
-      "check": "tests/restore.py",
-      "status": "passed",
-      "seconds": 2.728
+      "seconds": 9.864
     }
   ],
   "all_passed": true

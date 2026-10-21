@@ -12,6 +12,8 @@ settings=''.join('extension='+module+'\n' for module in ['intl','fileinfo'] if m
 settings+='session.save_path="'+str(ROOT/'writable/sessions').replace('\\','/')+'"\ncgi.force_redirect=0\nexpose_php=0\nupload_max_filesize=10M\npost_max_size=12M\n'
 (INI/'runtime.ini').write_text(settings,encoding='utf-8')
 STATIC={'/assets/css/style.css','/assets/css/product.css','/assets/js/app.js','/assets/js/product.js','/assets/json/courses.json','/assets/images/logo.png','/favicon.ico','/favicon-16x16.png','/favicon-32x32.png','/apple-touch-icon.png','/android-chrome-192x192.png','/android-chrome-512x512.png','/site.webmanifest'}
+STATIC.update({'/assets/css/redesign.css','/assets/fonts/design-fonts.css'})
+STATIC.update('/assets/fonts/'+f.name for f in (ROOT/'assets/fonts').glob('design-font-*') if f.suffix in ['.ttf','.woff2'])
 class Handler(http.server.BaseHTTPRequestHandler):
     protocol_version='HTTP/1.0'
     disable_nagle_algorithm=True

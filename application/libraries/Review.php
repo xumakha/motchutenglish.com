@@ -11,9 +11,18 @@ final class Review {
     public static function add(int $uid,string $target,array $snapshot): void {
         mce_query('INSERT INTO mce_review_cards(user_id,target_key,snapshot,due_at) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE revision=revision+IF(hidden<>0,1,0),hidden=0',[$uid,$target,mce_json($snapshot),mce_sqltime()]);
     }
-    public static function usedToday(int $uid,array $p): int {
-        $start=new DateTimeImmutable(Motivation::day($p).' 00:00:00',new DateTimeZone($p['quest_timezone']));
+    public static function usedToday(int $uid,array $p,?DateTimeImmutable $now=null): int {
+        $start=new DateTimeImmutable(Motivation::day($p,$now).' 00:00:00',new DateTimeZone($p['quest_timezone']));
         return (int)mce_query('SELECT COUNT(*) FROM mce_review_events WHERE user_id=? AND occurred_at>=? AND occurred_at<?',[$uid,mce_sqltime($start),mce_sqltime($start->modify('+1 day'))])->fetchColumn();
+    }
+    public static function queue(int $uid,bool $extra=false,bool $manage=false,?DateTimeImmutable $now=null): array {
+        $now??=mce_now();
+        return mce_transaction(function()use($uid,$extra,$manage,$now){
+            $p=Motivation::lock($uid,false,$now);Motivation::quests($uid,$p,$now);
+            $used=self::usedToday($uid,$p,$now);$limit=$extra?100:max(0,(int)$p['review_limit']-$used);
+            $cards=$manage?mce_all('SELECT * FROM mce_review_cards WHERE user_id=? ORDER BY hidden,due_at,id LIMIT 100',[$uid]):mce_all('SELECT id,snapshot,revision,due_at FROM mce_review_cards WHERE user_id=? AND hidden=0 AND due_at<=? ORDER BY due_at,id LIMIT '.$limit,[$uid,mce_sqltime($now)]);
+            return ['profile'=>$p,'used'=>$used,'cards'=>$cards];
+        });
     }
     public static function rate(int $uid,int $cardId,string $rating,string $key,int $revision,bool $extra=false): array {
         return mce_transaction(function()use($uid,$cardId,$rating,$key,$revision,$extra){

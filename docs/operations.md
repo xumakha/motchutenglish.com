@@ -14,9 +14,32 @@ Trước đổi release: backup SQL+media+secret config, chạy migrations trên
 
 Cùng code/config/environment với web. Mỗi phút: `php database/worker.php tick` rồi `php database/worker.php run 50`. Worker dùng DB named lock, job event keys và retry/backoff; monitor pending tuổi cao, failed/dead-letter. Chạy cleanup hàng ngày, reconcile hàng ngày hoặc sau sự cố. Cron Linux dùng flock để tránh overlap tick/backup; Windows Task Scheduler đặt không chạy instance thứ hai. Chọn cùng tài khoản service có quyền private writable. `/admin/operations` hiển thị counts/cohorts/jobs, admin có thể retry failed an toàn. Email ở trạng thái delivery uncertain cần đối chiếu provider trước thao tác thủ công, không tự gửi lặp.
 
+## Phục hồi worker bị ngắt (bổ sung 21/10/2026)
+
+Mỗi lần `database/worker.php run` giành được named lock độc quyền `mce_worker`, worker kiểm tra các job còn `running` từ lần chạy đã ngắt. Không chỉ dựa vào tuổi `locked_at`: worker khác còn giữ lock thì lần chạy mới trả `busy` và không lấy lại job, kể cả job đang chạy lâu.
+
+- Import/export đã có kết quả `committed`/`ready`, hoặc reminder có delivery `sent`/`skipped`: xác nhận job `done`, không thực hiện lại.
+- Import/export/xóa tài khoản bị gián đoạn: đưa về `pending` nếu chưa dùng hết 5 lần thử; giữ bộ đếm, xóa `locked_at`, backoff theo lần thử (60, 120, 240, 480 giây cho các lần ngắt 1–4). Projection import/export trở về `queued`. Export chưa hoàn chỉnh được dựng lại thành tệp riêng khi retry.
+- Mail/reminder/analytics chưa có bằng chứng hoàn tất: chuyển `failed`, ghi `Delivery uncertain`, yêu cầu đối soát. Không tự gửi lại; endpoint retry quản trị hiện từ chối trạng thái uncertain.
+- Job hết lượt thử hoặc loại không hỗ trợ: chuyển `failed` để kiểm tra thủ công. Không chứa payload riêng tư trong thông báo lỗi phục hồi.
+
+CLI trả thêm trường `recovery` gồm số `requeued`, `completed`, `failed`; giữ các trường `processed`/`failed` hiện có cho lần xử lý bình thường. Không cần migration hoặc daemon phụ. Lần cron tiếp theo sẽ phục hồi sau khi database giải phóng lock của process cũ; job được retry khi đến `available_at`.
+
+Kiểm thử `tests/jobs_recovery.php` chạy trên database test riêng: ngắt process worker CLI thật khi đang chờ khóa, khởi động lại, kiểm tra không lấy job của worker đang sống, backoff/giới hạn retry, không replay delivery chưa rõ, dedupe kết quả đã commit và rebuild partial export. Không chạy fixture này trên database ứng dụng.
+
 ## Email và analytics
 
 MAIL_DRIVER=disabled mặc định. log chỉ development/test, private file có token, xóa sau7ngày. SMTP dùng MAIL_FROM, SMTP_HOST/PORT/USER/PASSWORD/ENCRYPTION(starttls hoặc tls). Worker mới thực hiện send; kiểm provider/sandbox inbox và link HTTPS/expiry/reset/session revoke trên staging trước ra mắt. Không coi enqueue là delivery. Reminder opt-in theo timezone/hour, unsubscribe một lần, dedupe ngày. GA4 chỉ khi có cả measurementID/APIsecret và consent; whitelist không có PII. HTTP2xx chỉ là transport, cần debug/GA dashboard xác nhận ingestion. Chưa cấu hình real SMTP hoặc GA4 trong phiên này.
+
+## Múi giờ ôn tập và nhắc học (bổ sung 21/10/2026)
+
+`timezone` dùng cho lựa chọn/hiển thị của người học; `quest_timezone` là múi giờ nghiệp vụ đang có hiệu lực. Thay đổi chờ trong `mce_timezone_changes` chỉ được áp dụng từ `effective_after`, dưới profile lock. Không sửa lại lịch streak hoặc snapshot nhiệm vụ đã chốt.
+
+API `/api/v1/review/queue` và trang `/on-tap` dùng chung `Review::queue`: áp dụng thay đổi đến hạn, tạo nhiệm vụ nếu cần, đếm lượt ôn và lấy thẻ trong cùng transaction/mốc giờ. Giới hạn ngày tính theo khoảng từ nửa đêm địa phương tới nửa đêm kế tiếp; ngày DST có thể dài 23 hoặc 25 giờ. Điều này khác với khoảng lịch ôn thuật toán, vẫn tính bằng thời gian trôi qua UTC với một ngày bằng 24 giờ.
+
+Cron `tick` chỉ lấy danh sách user IDs ban đầu, sau đó đọc profile/reminder mới trong transaction cho từng user. Ngày hoạt động, giờ nhắc và ngày delivery đều lấy theo `quest_timezone` sau khi áp dụng thay đổi. Trước gửi, worker kiểm lại pending timezone; reminder đã xếp hàng cho ngày địa phương cũ được đánh dấu `skipped`. Tick lặp cùng ngày không tạo trùng delivery. Không cần migration hoặc đặt lại lịch sử người học.
+
+Kiểm thử: `tests/timezone.php` dùng clock cố định để kiểm trước/đúng ranh giới hiệu lực, daily cap, DST, snapshot và cron; kiểm delivery bằng mail sink local. `tests/timezone_http.py` so sánh API/SSR thật với pending change, ôn thêm tự nguyện và API nhiệm vụ. Chỉ dùng các fixture trên DB test riêng, không trên database ứng dụng.
 
 ## Backup và retention
 

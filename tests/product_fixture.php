@@ -58,4 +58,5 @@ if($op==='submit') {
     $uid=(int)$argv[2];$u=mce_one('SELECT id,name,email FROM users WHERE id=?',[$uid]);$_SESSION=['user'=>$u,'csrf'=>'test'];Study::mutate($argv[3],mce_decode($argv[4]));echo "ok\n";exit;
 }
 if($op==='read-session-version'){echo mce_query('SELECT session_version FROM mce_profiles WHERE user_id=?',[(int)$argv[2]])->fetchColumn();exit;}
+if($op==='environment'){echo mce_json(['php'=>PHP_VERSION,'database'=>mce_query('SELECT VERSION()')->fetchColumn(),'lessons'=>(int)mce_query('SELECT COUNT(*) FROM mce_lessons')->fetchColumn(),'attempts'=>(int)mce_query('SELECT COUNT(*) FROM mce_attempts')->fetchColumn()]);exit;}
 throw new RuntimeException('Unknown test operation');

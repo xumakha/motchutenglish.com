@@ -37,6 +37,9 @@ with (root/'writable/auth-test-server.log').open('w') as log:
         if server.poll() is not None:
             raise RuntimeError('Test server could not start; check writable/auth-test-server.log')
         subprocess.run(['php','tests/product_unit.php'],env=env,check=True)
+        subprocess.run(['php','tests/jobs_recovery.php'],env=env,check=True)
+        subprocess.run(['php','tests/timezone.php'],env=env,check=True)
+        subprocess.run([sys.executable,'tests/timezone_http.py'],env=env,check=True)
         subprocess.run([sys.executable,'tests/product_http.py'],env=env,check=True)
         subprocess.run(['php','tests/motivation.php'],env=env,check=True)
         if os.environ.get('BROWSER_TESTS')=='1':subprocess.run(['node','tests/browser.mjs'],env=env,check=True,timeout=90)

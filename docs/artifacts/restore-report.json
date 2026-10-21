@@ -1,11 +1,11 @@
 {
-  "database": "mce_restore_test_eb38320121b0",
-  "seconds": 1.128,
+  "database": "mce_restore_test_539a7451ff64",
+  "seconds": 1.219,
   "counts": {
-    "users": 15,
-    "mce_lessons": 17,
-    "mce_versions": 19,
-    "mce_attempts": 4,
+    "users": 70,
+    "mce_lessons": 20,
+    "mce_versions": 22,
+    "mce_attempts": 59,
     "mce_progress": 3,
     "mce_review_cards": 3,
     "reward_ledger": 19
@@ -16,6 +16,6 @@
   "progress": true,
   "attemptHistory": true,
   "restart": true,
-  "mediaFiles": 6,
+  "mediaFiles": 7,
   "mediaRestoreHashesMatch": true
 }

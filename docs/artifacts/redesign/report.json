@@ -1,0 +1,249 @@
+{
+  "timestamp": "2026-10-21T09:22:49.535Z",
+  "base": "http://127.0.0.1:8080",
+  "checks": [
+    {
+      "route": "/",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh/bat-dau-tu-nen-tang",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/bai-hoc/chao-hoi-tung-buoc",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/tu-vung",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/kien-thuc",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/kiem-tra-dau-vao",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/gioi-thieu",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/lien-he",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/login",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/register",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "route": "/",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh/bat-dau-tu-nen-tang",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/bai-hoc/chao-hoi-tung-buoc",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/tu-vung",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/kien-thuc",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/kiem-tra-dau-vao",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/gioi-thieu",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/lien-he",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/login",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/register",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh/bat-dau-tu-nen-tang",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/bai-hoc/chao-hoi-tung-buoc",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/tu-vung",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/kien-thuc",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/kiem-tra-dau-vao",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/gioi-thieu",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/lien-he",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/login",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/register",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/lo-trinh/bat-dau-tu-nen-tang",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/bai-hoc/chao-hoi-tung-buoc",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/tu-vung",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/kien-thuc",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/kiem-tra-dau-vao",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/gioi-thieu",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/lien-he",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/login",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/register",
+      "width": 1440,
+      "overflow": false
+    }
+  ],
+  "screenshots": [
+    "docs/artifacts/redesign/home-360.png",
+    "docs/artifacts/redesign/paths-360.png",
+    "docs/artifacts/redesign/path-360.png",
+    "docs/artifacts/redesign/intro-360.png",
+    "docs/artifacts/redesign/words-360.png",
+    "docs/artifacts/redesign/knowledge-360.png",
+    "docs/artifacts/redesign/home-1440.png",
+    "docs/artifacts/redesign/paths-1440.png",
+    "docs/artifacts/redesign/path-1440.png",
+    "docs/artifacts/redesign/intro-1440.png",
+    "docs/artifacts/redesign/words-1440.png",
+    "docs/artifacts/redesign/knowledge-1440.png"
+  ],
+  "fonts": [
+    "Baloo 2",
+    "Baloo 2",
+    "Be Vietnam Pro",
+    "Be Vietnam Pro",
+    "Be Vietnam Pro"
+  ],
+  "exceptions": [],
+  "externalRequests": []
+}
