@@ -61,7 +61,8 @@ function auth_limit_key(): string
 }
 function handle_auth(string $page): array
 {
-    $errors = [];
+    $errors = [];$GLOBALS['auth_field_errors']=[];
+    $invalid=function(string $field,string $message)use(&$errors){$errors[]=$message;$GLOBALS['auth_field_errors'][$field]=$message;};
     if (!in_array($page, ['login','register','logout','account'], true)) return $errors;
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     if ($page === 'account' && !current_user()) auth_redirect('login');
@@ -83,12 +84,12 @@ function handle_auth(string $page): array
     $email = strtolower(trim(post_value('email')));
     $password = post_value('password');
     $name = trim(post_value('name'));
-    if (strlen($email)>254 || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Vui lòng nhập email hợp lệ.';
-    if ($password === '' || strlen($password)>72) $errors[] = 'Mật khẩu phải có từ 1 đến 72 byte.';
+    if (strlen($email)>254 || !filter_var($email, FILTER_VALIDATE_EMAIL)) $invalid('email','Vui lòng nhập email hợp lệ.');
+    if ($password === '' || strlen($password)>72) $invalid('password','Mật khẩu phải có từ 1 đến 72 byte.');
     if ($page === 'register') {
-        if ($name === '' || mb_strlen($name, 'UTF-8')>100) $errors[] = 'Tên phải có từ 1 đến 100 ký tự.';
-        if (mb_strlen($password, 'UTF-8')<8) $errors[] = 'Mật khẩu cần ít nhất 8 ký tự.';
-        if ($password !== post_value('password_confirm')) $errors[] = 'Mật khẩu nhập lại chưa khớp.';
+        if ($name === '' || mb_strlen($name, 'UTF-8')>100) $invalid('name','Tên phải có từ 1 đến 100 ký tự.');
+        if (mb_strlen($password, 'UTF-8')<8) $invalid('password','Mật khẩu cần ít nhất 8 ký tự.');
+        if ($password !== post_value('password_confirm')) $invalid('password_confirm','Mật khẩu nhập lại chưa khớp.');
     }
     if ($errors) { http_response_code(422); return $errors; }
     try {
@@ -98,10 +99,11 @@ function handle_auth(string $page): array
         if ($page === 'register') {
             try { $userId = User_model::create($name, $email, password_hash($password, PASSWORD_DEFAULT)); }
             catch (PDOException $e) {
-                if ((int)($e->errorInfo[1]??0) === 1062) { http_response_code(422); return ['Email này đã được đăng ký. Vui lòng đăng nhập.']; }
+                if ((int)($e->errorInfo[1]??0) === 1062) { $GLOBALS['auth_field_errors']['email']='Email này đã được đăng ký.';http_response_code(422); return ['Email này đã được đăng ký. Vui lòng đăng nhập.']; }
                 throw $e;
             }
             sign_in(['id'=>$userId, 'name'=>$name, 'email'=>$email]);
+            if(class_exists('MarketingAnalytics'))MarketingAnalytics::claimGuest($userId);
             if(function_exists('mce_event')) mce_event('signup:'.$userId,'signup_completed','account',$userId);
         } else {
             $user = User_model::findByEmail($email);

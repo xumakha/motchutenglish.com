@@ -3,6 +3,30 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
+  container:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Remove previous container report
+        run: rm -f docs/artifacts/container-smoke-report.json
+      - name: Build runtime with PHP, Python and MariaDB clients
+        run: docker build -t mce-runtime-check .
+      - name: Validate production Compose configuration
+        env:
+          MCE_DB_PASSWORD: ci-config-validation-only
+          MCE_DB_ROOT_PASSWORD: ci-root-validation-only
+          APP_URL: https://compose-validation.invalid
+        run: docker compose config --quiet
+      - name: Check packaged production runtime and isolated database
+        run: python3 tests/container_smoke.py mce-runtime-check
+      - name: Upload container evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-smoke-report
+          path: docs/artifacts/container-smoke-report.json
+          if-no-files-found: warn
   integration:
     runs-on: ubuntu-24.04
     services:
@@ -27,4 +51,15 @@ jobs:
           DB_USER: root
           DB_PASSWORD: ci-isolated-only
           RESTORE_TESTS: 1
-        run: python3 tests/run_auth.py
+        run: |
+          rm -f docs/artifacts/test-report.json docs/artifacts/restore-report.json
+          python3 tests/run_auth.py
+      - name: Upload integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-integration-reports
+          path: |
+            docs/artifacts/test-report.json
+            docs/artifacts/restore-report.json
+          if-no-files-found: warn

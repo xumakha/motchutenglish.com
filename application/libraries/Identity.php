@@ -16,13 +16,13 @@ final class Identity {
         if(!filter_var($base,FILTER_VALIDATE_URL)||!in_array(parse_url($base,PHP_URL_SCHEME),['http','https'],true)) throw new ProductError(503,'Địa chỉ website chưa được cấu hình.');return $base;
     }
     public static function requestReset(string $email): void {
-        if(!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>254)throw new ProductError(422,'Vui lòng nhập email hợp lệ.');
+        if(!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>254)throw new ProductError(422,'Vui lòng nhập email hợp lệ.',['email'=>'Vui lòng nhập email hợp lệ.']);
         mce_limit('reset',5);if(!self::mailConfigured()) throw new ProductError(503,'Email chưa được cấu hình. Hiện chưa thể đặt lại mật khẩu.');
         $u=User_model::findByEmail(strtolower(trim($email)));
         if($u)try{mce_transaction(function()use($u){$uid=(int)$u['id'];Motivation::lock($uid);$t=self::token($uid,'reset');self::queueMail($uid,'Đặt lại mật khẩu Một Chút English',self::base().'/dat-lai-mat-khau#token='.$t,'reset:'.hash('sha256',$t));});}catch(ProductError $e){if($e->status!==401)throw $e;}
     }
     public static function password(string $password): void {
-        if(mb_strlen($password)<8||strlen($password)>72) throw new ProductError(422,'Mật khẩu cần ít nhất 8 ký tự và tối đa 72 byte.');
+        if(mb_strlen($password)<8||strlen($password)>72) throw new ProductError(422,'Mật khẩu cần ít nhất 8 ký tự và tối đa 72 byte.',['password'=>'Mật khẩu cần ít nhất 8 ký tự và tối đa 72 byte.']);
     }
     public static function consume(string $token,string $purpose,?string $password=null): void {
         if(!preg_match('/^[a-f0-9]{64}$/D',$token)) throw new ProductError(422,'Liên kết không hợp lệ hoặc đã hết hạn.');
@@ -45,25 +45,25 @@ final class Identity {
         });
     }
     public static function verify(int $uid,?string $email=null): void {
-        mce_limit('verify',5);if($email!==null) { $email=strtolower(trim($email));if(!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>254) throw new ProductError(422,'Email không hợp lệ.'); }
+        mce_limit('verify',5);if($email!==null) { $email=strtolower(trim($email));if(!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>254) throw new ProductError(422,'Email không hợp lệ.',['email'=>'Email không hợp lệ.']); }
         mce_transaction(function()use($uid,$email){Motivation::lock($uid);$token=self::token($uid,'verify',$email,1440);self::queueMail($uid,'Xác minh email Một Chút English',self::base().'/xac-minh-email#token='.$token,'verify:'.hash('sha256',$token),$email);});
     }
     public static function updatePassword(int $uid,string $current,string $next): void {
         mce_limit('password',10);$u=mce_one('SELECT password_hash FROM users WHERE id=?',[$uid]);
-        if(!password_verify($current,$u['password_hash'])) throw new ProductError(422,'Mật khẩu hiện tại chưa đúng.');self::password($next);
+        if(!password_verify($current,$u['password_hash'])) throw new ProductError(422,'Mật khẩu hiện tại chưa đúng.',['current'=>'Mật khẩu hiện tại chưa đúng.']);self::password($next);
         mce_transaction(function()use($uid,$next){Motivation::lock($uid);User_model::updatePassword($uid,password_hash($next,PASSWORD_DEFAULT));mce_query('UPDATE mce_profiles SET session_version=session_version+1 WHERE user_id=?',[$uid]);mce_query("UPDATE mce_auth_tokens SET used_at=? WHERE user_id=? AND purpose='reset' AND used_at IS NULL",[mce_sqltime(),$uid]);});
-        $_SESSION['user']=null;session_regenerate_id(true);
+        $_SESSION['user']=null;unset($_SESSION['marketing_consent'],$_SESSION['marketing_journey']);session_regenerate_id(true);
     }
     public static function export(int $uid): array {
         $out=['user'=>mce_one('SELECT id,name,email,created_at FROM users WHERE id=?',[$uid])];
-        foreach(['profiles','enrollments','progress','attempts','user_vocabulary','review_cards','review_events','activities','quests','streak_state','streak_calendar','badges','inventory','purchases','reminders','reports','consents','cohorts','active_time'] as $t) $out[$t]=mce_all('SELECT * FROM mce_'.$t.' WHERE user_id=?',[$uid]);
+        foreach(['profiles','enrollments','progress','attempts','user_vocabulary','review_cards','review_events','activities','quests','streak_state','streak_calendar','badges','inventory','purchases','reminders','reports','consents','cohorts','active_time','journeys'] as $t) $out[$t]=mce_all('SELECT * FROM mce_'.$t.' WHERE user_id=?',[$uid]);
         foreach($out['reminders'] as &$r) unset($r['unsubscribe_hash']);unset($r);
         $out['answers']=mce_all("SELECT i.attempt_id,i.exercise_id,i.response,i.first_response,i.state,CASE WHEN a.mode='test' AND a.status<>'finished' THEN NULL ELSE i.grading END AS grading FROM mce_items i JOIN mce_attempts a ON a.id=i.attempt_id WHERE a.user_id=?",[$uid]);
         $out['legacy_attempts']=mce_all('SELECT id,lesson_id,response,score,submitted_at FROM learning_attempts WHERE user_id=?',[$uid]);
         $out['rewards']=mce_all('SELECT currency,amount,event_key,created_at FROM reward_ledger WHERE user_id=?',[$uid]);return $out;
     }
     public static function deleteRequest(int $uid,string $password): void {
-        $u=mce_one('SELECT password_hash FROM users WHERE id=?',[$uid]);if(!password_verify($password,$u['password_hash'])) throw new ProductError(422,'Mật khẩu xác nhận chưa đúng.');
+        $u=mce_one('SELECT password_hash FROM users WHERE id=?',[$uid]);if(!password_verify($password,$u['password_hash'])) throw new ProductError(422,'Mật khẩu xác nhận chưa đúng.',['password'=>'Mật khẩu xác nhận chưa đúng.']);
         if(learning_role(db(),$uid)==='admin') {
             if((int)mce_query("SELECT COUNT(*) FROM learning_roles WHERE role='admin'")->fetchColumn()<=1) throw new ProductError(422,'Hãy cấp quyền cho một quản trị viên khác trước khi xóa tài khoản quản trị cuối cùng.');
         }
@@ -73,14 +73,14 @@ final class Identity {
             if(in_array($uid,array_map(fn($a)=>(int)$a['user_id'],$active),true)&&count($active)<=1)throw new ProductError(422,'Hãy cấp quyền cho một quản trị viên khác trước khi xóa quản trị viên cuối cùng.');
             Motivation::lock($uid);mce_query('UPDATE mce_profiles SET deleted_at=?,session_version=session_version+1 WHERE user_id=?',[mce_sqltime(),$uid]);mce_query("INSERT IGNORE INTO mce_jobs(type,payload,event_key,available_at) VALUES ('delete_account',?,?,?)",[mce_json(['userId'=>$uid]),'delete:'.$uid,mce_sqltime()]);mce_audit('delete_requested','user:'.$uid);
         });
-        $_SESSION['user']=null;session_regenerate_id(true);
+        $_SESSION['user']=null;unset($_SESSION['marketing_consent'],$_SESSION['marketing_journey']);session_regenerate_id(true);
     }
     public static function erase(int $uid): void {
         mce_transaction(function()use($uid){
             Motivation::lock($uid,true);
             Exports::deleteFor($uid);
             mce_query('DELETE i FROM mce_items i JOIN mce_attempts a ON a.id=i.attempt_id WHERE a.user_id=?',[$uid]);
-            foreach(['review_events','review_cards','user_vocabulary','attempts','enrollments','progress','activities','quest_events','quests','streak_calendar','streak_state','inventory_events','badges','inventory','purchases','balances','reminders','deliveries','reports','events','auth_tokens','timezone_changes','consents','cohorts','active_time'] as $t) mce_query('DELETE FROM mce_'.$t.' WHERE user_id=?',[$uid]);
+            foreach(['review_events','review_cards','user_vocabulary','attempts','enrollments','progress','activities','quest_events','quests','streak_calendar','streak_state','inventory_events','badges','inventory','purchases','balances','reminders','deliveries','reports','events','auth_tokens','timezone_changes','consents','cohorts','active_time','journeys'] as $t) mce_query('DELETE FROM mce_'.$t.' WHERE user_id=?',[$uid]);
             foreach(['learning_attempts','learning_roles','reward_ledger','learning_events'] as $t) mce_query('DELETE FROM '.$t.' WHERE user_id=?',[$uid]);
             mce_query('DELETE FROM mce_jobs WHERE type IN (\'mail\',\'reminder\',\'analytics\',\'export\') AND JSON_EXTRACT(payload,\'$.userId\')=?',[$uid]);
             mce_query('UPDATE mce_audit SET actor_id=NULL WHERE actor_id=?',[$uid]);

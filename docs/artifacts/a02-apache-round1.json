@@ -1,0 +1,283 @@
+{
+  "timestamp": "2026-10-22T04:32:48.654171+00:00",
+  "runtime": {
+    "php": "8.5.11",
+    "database": "10.4.32-MariaDB",
+    "lessons": 18,
+    "attempts": 55
+  },
+  "system": "Windows-10-10.0.19045-SP0",
+  "cpu": "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD",
+  "logical_cpus": 12,
+  "environment": "Local Windows, Apache 64 request threads + one persistent PHP FastCGI worker; not staging",
+  "concurrency": 50,
+  "samples": 50,
+  "operation": "authenticated server submit + grading + attempt read",
+  "p50_ms": 328.31,
+  "p95_ms": 607.98,
+  "max_ms": 627.26,
+  "errors": 0,
+  "error_rate": 0.0,
+  "seconds": 0.874,
+  "target_p95_ms": 800,
+  "target_error_rate": 0.01,
+  "target_met": true,
+  "results": [
+    {
+      "ms": 34.7,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 50.52,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 72.59,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 104.41,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 92.55,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 115.64,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 138.15,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 160.79,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 172.33,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 147.95,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 124.87,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 180.43,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 191.26,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 202.54,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 211.71,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 245.54,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 233.35,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 221.38,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 255.34,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 420.97,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 265.82,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 289.17,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 275.84,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 442.77,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 299.98,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 323.15,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 333.47,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 308.9,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 365.31,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 341.35,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 352.43,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 376.13,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 457.34,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 386.41,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 397.72,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 466.97,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 418.35,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 479.46,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 439.17,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 525.09,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 493.51,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 575.9,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 550.98,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 537.62,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 561.38,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 583.59,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 607.98,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 593.92,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 617.23,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 627.26,
+      "error": null,
+      "details": null
+    }
+  ],
+  "httpRuntime": {
+    "php": "8.5.11 cgi-fcgi",
+    "persistentWorkerVerified": true,
+    "phpWorkers": 1,
+    "apache": "Server version: Apache/2.4.58 (Win64)"
+  }
+}

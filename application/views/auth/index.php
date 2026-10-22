@@ -6,7 +6,7 @@ if ($page === 'account' && current_user()): $user = current_user();
     $register = $page === 'register';
     heading($register ? 'Tạo tài khoản của bạn.' : 'Chào mừng bạn trở lại.', 'Học nhẹ nhàng, tiến bộ mỗi ngày.', $register ? 'ĐĂNG KÝ' : 'ĐĂNG NHẬP'); ?>
     <section class="panel narrow auth-panel">
-    <?php if ($authErrors): ?><div class="feedback retry" role="alert"><?php foreach ($authErrors as $error): ?><p><?=h($error)?></p><?php endforeach ?></div><?php endif ?>
+    <?php if ($authErrors): ?><div class="feedback retry" role="alert" id="form-error" tabindex="-1"><?php foreach ($authErrors as $error): ?><p><?=h($error)?></p><?php endforeach ?></div><?php $failedForm=['_formAction'=>$page,'name'=>post_value('name'),'email'=>post_value('email')];$fieldErrors=$GLOBALS['auth_field_errors']??[];require APP_PATH.'/views/product/form-error-state.php';endif ?>
     <?php if ($page !== 'logout'): ?>
     <form method="post" action="<?=h(url($page))?>" class="auth-form">
         <input type="hidden" name="csrf" value="<?=h($_SESSION['csrf'])?>">

@@ -1,0 +1,1 @@
+<script type="application/json" id="form-error-state"><?=json_encode(mce_form_error_state($failedForm??[],$fieldErrors??[]),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE)?></script>

@@ -1,6 +1,22 @@
 <?php
 declare(strict_types=1);
 final class Study {
+    public static function progressHistory(int $uid,mixed $week=0,mixed $page=1,?DateTimeImmutable $now=null): array {
+        return mce_transaction(function()use($uid,$week,$page,$now){
+            $now??=mce_now();$p=Motivation::lock($uid,false,$now);
+            $offset=is_scalar($week)&&preg_match('/^[0-9]{1,3}$/D',(string)$week)?min(520,(int)$week):0;
+            $local=$now->setTimezone(new DateTimeZone($p['timezone']));
+            $start=$local->setTime(0,0)->modify('-'.((int)$local->format('N')-1).' days')->modify('-'.$offset.' weeks');$end=$start->modify('+1 week');
+            $from=$start->format('Y-m-d');$to=$end->format('Y-m-d');
+            $days=mce_all('SELECT local_date,lessons,reviews FROM mce_activities WHERE user_id=? AND local_date>=? AND local_date<? ORDER BY local_date',[$uid,$from,$to]);
+            $totals=['lessons'=>0,'reviews'=>0,'activeDays'=>0];foreach($days as $d){$totals['lessons']+=(int)$d['lessons'];$totals['reviews']+=(int)$d['reviews'];if($d['lessons']+$d['reviews']>0)$totals['activeDays']++;}
+            $score=mce_one("SELECT SUM(a.score) AS score,SUM(a.max_score) AS max_score FROM mce_attempts a JOIN mce_versions v ON v.id=a.version_id JOIN mce_lessons l ON l.id=v.lesson_id WHERE a.user_id=? AND a.status='finished' AND a.mode<>'preview' AND l.subtype<>'placement' AND a.finished_at>=? AND a.finished_at<?",[$uid,mce_sqltime($start),mce_sqltime($end)]);
+            $seconds=(int)mce_query('SELECT COALESCE(SUM(seconds),0) FROM mce_active_time WHERE user_id=? AND local_date>=? AND local_date<?',[$uid,$from,$to])->fetchColumn();
+            $paging=Review::pagination((int)mce_query("SELECT COUNT(*) FROM mce_attempts WHERE user_id=? AND status='finished' AND mode<>'preview'",[$uid])->fetchColumn(),$page);
+            $history=mce_all("SELECT a.id,a.version_id,a.finished_at,a.score,a.max_score,a.mode,v.title,l.subtype,l.archived FROM mce_attempts a JOIN mce_versions v ON v.id=a.version_id JOIN mce_lessons l ON l.id=v.lesson_id WHERE a.user_id=? AND a.status='finished' AND a.mode<>'preview' ORDER BY a.finished_at DESC,a.id DESC LIMIT 30 OFFSET ".$paging['offset'],[$uid]);
+            return ['profile'=>$p,'weekOffset'=>$offset,'weekStart'=>$from,'weekEnd'=>$end->modify('-1 day')->format('Y-m-d'),'weekDays'=>$days,'weekTotals'=>$totals,'weekScore'=>$score,'weekSeconds'=>$seconds,'history'=>$history,'historyPaging'=>$paging];
+        });
+    }
     public static function guestKey(): string { if(empty($_SESSION['product_guest'])) $_SESSION['product_guest']=bin2hex(random_bytes(32));return hash('sha256',$_SESSION['product_guest']); }
     public static function owner(array $a): void {
         if ($a['user_id']!==null) { if(!current_user()||(int)$a['user_id']!==mce_uid()) throw new ProductError(404,'Không tìm thấy lượt học.'); }
@@ -135,7 +151,7 @@ final class Study {
         $stored=array_column(mce_all('SELECT * FROM mce_items WHERE attempt_id=?',[$a['id']]),null,'exercise_id');
         foreach($d['exercises'] as $orderedExercise) {
             $i=$stored[$orderedExercise['id']];
-            $e=current(array_filter($d['exercises'],fn($e)=>$e['id']===$i['exercise_id']));$public=Assessment::publicExercise($e);$order=mce_decode($i['presented_order']);
+            $e=$orderedExercise;$public=Assessment::publicExercise($e);$order=mce_decode($i['presented_order']);
             if(isset($order['choices'])) $public['payload']['choices']=array_replace(array_fill_keys($order['choices'],''),$public['payload']['choices']);
             if(isset($order['tokens'])) $public['payload']['tokens']=array_replace(array_fill_keys($order['tokens'],''),$public['payload']['tokens']);
             if(isset($order['right'])) { $public['payload']['right']=[];foreach($order['right'] as $opaque=>$pid)$public['payload']['right'][$opaque]=$e['payload']['pairs'][$pid]['right']; }
@@ -150,7 +166,7 @@ final class Study {
             $percent=$a['max_score']?100*$a['score']/$a['max_score']:0;
             foreach($d['blueprint']['rules'] as $rule)if($percent>=$rule['minPercent'])$suggestion=$rule['pathSlug'];
         }
-        return ['id'=>$a['id'],'title'=>$a['title'],'revision'=>(int)$a['revision'],'mode'=>$a['mode'],'status'=>$a['status'],'position'=>(int)$a['position'],'blocks'=>$blocks,'viewed'=>mce_decode($a['viewed']),'items'=>$items,'score'=>$a['status']==='finished'?$a['score']:null,'maxScore'=>$a['status']==='finished'?$a['max_score']:null,'objectives'=>$d['objectives'],'versionId'=>$a['version_id'],'lessonId'=>$a['lesson_id'],'passThreshold'=>$d['passThreshold'],'suggestion'=>$suggestion,'skipped'=>count(array_filter($items,fn($i)=>$i['state']==='skipped')),'audioUnavailable'=>count(array_filter($items,fn($i)=>$i['state']==='unavailable'))>0];
+        return ['canSaveConcepts'=>$a['user_id']!==null&&$a['mode']!=='preview'&&$a['status']==='finished','id'=>$a['id'],'title'=>$a['title'],'revision'=>(int)$a['revision'],'mode'=>$a['mode'],'status'=>$a['status'],'position'=>(int)$a['position'],'blocks'=>$blocks,'viewed'=>mce_decode($a['viewed']),'items'=>$items,'score'=>$a['status']==='finished'?$a['score']:null,'maxScore'=>$a['status']==='finished'?$a['max_score']:null,'objectives'=>$d['objectives'],'versionId'=>$a['version_id'],'lessonId'=>$a['lesson_id'],'passThreshold'=>$d['passThreshold'],'suggestion'=>$suggestion,'skipped'=>count(array_filter($items,fn($i)=>$i['state']==='skipped')),'audioUnavailable'=>count(array_filter($items,fn($i)=>$i['state']==='unavailable'))>0];
     }
     public static function claimGuest(int $uid,string $id): void {
         mce_transaction(function()use($uid,$id){

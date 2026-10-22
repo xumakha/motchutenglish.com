@@ -1,0 +1,277 @@
+{
+  "timestamp": "2026-10-22T04:24:16.896344+00:00",
+  "runtime": {
+    "php": "8.5.11",
+    "database": "10.4.32-MariaDB",
+    "lessons": 21,
+    "attempts": 96
+  },
+  "system": "Windows-10-10.0.19045-SP0",
+  "cpu": "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD",
+  "logical_cpus": 12,
+  "environment": "Local Windows, threaded CGI process per request; not staging",
+  "concurrency": 50,
+  "samples": 50,
+  "operation": "authenticated server submit + grading + attempt read",
+  "p50_ms": 1049.395,
+  "p95_ms": 1190.16,
+  "max_ms": 1193.88,
+  "errors": 0,
+  "error_rate": 0.0,
+  "seconds": 1.377,
+  "target_p95_ms": 800,
+  "target_error_rate": 0.01,
+  "target_met": false,
+  "results": [
+    {
+      "ms": 414.74,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 694.28,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 676.3,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 789.25,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 632.07,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1128.7,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1190.56,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 263.27,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 913.73,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 807.73,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1068.9,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1017.8,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1041.62,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1193.88,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1103.09,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 855.16,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 889.56,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 859.97,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1060.28,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1039.09,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 456.37,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1060.55,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1078.46,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1067.66,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1115.94,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1190.16,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1116.17,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1178.56,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 937.93,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1061.54,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1028.5,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1089.7,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 920.73,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1130.74,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1169.62,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1031.76,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 859.83,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1084.14,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 888.63,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1139.32,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 846.54,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1053.38,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1095.56,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1045.41,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1128.14,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1086.04,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 942.78,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1118.24,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1010.24,
+      "error": null,
+      "details": null
+    },
+    {
+      "ms": 1129.26,
+      "error": null,
+      "details": null
+    }
+  ]
+}

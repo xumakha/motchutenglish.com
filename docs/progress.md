@@ -1,40 +1,51 @@
-# Tiến độ - 20/10/2026
+# Tiến độ — 22/10/2026
 
-## Trạng thái hiện tại
-Đang triển khai và rà soát toàn bộ bản phát hành đầu tiên theo `docs/specification.md`. Không coi việc có màn hình là đã nghiệm thu. Chưa triển khai production hoặc đăng ký dịch vụ ngoài.
+Đã cập nhật đến A14, A02 local và renderer flashcard trong lesson. Chưa hoàn tất toàn bộ spec hoặc nghiệm thu ra mắt. Đối chiếu chi tiết tại [traceability](spec-traceability.md) và [audit cùng các phần cập nhật](spec-audit-2026-10-21.md).
 
-## Đã có code và đã chạy các luồng dữ liệu thật
-- PHP MVC hiện hữu được giữ lại; MariaDB/PDO, schema bổ sung và migrations có registry. Không xóa tài khoản, catalog hoặc kết quả cũ.
-- Lộ trình/chương, lesson ID ổn định, phiên bản bất biến, workflow draft/in_review/published/archived, preview cùng player và grading engine.
-- Player nhiều câu: choice, true/false, fill, order, match, correction, closed answer, self assessment, flashcard, listening choice/fill khi có audio hợp lệ. Bài tự đánh giá giữ điểm null.
-- Snapshot phiên bản, thứ tự trình bày, draft/resume, revision/409 có trạng thái mới, retry cùng response idempotent, first/best score, thời gian tương tác ước tính, giữ draft khi mất mạng.
-- Học thử khách và xác nhận chuyển bài sau đăng ký; server giữ/chấm dữ liệu, không nhập điểm do client khai.
-- Onboarding, 20 câu gợi ý cố định chưa hiệu chuẩn, lộ trình không khóa và gợi ý bài tiếp theo.
-- Từ vựng theo nghĩa/chủ đề, ghi chú riêng, thẻ ôn đến hạn, bốn ratings, reset/ẩn/lịch sử và thuật toán UTC version 1.
-- Domain events, XP/xu ledger, quest snapshot, streak/vé nghỉ, badges, shop trang trí, cân bằng lại ledger; tắt gamification không chặn học.
-- Quản trị paths/units/lesson versions/questions/vocabulary/articles, media kiểm MIME, báo lỗi, role, cấu hình an toàn và audit.
-- JSON/CSV dry-run, atomic commit, chống trùng, commit lớn đưa vào DB queue, export nội dung không kèm dữ liệu học viên.
-- Xác minh/reset/đổi mật khẩu/đổi email, thu hồi session, opt-in reminder/unsubscribe, export cá nhân và job xóa/ẩn danh.
-- SEO render server, canonical/noindex, sitemap/robots, breadcrumb; số liệu vận hành/cohort từ DB. Adapter GA4 opt-in, mặc định tắt, chưa xác nhận gửi thật.
+## Checklist hiện tại
 
-## Nội dung mẫu
-15 bài học/checkpoint thật thuộc 2 lộ trình x 2 chương, mỗi chương ít nhất 3 bài và có checkpoint cuối chương. Ngoài ra có 1 bài kiểm tra gợi ý 20 câu và 2 bản nháp nghe cần audio. Tổng 90 exercises, tối thiểu 2 ví dụ/type, 40 nghĩa từ trong 4 chủ đề và 3 bài kiến thức gốc. Seed idempotent, không tạo học viên hoặc thành tích giả. Hai lộ trình mở rộng không có bài thì không quảng cáo là sẵn sàng.
+> Đã hoàn tác hai đợt chỉnh nút/CSS và bố cục UI gần nhất theo yêu cầu. Giữ các sửa logic, flashcard và accessibility trước đợt UI.
 
-## Bằng chứng đã chạy
-- Bộ kiểm thử HTTP + database riêng đã chạy qua luồng học, quyền, CSRF, IDOR, idempotency, notes, review, shop đồng thời và import.
-- Mail sink local đã kiểm tra xác minh, reset một lần, đổi email, thu hồi session, reminder/unsubscribe và job xóa dữ liệu.
-- Chrome đã chạy ở 360/390/768/1440px và kiểm tra khách học/nộp bằng bàn phím, xem kết quả, đăng ký rồi xác nhận import; xem `docs/artifacts/browser-report.json`.
-- Bài đo local trước các thay đổi cuối: 50 phiên, p95 739.89 ms, 0/50 lỗi; xem `docs/artifacts/performance.json`. Không phải kết quả staging.
-- Dump SQL đã restore vào DB mới và kiểm tra đăng nhập, catalog, progress, attempt history sau khi đổi PHP process: 1.042 giây với dataset test nhỏ; xem `docs/artifacts/restore-report.json`.
 
-## Đang hoàn thiện trước khi báo hoàn tất
-- Chạy lại toàn bộ hồi quy sau các bổ sung cuối (media, CSV/queue import, immutable versions, lịch ngày và analytics consent).
-- Rà soát yêu cầu theo từng mục/acceptance case, cập nhật tài liệu setup/deploy/retention và báo cáo cuối.
-- Cấu hình CI và container MariaDB 10.11/PHP được chuẩn bị; chưa có kết quả chạy CI/staging từ xa.
 
-## Cần chủ dự án cung cấp trước ra mắt
-Domain/hosting/HTTPS, runtime MariaDB được hỗ trợ, SMTP thực, media/audio có quyền sử dụng, thông tin đơn vị vận hành và nội dung pháp lý được duyệt. Chưa có các thông tin này thì UI không báo email/audio/analytics ngoài đã hoạt động. XAMPP MariaDB 10.4 hiện chỉ dùng cho local compatibility test.
+- [x] Cách ly review/concept: preview và guest chưa claim không tạo thẻ ôn tài khoản; API kiểm server, player dùng canSaveConcepts. Hồi quy/Chrome kiểm claim hợp lệ, retry chống trùng và account khác bị chặn.
 
-## Chạy local
-Bật MySQL XAMPP, chạy `python tests/dev_server.py 8080` hoặc `./start.ps1`. CLI PHP có thể dùng `./php-local.ps1 database/check.php` để nạp intl/fileinfo cục bộ, không sửa PHP toàn máy.
-Tài khoản quản trị local đã tạo bằng mật khẩu ngẫu nhiên; thông tin chỉ ở `writable/local-admin-b9d03e6e.txt` (không đưa lên Git). CMS mới: `/admin/lessons`; bài cũ: `/admin`.
+- [x] A01/A13: phục hồi worker, retry có giới hạn, xử lý delivery chưa rõ; đồng nhất timezone API/HTML/job và kiểm thử DST.
+- [x] A03/A04: workflow xuất bản và membership bộ từ; sửa đúng draft, phát hiện bản sửa cũ, trả duyệt có lý do.
+- [x] A05: phân trang sổ từ và quản lý thẻ, giữ tìm kiếm/bộ lọc và quyền owner.
+- [x] A06: POS/audio trong snapshot thẻ mới; phát audio, tốc độ, lỗi/thử lại và tương thích snapshot cũ.
+- [x] A07: thống kê tuần và lịch sử lượt học có phân trang, mở lại đúng phiên bản cũ. Chưa có biểu đồ tương tác.
+- [x] A08/A09: funnel theo consent, retention và thời điểm event; SEO override qua workflow, mặc định và kiểm quyền. Chưa xác nhận GA4 ingestion thật.
+- [x] A10: field errors, giữ dữ liệu không nhạy cảm, order/match; bổ sung menu Enter/Escape, skip link focus main, scroll-padding theo chiều cao header và status không che focus. Chrome kiểm main landmark/tên textbox/mặt thẻ ẩn. [Phạm vi và checklist](accessibility-a10.md).
+- [x] A11: lỗi import theo field path, processed/total thực, polling đúng quyền, rollback nguyên tử và retry.
+- [x] A12: sửa hướng dẫn và kiểm fresh install/SQL-media restore local; mở rộng CI từ backup rỗng sang packaged runtime/schema/admin/HTTP/worker/backup/media hash, lưu reports và loại evidence cũ. [Phạm vi](container-a12.md).
+- [x] A14: đồng bộ số đo, trạng thái và phạm vi bằng chứng trong tài liệu.
+- [ ] A02: đã giảm truy vấn profile và vòng lặp dựng attempt, thêm runner benchmark độc lập; CGI p95 1151.40 ms chưa đạt; Apache/PHP 8.5 FastCGI ba lượt 607.98/613.66/642.30 ms, đều 0/50 lỗi và đạt ngưỡng local. Còn nghiệm thu staging. Xem [báo cáo A02](performance-a02.md).
+- [ ] A10: audit screen reader thủ công và WCAG; kết quả Chrome không thay nghiệm thu này.
+- [ ] A12: runner container đã viết và kiểm cú pháp; chưa có Docker CLI để build/chạy thật, CI từ xa chưa chạy. Còn xác nhận runtime triển khai mục tiêu.
+- [x] Lesson flashcard: có mặt trước/mặt sau, ghi nhớ tùy chọn, lật bằng bàn phím sau server xác nhận; test chỉ hiện đáp án sau finish. Kiểm offline/reconnect/resume và điểm null qua Chrome. Luồng này không dùng ratings/lịch ôn của `/on-tap`.
+- [ ] Nghiệm thu staging theo mục 26–29; xác nhận SMTP, nội dung audio có quyền, pháp lý, HTTPS, cron, cảnh báo và backup ngoài máy.
+
+## Bằng chứng và giới hạn
+
+| Artifact | Kết quả ghi nhận | Phạm vi |
+|---|---|---|
+| [Hồi quy](artifacts/test-report.json) | 2026-10-22T05:06:02.759591+00:00, `all_passed=true` | DB local riêng; gồm kiểm review/concept preview/guest/claim và Chrome, mail sink. Không chạy lại performance/restore. |
+| [Chrome](artifacts/browser-report.json) | 2026-10-22T06:40:36.704Z; 360/390/768/1440 px, không overflow/exception trong các case đã chạy | Chạy lại sau hoàn tác hai đợt UI/CSS. Giữ kiểm logic học, flashcard, accessibility và preview isolation trước đó; public route smoke qua. Không chạy lại performance/restore. |
+| [Cài đặt A12](artifacts/a12-install-report.json) | 22/10/2026 04:05 UTC, 15 checks qua | Fresh install, migration lặp, tạo admin, seed/worker, SQL/media backup/restore. Docker chưa chạy do máy chưa có Docker. |
+| [Hiệu năng](artifacts/performance.json) | 22/10/2026 04:33 UTC; 50 phiên, 0 lỗi, p95 **642.30 ms**, `target_met=true` | Apache riêng + một PHP 8.5 FastCGI worker, đạt ngưỡng local ở 3 lượt (607.98/613.66/642.30 ms). Chưa staging. CGI trước đó 1151.40 ms vẫn được giữ riêng. [Chi tiết](performance-a02.md). |
+| [Phục hồi chức năng](artifacts/restore-report.json) | **1.219 giây**, login/catalog/progress/history/restart và media hashes đạt | Dataset test nhỏ, báo cáo lịch sử không có timestamp nội tại; không suy ra RPO/RTO production hoặc backup ngoài máy. Khác smoke test fresh install A12. |
+
+Môi trường đã kiểm local: Windows, PHP 8.5.11, XAMPP MariaDB 10.4.32. Apache 2.4.58 riêng + PHP 8.5.11 FastCGI đã đo local; PHP module 8.2 của XAMPP không dùng cho benchmark. Docker/CI được chuẩn bị cho runtime mới; chưa có kết quả build hoặc chạy từ xa. Báo cáo targeted A04/A08/A11 bổ sung bằng chứng từng phần, không phải nghiệm thu toàn spec.
+
+## Nội dung và giới hạn sản phẩm
+
+Snapshot nội dung từ audit 21/10: 2 lộ trình, 15 bài/checkpoint công khai (4 checkpoint), bài gợi ý 20 câu riêng, 40 nghĩa từ/4 bộ và 3 bài kiến thức; 2 bản nháp nghe cần audio hợp lệ. Không kiểm đếm lại database chính trong A14. Seed không tạo học viên/thành tích giả; WAV trong test không chứng minh nội dung nghe production sẵn sàng.
+
+CMS dùng document JSON, câu hỏi là màn tra cứu; chưa có visual block builder hoặc question bank CRUD độc lập. Quản lý thẻ không phải màn lịch sử mọi lần rating. Số đo kiểm thử không thay kiểm duyệt nội dung, quyền media hoặc thông tin pháp lý.
+
+## Chạy và bàn giao
+
+Theo [README](../README.md), [vận hành](operations.md) và [kiểm thử](testing.md). CLI tạo admin dùng email, tên và `--local`; không ghi mật khẩu hoặc đường dẫn file credentials cá nhân vào handoff. Không sửa tài khoản admin đang có trong A14.
+
+Chủ dự án cần cung cấp domain/hosting/HTTPS, SMTP, media có quyền, thông tin vận hành/pháp lý và cấu hình analytics nếu muốn bật. Việc enqueue không có nghĩa email đã gửi hoặc GA4 đã nhận.

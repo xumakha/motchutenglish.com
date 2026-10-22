@@ -3,9 +3,62 @@ declare(strict_types=1);
 require dirname(__DIR__).'/application/core/bootstrap.php';
 if(!preg_match('/^mce_auth_test_[a-f0-9]+$/D',app_config()['db_name']??''))throw new RuntimeException('Isolated test DB required');
 $op=$argv[1]??'';
+if($op==='review-card-count') {echo (int)mce_query('SELECT COUNT(*) FROM mce_review_cards WHERE user_id=?',[(int)$argv[2]])->fetchColumn();exit;}
+if($op==='browser-flashcard') {
+    $source=mce_one("SELECT v.*,l.unit_id FROM mce_versions v JOIN mce_lessons l ON l.current_version=v.id WHERE v.status='published' ORDER BY v.id LIMIT 1");
+    $doc=mce_decode($source['document']);$doc['blocks']=[];$doc['preview']=true;
+    $doc['exercises']=[['id'=>'memory','type'=>'flashcard','schemaVersion'=>1,'contentVersion'=>1,'level'=>'A1','skillTags'=>['memory'],'payload'=>['prompt'=>'Remember family','modelAnswer'=>'PRIVATE-FLASHCARD-BACK — family means gia đình.','criteria'=>['Nhớ nghĩa gia đình','Đặt câu phù hợp']],'explanation'=>'Đối chiếu với mẫu, không tự động chấm điểm.']];
+    Assessment::document($doc,true);
+    mce_query('INSERT INTO mce_lessons(unit_id,slug,required) VALUES (?,?,0)',[$source['unit_id'],'browser-card-'.bin2hex(random_bytes(5))]);$lesson=(int)db()->lastInsertId();
+    mce_query("INSERT INTO mce_versions(lesson_id,title,document,status,author_id,published_at) VALUES (?,?,?,'published',?,?)",[$lesson,'Browser flashcard',mce_json($doc),$source['author_id'],mce_sqltime()]);
+    mce_query('UPDATE mce_lessons SET current_version=? WHERE id=?',[(int)db()->lastInsertId(),$lesson]);echo $lesson;exit;
+}
+if($op==='review-audio') {
+    $uid=(int)$argv[2];$audio=(int)$argv[3];
+    mce_query("INSERT INTO mce_vocabulary(slug,lemma,ipa,part_of_speech,topic,meaning,example,translation,level,audio_id,status) VALUES (?,'Audio review','IPA-TEST','noun','audio-review','Audio meaning','Audio example','Audio translation','A1',?,'published')",['audio-review-'.$uid,$audio]);
+    echo db()->lastInsertId();exit;
+}
+if($op==='review-audio-state') {
+    $uid=(int)$argv[2];$sense=(int)$argv[3];
+    if(!empty($argv[4]))mce_query("UPDATE mce_vocabulary SET status='archived',part_of_speech='changed' WHERE id=?",[$sense]);
+    echo mce_json(mce_one('SELECT snapshot FROM mce_review_cards WHERE user_id=? AND target_key=?',[$uid,'sense:'.$sense]));exit;
+}
+if($op==='browser-review') {
+    $u=mce_one('SELECT id FROM users WHERE email=?',[$argv[2]]);if(!$u)throw new RuntimeException('Missing browser test user');
+    $audio=mce_one("SELECT id FROM mce_media WHERE mime LIKE 'audio/%' ORDER BY id DESC LIMIT 1");
+    Review::add((int)$u['id'],'browser-audio',['front'=>'Browser review','back'=>'Meaning','partOfSpeech'=>'noun','audioId'=>(int)$audio['id']]);
+    Review::add((int)$u['id'],'browser-legacy',['front'=>'Legacy review','back'=>'Legacy meaning']);exit;
+}
 if($op==='cms-state') {
     $kind=$argv[2];if(!in_array($kind,['paths','articles','vocabulary','vocabulary_sets'],true))throw new RuntimeException('Invalid fixture kind');$id=(int)$argv[3];
     echo mce_json(['row'=>mce_one('SELECT * FROM mce_'.$kind.' WHERE id=?',[$id]),'draft'=>mce_one('SELECT * FROM mce_entity_drafts WHERE kind=? AND entity_id=? ORDER BY id DESC LIMIT 1',[$kind,$id]),'article'=>mce_one('SELECT * FROM mce_article_versions WHERE article_id=? ORDER BY id DESC LIMIT 1',[$id]),'items'=>mce_all('SELECT sense_id FROM mce_vocabulary_set_items WHERE set_id=? ORDER BY sense_id',[$id])]);exit;
+}
+if($op==='pagination') {
+    $uid=(int)$argv[2];
+    mce_transaction(function()use($uid){for($i=0;$i<121;$i++){
+        $slug='paging-'.$uid.'-'.$i;
+        mce_query("INSERT INTO mce_vocabulary(slug,lemma,ipa,part_of_speech,topic,meaning,example,translation,level,status) VALUES (?,?,?,'noun','paging','Pagination meaning','Example','Translation','A1','published')",[$slug,'Paging '.$i,'']);
+        $id=(int)db()->lastInsertId();mce_query('INSERT INTO mce_user_vocabulary(user_id,sense_id,notes) VALUES (?,?,?)',[$uid,$id,'PRIVATE-PAGING-'.$uid]);
+        Review::add($uid,'sense:'.$id,['front'=>'Paging '.$i,'back'=>'Meaning']);
+        if($i%2===0)mce_query('UPDATE mce_review_cards SET hidden=1 WHERE user_id=? AND target_key=?',[$uid,'sense:'.$id]);
+    }});exit;
+}
+if($op==='marketing-state') {
+    $u=mce_one('SELECT id FROM users WHERE email=?',[$argv[2]]);echo mce_json($u?mce_all('SELECT * FROM mce_journeys WHERE user_id=?',[$u['id']]):[]);exit;
+}
+if($op==='seo-source') {
+    $kind=$argv[2];if(!in_array($kind,['paths','vocabulary','articles','vocabulary_sets'],true))throw new RuntimeException('Invalid kind');
+    echo mce_json(mce_one("SELECT * FROM mce_".$kind." WHERE status='published' ORDER BY id LIMIT 1"));exit;
+}
+if($op==='browser-role') {
+    $u=mce_one('SELECT id FROM users WHERE email=?',[$argv[2]]);if(!$u)throw new RuntimeException('Missing browser user');
+    mce_query("INSERT INTO learning_roles(user_id,role) VALUES (?,'admin') ON DUPLICATE KEY UPDATE role='admin'",[$u['id']]);exit;
+}
+if($op==='browser-import') {
+    $u=mce_one('SELECT id,name,email FROM users WHERE email=?',[$argv[2]]);if(!$u)throw new RuntimeException('Missing browser user');$_SESSION=['user'=>$u];
+    $prefix='browser-import-'.bin2hex(random_bytes(4));$rows=[];for($i=0;$i<101;$i++)$rows[]=['externalId'=>'a'.$i,'slug'=>$prefix.'-'.$i,'title'=>'Browser import '.$i,'body'=>'Owned test content'];
+    $preview=Content::importPreview(mce_json(['schemaVersion'=>1,'namespace'=>$prefix,'articles'=>$rows]));if($preview['errors'])throw new RuntimeException('Invalid browser import fixture');Content::importCommit($preview['id']);
+    mce_query('UPDATE mce_jobs SET available_at=? WHERE event_key=?',['2000-01-01 00:00:00','import:'.$preview['id']]);echo $preview['id'];exit;
 }
 if($op==='authclear'){mce_query('DELETE FROM auth_attempts');exit;}
 if($op==='streak') {

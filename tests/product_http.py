@@ -1,3 +1,4 @@
+import hashlib
 import http.cookiejar, json, re, secrets, subprocess, urllib.request, urllib.error, urllib.parse, io, wave
 from concurrent.futures import ThreadPoolExecutor
 BASE='http://127.0.0.1:8089'
@@ -110,6 +111,18 @@ editor.upload('bad.svg',b'<svg xmlns="http://www.w3.org/2000/svg"><script/></svg
 audio=io.BytesIO()
 with wave.open(audio,'wb') as wav:wav.setnchannels(1);wav.setsampwidth(2);wav.setframerate(8000);wav.writeframes(b'\0\0'*800)
 aid=editor.upload('fixture.wav',audio.getvalue())['id']
+sense=int(fixture('review-audio',users['learner']['id'],aid))
+learner.api('vocabulary/save',dict(senseId=sense,notes='',review=True))
+snapshot=json.loads(json.loads(fixture('review-audio-state',users['learner']['id'],sense))['snapshot'])
+assert snapshot['partOfSpeech']=='noun' and int(snapshot['audioId'])==int(aid)
+fixture('review-audio-state',users['learner']['id'],sense,'archive')
+with learner.opener.open(BASE+'/media/'+str(aid)) as response:assert response.status==200 and response.read().startswith(b'RIFF')
+assert other.req('/media/'+str(aid))[0]==404
+html=learner.req('/on-tap?more=1')[1]
+assert 'data-native-retry' in html and 'Phát âm từ trên thẻ ôn' in html and 'noun' in html
+assert json.loads(json.loads(fixture('review-audio-state',users['learner']['id'],sense))['snapshot'])==snapshot
+print('PASS: A06 vocabulary snapshot POS/audio, archived-source owner access and unchanged saved snapshot')
+
 audio_doc=json.loads(json.dumps(document));audio_doc['blocks']=[dict(id='audio',type='audio',audioId=aid,transcript='TEST_TRANSCRIPT_AUDIO',required=True)]
 base_ex=dict(schemaVersion=1,contentVersion=1,explanation='Test audio engine.',skillTags=['listening'],level='A1')
 audio_doc['exercises']=[dict(base_ex,id='listen-choice',type='listening_choice',payload=dict(prompt='Test listening choice',audioId=aid,transcript='TEST_TRANSCRIPT_AUDIO',choices={'a':'Tea','b':'Coffee'},answerId='a')),dict(base_ex,id='listen-fill',type='listening_fill',payload=dict(prompt='Test listening fill',audioId=aid,transcript='TEST_TRANSCRIPT_AUDIO',blanks={'word':['tea']}))]
@@ -131,7 +144,10 @@ editor.api('admin/import-commit',dict(importId=csv_preview['id']));editor.api('a
 rows=[dict(externalId='bulk-'+str(n),slug='bulk-example-'+str(n),lemma='example '+str(n),ipa='',part_of_speech='noun',topic='tests',meaning='sample',example='An example.',translation='Vi du.',level='A1') for n in range(101)]
 bulk=editor.api('admin/import-preview',dict(raw=json.dumps(dict(schemaVersion=1,namespace='large-test',vocabulary=rows))));assert not bulk['errors']
 editor.api('admin/import-commit',dict(importId=bulk['id']));subprocess.run(['php','database/worker.php','run','50'],check=True,capture_output=True)
-assert 'committed' in editor.req('/admin/imports')[1]
+assert 'committed' in editor.req('/admin/imports')[1] and 'data-import-progress' in editor.req('/admin/imports')[1]
+status=editor.api('admin/import-status/'+bulk['id']);assert status['processed']==101 and status['total']==101 and status['committed']==101
+learner.api('admin/import-status/'+bulk['id'],status=403)
+assert admin.api('admin/import-status/'+bulk['id'])['status']=='committed'
 print('PASS: versioned learning, all product pages, optimistic conflicts, idempotent submit/finish, notes ownership, review, concurrent shop, atomic import and test-mode redaction')
 
 # Every metadata import template passes the same validator as CMS and commits once.
@@ -183,9 +199,52 @@ for kind,fields in [
     snap=state(kind,entity);version=snap['article' if kind=='articles' else 'draft']['id']
     endpoint='admin/article-workflow' if kind=='articles' else 'admin/entity-workflow'
     action=dict(action='publish',**{('versionId' if kind=='articles' else 'draftId'):version})
-    editor.api(endpoint,action,403);admin.api(endpoint,action)
+    editor.api(endpoint,action,403)
+    draft_type='article' if kind=='articles' else 'entity'
+    record=snap['article' if kind=='articles' else 'draft']
+    document=json.loads(record['document'])
+    save=dict(type=draft_type,draftId=version,expected=hashlib.sha256(record['document'].encode()).hexdigest(),document=document)
+    editor.api('admin/draft-save',save,409)
+    returned=dict(action,action='return',reason='Please clarify the example')
+    editor.api(endpoint,returned,403)
+    admin.api(endpoint,dict(returned,reason=''),422)
+    admin.api(endpoint,returned)
+    admin.api(endpoint,returned,409)
+    record=state(kind,entity)['article' if kind=='articles' else 'draft']
+    document=json.loads(record['document']);document['status']='draft'
+    document['body' if kind=='articles' else ('meaning' if kind=='vocabulary' else 'description')]='Revised in the same draft'
+    save=dict(type=draft_type,draftId=version,expected=hashlib.sha256(record['document'].encode()).hexdigest(),document=document)
+    learner.api('admin/draft-save',save,403)
+    editor.api('admin/draft-save',dict(save,document=dict(document,status='published')),422)
+    editor.api('admin/draft-save',save)
+    editor.api('admin/draft-save',save,409)
+    revised=state(kind,entity)
+    assert revised['row']==snap['row']
+    assert int(revised['article' if kind=='articles' else 'draft']['id'])==int(version)
+    section='articles' if kind=='articles' else kind.replace('_','-')
+    code,html,_=editor.req('/admin/'+section+'?draft='+str(version))
+    assert code==200 and 'admin/draft-save' in html and 'Please clarify the example' in html
+    editor.api(endpoint,dict(action,action='review'))
+    admin.api(endpoint,action)
+    editor.api('admin/draft-save',save,409)
     assert state(kind,entity)['row']['status']=='published'
-print('PASS: A03 reviewed snapshots, role checks, unchanged public membership and stale proposal rejection')
+    published=state(kind,entity)['row']
+    editor.api('admin/entity',dict(data,status='draft'))
+    proposal=state(kind,entity)['article' if kind=='articles' else 'draft']
+    proposal_doc=json.loads(proposal['document']);proposal_doc['status']='draft'
+    proposal_doc['body' if kind=='articles' else ('meaning' if kind=='vocabulary' else 'description')]='Second revision while public stays unchanged'
+    editor.api('admin/draft-save',dict(type=draft_type,draftId=proposal['id'],expected=hashlib.sha256(proposal['document'].encode()).hexdigest(),document=proposal_doc))
+    assert state(kind,entity)['row']==published
+# Membership-only drafts use the same edit/return loop without changing the live set.
+admin.api('admin/entity-workflow',dict(draftId=stale,action='return',reason='Recheck membership'))
+member=state('vocabulary_sets',set_id)['draft'];member_doc=json.loads(member['document'])
+member_doc['senseIds']=[catalog['vocabulary'][3]['id']];member_doc['status']='draft'
+items_before=state('vocabulary_sets',set_id)['items']
+editor.api('admin/draft-save',dict(type='entity',draftId=stale,expected=hashlib.sha256(member['document'].encode()).hexdigest(),document=member_doc))
+assert state('vocabulary_sets',set_id)['items']==items_before
+code,html,_=editor.req('/admin/vocabulary-sets?draft='+str(stale));assert code==200 and 'admin/draft-save' in html
+
+print('PASS: A03/A04 reviewed snapshots, return reasons, exact draft editing, conflicts, role checks and unchanged projection')
 assert learner.req('/tu-vung/chu-de/integration-set')[0]==200
 # Daily limit applies server-side and explicit extra study is voluntary.
 learner.api('profile',dict(goal='foundation',selfLevel='beginner',minutes=10,timezone='Asia/Ho_Chi_Minh',reviewLimit=1,gamification=False,animations=False))
@@ -196,3 +255,134 @@ rating=dict(cardId=card['id'],revision=int(card['revision']),requestKey=secrets.
 learner.api('review/rate',rating,422);rating['extra']=True;learner.api('review/rate',rating);learner.api('review/rate',rating)
 assert learner.req('/on-tap?manage=1')[0]==200
 print('PASS: metadata templates, vocabulary-set membership, daily review limit, explicit extra and gamification-disabled review')
+
+# A05: every private item remains reachable beyond 100, without overlap or leakage.
+fixture('pagination',users['learner']['id'])
+seen=[]
+for page in range(1,6):
+    code,html,_=learner.req('/so-tu-vung?q=Paging&filter=all&page='+str(page))
+    assert code==200
+    ids=re.findall(r'name="senseId" value="([0-9]+)"',html)
+    ids=list(dict.fromkeys(ids));assert len(ids)==(30 if page<5 else 1)
+    assert not set(ids)&set(seen);seen+=ids
+    if page<5:assert 'rel="next"' in html and 'q=Paging&amp;filter=all&amp;page=' in html
+assert len(seen)==121
+assert 'PRIVATE-PAGING-' not in other.req('/so-tu-vung?q=Paging')[1]
+for filter_name,count in [('hidden',61),('review',60)]:
+    html=learner.req('/so-tu-vung?q=Paging&filter='+filter_name)[1]
+    assert str(count)+' mục' in html and 'value="'+filter_name+'" selected' in html
+assert len(set(re.findall(r'name="senseId" value="([0-9]+)"',learner.req('/so-tu-vung?q=Paging&page=999')[1])))==1
+assert learner.req('/so-tu-vung?page[]=bad')[0]==200
+cards_seen=[]
+for page in range(1,6):
+    code,html,_=learner.req('/on-tap?manage=1&page='+str(page));assert code==200
+    ids=list(dict.fromkeys(re.findall(r'name="cardId" value="([0-9]+)"',html)))
+    assert len(ids)<=30 and not set(ids)&set(cards_seen);cards_seen+=ids
+assert len(cards_seen)>121
+code,html,url=learner.req('/so-tu-vung?q=Paging&filter=hidden&page=2',dict(csrf=learner.csrf,command='vocabulary/save',senseId=seen[0],notes='Updated private note'))
+assert code==200 and 'page=2' in url and 'filter=hidden' in url
+print('PASS: A05 121+ private items, stable pages, filters/counts, owner isolation and post redirect context')
+
+code,html,_=learner.req('/tien-do?week=1&page=999')
+assert code==200 and '/hoc/luot/'+key in html and 'week=2' in html
+assert learner.req('/tien-do?week[]=bad&page[]=bad')[0]==200
+assert '/hoc/luot/'+key not in other.req('/tien-do')[1]
+print('PASS: A07 history links in HTML, week navigation, invalid queries and owner isolation')
+
+# A08: real anonymous opt-in -> trial -> registration carries only the consented journey.
+campaign=Client();route='/chien-dich/'+catalog['paths'][0]['slug']
+code,html,_=campaign.req(route+'?utm_source=newsletter&utm_medium=email&utm_campaign='+catalog['paths'][0]['slug'])
+assert code==200 and 'analytics/consent' in html
+campaign.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+campaign.api('analytics/consent',dict(enabled='yes',campaignSlug=catalog['paths'][0]['slug'],utm_source='newsletter',utm_medium='email',utm_campaign=catalog['paths'][0]['slug']))
+trial=next(l for l in catalog['lessons'] if json.loads(l['document']).get('preview') and l['subtype']!='placement')
+campaign.api('attempts/start',dict(lessonId=trial['id'],requestKey=secrets.token_hex(16)))
+_,html,_=campaign.req('/register');csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+email='campaign-'+secrets.token_hex(6)+'@example.com'
+code,html,url=campaign.req('/register',dict(csrf=csrf,name='Campaign learner',email=email,password='Product-test-123!',password_confirm='Product-test-123!'))
+assert code==200 and url.endswith('/account')
+journey=json.loads(fixture('marketing-state',email));assert len(journey)==1 and journey[0]['guest_trial_at'] and journey[0]['signup_at'] and journey[0]['source']=='newsletter'
+campaign.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+campaign.api('consent',dict(analytics=False));assert json.loads(fixture('marketing-state',email))==[]
+assert 'Hành trình chiến dịch' in admin.req('/admin/operations')[1]
+assert editor.req('/admin/operations')[0]==403
+print('PASS: A08 HTTP campaign opt-in, guest trial, registration link, revoke and admin-only report')
+
+# A09: shared SSR metadata, permissions, validation, entity review snapshots and reset.
+seo=dict(path='/',title='SEO home & quote " title',description='SEO description & "quoted" value')
+editor.api('admin/seo',seo,403);learner.api('admin/seo',seo,403)
+for bad in ['/login','/hoc','/admin/settings','https://evil.example/','/lo-trinh?q=secret','/gioi-thieu/invalid','/bai-hoc/example']:
+    admin.api('admin/seo',dict(seo,path=bad),422)
+admin.api('admin/seo',dict(seo,title='<script>bad</script>'),422)
+admin.api('admin/seo',dict(seo,title='x'*161),422)
+admin.api('admin/seo',seo)
+html=learner.req('/')[1]
+assert 'SEO home &amp; quote &quot; title' in html and 'SEO description &amp; &quot;quoted&quot; value' in html
+assert '<meta property="og:title" content="SEO home' in html
+assert 'noindex' in learner.req('/tai-khoan')[1]
+admin.api('admin/seo',dict(path='/',title='',description=''))
+assert 'SEO home' not in learner.req('/')[1]
+for kind,prefix in [('paths','lo-trinh'),('vocabulary','tu-vung'),('vocabulary_sets','tu-vung/chu-de'),('articles','kien-thuc')]:
+    source=json.loads(fixture('seo-source',kind));entity_id=source['id'];route='/'+prefix+'/'+source['slug']
+    data=dict(source,kind=kind,status='draft',seo_title='SEO published '+kind,seo_description='Description '+kind)
+    editor.api('admin/entity',dict(data,seo_title='z'*161),422)
+    editor.api('admin/entity',data)
+    snap=state(kind,entity_id);record=snap['article' if kind=='articles' else 'draft']
+    assert data['seo_title'] not in learner.req(route)[1]
+    endpoint='admin/article-workflow' if kind=='articles' else 'admin/entity-workflow'
+    command={('versionId' if kind=='articles' else 'draftId'):record['id']}
+    editor.api(endpoint,dict(command,action='review'));admin.api(endpoint,dict(command,action='publish'))
+    code,html,_=learner.req(route);assert code==200 and '<title>'+data['seo_title'] in html,(kind,code,re.findall(r'<title>(.*?)</title>',html))
+    assert '<meta name="description" content="'+data['seo_description']+'"' in html
+    assert '<meta property="og:description" content="'+data['seo_description']+'"' in html
+    assert re.search(r'<link rel="canonical" href="[^"]*'+re.escape(route)+'"',html)
+    editor.api('admin/entity',dict(data,seo_title='Unpublished SEO '+kind))
+    html=learner.req(route)[1];assert 'Unpublished SEO '+kind not in html and '<title>'+data['seo_title'] in html
+assert 'admin/seo' in admin.req('/admin/settings')[1]
+print('PASS: A09 SSR title/meta/OG, safe text validation, private noindex, canonical preservation, publish isolation and clear override')
+
+# A10: validation contract and safe SSR error state.
+error=learner.api('profile',dict(goal='invalid',selfLevel='invalid',minutes=99,timezone='invalid',reviewLimit=999),422)
+assert set(error['fieldErrors'])=={'goal','selfLevel','minutes','timezone','reviewLimit'}
+error=learner.api('vocabulary/save',dict(senseId=catalog['vocabulary'][0]['id'],notes='x'*2001),422)
+assert 'notes' in error['fieldErrors']
+code,html,_=admin.req('/admin/settings',dict(csrf=admin.csrf,command='admin/seo',path='/',title='x'*161,description='Preserve this value'))
+assert code==422 and 'id="form-error-state"' in html and 'Preserve this value' in html
+state_json=re.search(r'<script type="application/json" id="form-error-state">(.*?)</script>',html,re.S)[1]
+assert 'title' in json.loads(state_json)['fields'] and 'csrf' not in json.loads(state_json)['values']
+print('PASS: A10 named field errors, safe scoped SSR state and preserved non-secret input')
+
+# Preview/guest sessions cannot write real account review cards through the concept endpoint.
+def finish_skipped(client, attempt):
+    state=client.api('attempts/'+attempt)
+    for block in state['blocks']:
+        state=client.api('attempts/'+attempt+'/view',dict(revision=state['revision'],block=block['id']))
+    for item in state['items']:
+        state=client.api('attempts/'+attempt+'/skip',dict(revision=state['revision'],exerciseId=item['exercise']['id']))
+    return client.api('attempts/'+attempt+'/finish',dict(revision=state['revision']))
+
+before=int(fixture('review-card-count',users['editor']['id']))
+_,html,_=editor.req('/admin/lesson-preview/'+str(restore_version))
+preview_state=json.loads(re.search(r'id="study-state"[^>]*>(.*?)</script>',html,re.S)[1])
+preview_state=finish_skipped(editor,preview_state['id'])
+assert not preview_state['canSaveConcepts']
+editor.api('review/concept',dict(attemptId=preview_state['id'],exerciseId='hello'),422)
+assert int(fixture('review-card-count',users['editor']['id']))==before
+guest=Client();_,html,_=guest.req('/login');guest.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+guest_id=secrets.token_hex(16);guest.api('attempts/start',dict(lessonId=lesson['id'],requestKey=guest_id))
+assert not finish_skipped(guest,guest_id)['canSaveConcepts']
+_,html,_=guest.req('/register');csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+code,html,_=guest.req('/register',dict(csrf=csrf,name='Unclaimed trial',email='claim-'+secrets.token_hex(6)+'@example.com',password='Product-test-123!',password_confirm='Product-test-123!'))
+assert code==200;guest.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+assert not guest.api('attempts/'+guest_id)['canSaveConcepts']
+guest.api('review/concept',dict(attemptId=guest_id,exerciseId='hello'),422)
+assert guest.api('review/queue')==[]
+guest.api('guest/claim',dict(attemptId=guest_id,confirm='yes'))
+claimed=guest.api('attempts/'+guest_id)
+claimed=guest.api('attempts/'+guest_id+'/finish',dict(revision=claimed['revision']))
+assert claimed['canSaveConcepts']
+guest.api('review/concept',dict(attemptId=guest_id,exerciseId='hello'))
+guest.api('review/concept',dict(attemptId=guest_id,exerciseId='hello'))
+assert len(guest.api('review/queue'))==1
+other.api('review/concept',dict(attemptId=guest_id,exerciseId='hello'),404)
+print('PASS: preview and unclaimed trial cannot create account review; confirmed owner can save idempotently, other owner denied')

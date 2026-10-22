@@ -27,7 +27,7 @@ final class Jobs {
                 $retry=$retryable&&(int)$job['attempts']<5;
                 $error=$retry?'Worker interrupted - safe retry scheduled':($retryable?'Worker interrupted - retry limit reached':(in_array($job['type'],['mail','reminder','analytics'],true)?'Delivery uncertain - worker interrupted; manual reconciliation required':'Worker interrupted - unsupported or invalid payload; manual inspection required'));
                 mce_query('UPDATE mce_jobs SET status=?,available_at=?,locked_at=NULL,last_error=? WHERE id=?',[$retry?'pending':'failed',mce_sqltime(mce_now()->modify('+'.self::recoveryDelay((int)$job['attempts']).' seconds')),$error,$job['id']]);
-                if(is_array($payload)&&$job['type']==='import')mce_query("UPDATE mce_imports SET status=? WHERE id=? AND status<>'committed'",[$retry?'queued':'failed',$payload['importId']??'']);
+                if(is_array($payload)&&$job['type']==='import'){mce_query("UPDATE mce_imports SET status=? WHERE id=? AND status<>'committed'",[$retry?'queued':'failed',$payload['importId']??'']);$total=mce_one('SELECT total FROM mce_import_progress WHERE import_id=?',[$payload['importId']??''])['total']??null;if($total===null){$total=0;$doc=mce_decode(mce_one('SELECT document FROM mce_imports WHERE id=?',[$payload['importId']??''])['document']??'{}');foreach(['paths','units','articles','vocabulary_sets','vocabulary','lessons'] as $kind)if(is_array($doc[$kind]??null)){$total=count($doc[$kind]);break;}}ImportStatus::write($payload['importId']??'',0,(int)$total,$retry?'queued':'failed');}
                 if(is_array($payload)&&$job['type']==='export')mce_query("UPDATE mce_exports SET status=? WHERE id=? AND status<>'ready'",[$retry?'queued':'failed',$payload['exportId']??'']);
                 return $retry?'requeued':'failed';
             });
@@ -37,6 +37,7 @@ final class Jobs {
     }
     public static function tick(?DateTimeImmutable $now=null): void {
         $now??=mce_now();
+        mce_query('DELETE FROM mce_journeys WHERE landed_at<?',[mce_sqltime($now->modify('-90 days'))]);
         foreach(mce_all('SELECT user_id FROM mce_profiles WHERE deleted_at IS NULL') as $profile) {
             $uid=(int)$profile['user_id'];
             mce_transaction(function()use($uid,$now){

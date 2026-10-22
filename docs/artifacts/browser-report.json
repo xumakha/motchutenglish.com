@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-21T09:23:05.135Z",
+  "date": "2026-10-22T06:40:36.704Z",
   "browser": "Chromium headless (sandbox disabled only for isolated local test process)",
   "widths": [
     360,
@@ -19,12 +19,24 @@
   "keyboardSubmission": true,
   "guestResults": true,
   "registrationAndExplicitImport": true,
+  "reviewAudioErrorRetry": true,
+  "reviewLegacySnapshot": true,
+  "keyboardOrderMatch": true,
+  "scopedFieldErrors": true,
+  "importWorkerPolling": true,
+  "lessonFlashcardKeyboardOfflineResume": true,
+  "lessonFlashcardTestRedactionNullScore": true,
+  "accessibleMenuEscapeSkipLink": true,
+  "flashcardAccessibilityTree": true,
+  "focusBelowStickyHeader": true,
+  "previewReviewIsolation": true,
   "overflow": false,
   "exceptions": [],
   "screenshots": [
     "docs/artifacts/catalog-360.png",
     "docs/artifacts/catalog-390.png",
     "docs/artifacts/catalog-768.png",
-    "docs/artifacts/catalog-1440.png"
+    "docs/artifacts/catalog-1440.png",
+    "docs/artifacts/lesson-flashcard-360.png"
   ]
 }

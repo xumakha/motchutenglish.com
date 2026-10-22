@@ -1,267 +1,317 @@
 {
-  "environment": "Local Windows, threaded CGI process per request, XAMPP MariaDB 10.4.32; not staging",
+  "timestamp": "2026-10-22T04:33:44.310245+00:00",
+  "runtime": {
+    "php": "8.5.11",
+    "database": "10.4.32-MariaDB",
+    "lessons": 18,
+    "attempts": 55
+  },
+  "system": "Windows-10-10.0.19045-SP0",
+  "cpu": "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD",
+  "logical_cpus": 12,
+  "environment": "Local Windows, Apache 64 request threads + one persistent PHP FastCGI worker; not staging",
   "concurrency": 50,
   "samples": 50,
   "operation": "authenticated server submit + grading + attempt read",
-  "p50_ms": 954.925,
-  "p95_ms": 1145.16,
-  "max_ms": 1153.63,
+  "p50_ms": 350.345,
+  "p95_ms": 642.3,
+  "max_ms": 662.53,
   "errors": 0,
   "error_rate": 0.0,
-  "seconds": 1.201,
+  "seconds": 0.865,
   "target_p95_ms": 800,
   "target_error_rate": 0.01,
-  "target_met": false,
+  "target_met": true,
   "results": [
     {
-      "ms": 475.21,
+      "ms": 32.48,
       "error": null,
       "details": null
     },
     {
-      "ms": 622.28,
+      "ms": 51.9,
       "error": null,
       "details": null
     },
     {
-      "ms": 763.87,
+      "ms": 69.53,
       "error": null,
       "details": null
     },
     {
-      "ms": 783.83,
+      "ms": 112.65,
       "error": null,
       "details": null
     },
     {
-      "ms": 736.14,
+      "ms": 82.25,
       "error": null,
       "details": null
     },
     {
-      "ms": 1077.36,
+      "ms": 96.56,
       "error": null,
       "details": null
     },
     {
-      "ms": 799.35,
+      "ms": 139.13,
       "error": null,
       "details": null
     },
     {
-      "ms": 479.42,
+      "ms": 125.07,
       "error": null,
       "details": null
     },
     {
-      "ms": 371.0,
+      "ms": 160.81,
       "error": null,
       "details": null
     },
     {
-      "ms": 1150.65,
+      "ms": 148.23,
       "error": null,
       "details": null
     },
     {
-      "ms": 1007.17,
+      "ms": 172.45,
       "error": null,
       "details": null
     },
     {
-      "ms": 1046.06,
+      "ms": 184.73,
       "error": null,
       "details": null
     },
     {
-      "ms": 768.94,
+      "ms": 208.57,
       "error": null,
       "details": null
     },
     {
-      "ms": 645.85,
+      "ms": 221.51,
       "error": null,
       "details": null
     },
     {
-      "ms": 654.35,
+      "ms": 196.04,
       "error": null,
       "details": null
     },
     {
-      "ms": 1030.26,
+      "ms": 229.53,
       "error": null,
       "details": null
     },
     {
-      "ms": 552.26,
+      "ms": 242.62,
       "error": null,
       "details": null
     },
     {
-      "ms": 783.2,
+      "ms": 282.7,
       "error": null,
       "details": null
     },
     {
-      "ms": 1033.11,
+      "ms": 266.08,
       "error": null,
       "details": null
     },
     {
-      "ms": 995.07,
+      "ms": 294.78,
       "error": null,
       "details": null
     },
     {
-      "ms": 1153.63,
+      "ms": 251.78,
       "error": null,
       "details": null
     },
     {
-      "ms": 966.79,
+      "ms": 320.0,
       "error": null,
       "details": null
     },
     {
-      "ms": 1115.65,
+      "ms": 305.84,
       "error": null,
       "details": null
     },
     {
-      "ms": 892.43,
+      "ms": 332.33,
       "error": null,
       "details": null
     },
     {
-      "ms": 907.02,
+      "ms": 356.24,
       "error": null,
       "details": null
     },
     {
-      "ms": 1145.16,
+      "ms": 344.45,
       "error": null,
       "details": null
     },
     {
-      "ms": 942.7,
+      "ms": 404.9,
       "error": null,
       "details": null
     },
     {
-      "ms": 982.37,
+      "ms": 391.11,
       "error": null,
       "details": null
     },
     {
-      "ms": 1131.0,
+      "ms": 379.12,
       "error": null,
       "details": null
     },
     {
-      "ms": 1058.42,
+      "ms": 363.77,
       "error": null,
       "details": null
     },
     {
-      "ms": 702.43,
+      "ms": 428.3,
       "error": null,
       "details": null
     },
     {
-      "ms": 895.6,
+      "ms": 414.78,
       "error": null,
       "details": null
     },
     {
-      "ms": 1074.44,
+      "ms": 440.53,
       "error": null,
       "details": null
     },
     {
-      "ms": 995.9,
+      "ms": 450.74,
       "error": null,
       "details": null
     },
     {
-      "ms": 599.38,
+      "ms": 503.98,
       "error": null,
       "details": null
     },
     {
-      "ms": 1029.33,
+      "ms": 540.49,
       "error": null,
       "details": null
     },
     {
-      "ms": 982.92,
+      "ms": 528.21,
       "error": null,
       "details": null
     },
     {
-      "ms": 922.54,
+      "ms": 551.9,
       "error": null,
       "details": null
     },
     {
-      "ms": 1062.17,
+      "ms": 514.71,
       "error": null,
       "details": null
     },
     {
-      "ms": 735.66,
+      "ms": 458.51,
       "error": null,
       "details": null
     },
     {
-      "ms": 996.29,
+      "ms": 561.07,
       "error": null,
       "details": null
     },
     {
-      "ms": 980.45,
+      "ms": 572.72,
       "error": null,
       "details": null
     },
     {
-      "ms": 1007.92,
+      "ms": 596.54,
       "error": null,
       "details": null
     },
     {
-      "ms": 967.92,
+      "ms": 619.76,
       "error": null,
       "details": null
     },
     {
-      "ms": 946.88,
+      "ms": 606.51,
       "error": null,
       "details": null
     },
     {
-      "ms": 962.97,
+      "ms": 579.98,
       "error": null,
       "details": null
     },
     {
-      "ms": 896.18,
+      "ms": 656.44,
       "error": null,
       "details": null
     },
     {
-      "ms": 996.92,
+      "ms": 629.12,
       "error": null,
       "details": null
     },
     {
-      "ms": 931.9,
+      "ms": 642.3,
       "error": null,
       "details": null
     },
     {
-      "ms": 922.55,
+      "ms": 662.53,
       "error": null,
       "details": null
     }
-  ]
+  ],
+  "httpRuntime": {
+    "php": "8.5.11 cgi-fcgi",
+    "persistentWorkerVerified": true,
+    "phpWorkers": 1,
+    "routingChecks": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/lo-trinh",
+        "status": 200
+      },
+      {
+        "path": "/assets/css/redesign.css",
+        "status": 200
+      },
+      {
+        "path": "/application/config/database.php",
+        "status": 403
+      },
+      {
+        "path": "/writable/apache-benchmark/guard.php",
+        "status": 403
+      },
+      {
+        "path": "/tests/performance_profile.php",
+        "status": 403
+      },
+      {
+        "path": "/.env",
+        "status": 403
+      }
+    ],
+    "apache": "Server version: Apache/2.4.58 (Win64)"
+  },
+  "securityPreflight": {
+    "privateAttemptUnauthenticated": 404,
+    "invalidCsrf": 403
+  }
 }

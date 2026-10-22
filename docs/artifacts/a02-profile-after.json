@@ -1,0 +1,66 @@
+{
+  "environment": "CLI sequential diagnostic on isolated MariaDB; not HTTP or staging load",
+  "scope": "same submit/grade/read service path, five fresh attempts; not a controlled latency comparison; other local processes may be active",
+  "samples": [
+    {
+      "bootstrapMs": 13.0542,
+      "identityMs": 0.6359,
+      "rateLimitMs": 2.9307,
+      "mutateMs": 9.7472,
+      "readSerializeMs": 1.0251,
+      "queryCount": 26,
+      "sqlMs": 9.489000045776368,
+      "totalMs": 32.8462,
+      "correct": true,
+      "processWallMs": 101.01420000137296
+    },
+    {
+      "bootstrapMs": 12.0965,
+      "identityMs": 1.3705,
+      "rateLimitMs": 4.8521,
+      "mutateMs": 13.3216,
+      "readSerializeMs": 1.023,
+      "queryCount": 26,
+      "sqlMs": 15.653700012207027,
+      "totalMs": 38.0271,
+      "correct": true,
+      "processWallMs": 97.42189999087714
+    },
+    {
+      "bootstrapMs": 12.6933,
+      "identityMs": 0.4822,
+      "rateLimitMs": 4.1573,
+      "mutateMs": 12.912,
+      "readSerializeMs": 0.9635,
+      "queryCount": 26,
+      "sqlMs": 13.486899993896486,
+      "totalMs": 37.0464,
+      "correct": true,
+      "processWallMs": 93.36379999876954
+    },
+    {
+      "bootstrapMs": 12.3677,
+      "identityMs": 0.5889,
+      "rateLimitMs": 2.647,
+      "mutateMs": 10.8571,
+      "readSerializeMs": 1.2711,
+      "queryCount": 26,
+      "sqlMs": 10.408899978637695,
+      "totalMs": 33.1374,
+      "correct": true,
+      "processWallMs": 91.7224000004353
+    },
+    {
+      "bootstrapMs": 12.164,
+      "identityMs": 0.4519,
+      "rateLimitMs": 3.8609,
+      "mutateMs": 12.0751,
+      "readSerializeMs": 1.1135,
+      "queryCount": 26,
+      "sqlMs": 12.41790002441406,
+      "totalMs": 34.5705,
+      "correct": true,
+      "processWallMs": 98.19010000501294
+    }
+  ]
+}

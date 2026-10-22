@@ -15,5 +15,5 @@ foreach (['Home','Courses','Listening','Pages','Auth'] as $controller) require A
 
 require APP_PATH.'/libraries/Learning.php';
 require APP_PATH.'/controllers/Learning.php';
-foreach (['ProductSupport','Assessment','Motivation','Review','Study','Identity','MailTransport','MarketingAnalytics','CatalogCache','AssetStorage','Content','Exports','Jobs'] as $library) require APP_PATH.'/libraries/'.$library.'.php';
+foreach (['ProductSupport','Seo','Assessment','Motivation','Review','Study','Identity','MailTransport','MarketingAnalytics','CatalogCache','AssetStorage','ImportStatus','Content','Exports','Jobs'] as $library) require APP_PATH.'/libraries/'.$library.'.php';
 require APP_PATH.'/controllers/Product.php';

@@ -24,7 +24,7 @@ final class Content {
     }
     public static function saveVersion(array $data): int {
         mce_staff();$uid=mce_uid();$title=mce_text($data['title']??'',200);$document=$data['document']??null;
-        if(!is_array($document)) throw new ProductError(422,'Document phải là JSON object.');Assessment::document($document);
+        if(!is_array($document)) throw new ProductError(422,'Document phải là JSON object.');mce_field('document',fn()=>Assessment::document($document));
         return mce_transaction(function()use($data,$document,$uid,$title){
             $lesson=(int)($data['lessonId']??0);
             if(!$lesson) {
@@ -79,7 +79,7 @@ final class Content {
             } elseif($action==='archive') { mce_query('UPDATE mce_lessons SET archived=1 WHERE id=?',[$v['lesson_id']]); }
             elseif($action==='restore') { if($v['status']!=='published')throw new ProductError(422,'Chỉ khôi phục bản đã xuất bản.');mce_query('UPDATE mce_lessons SET archived=0,current_version=? WHERE id=?',[$version,$v['lesson_id']]); }
             elseif($action==='return') { if($v['status']!=='in_review')throw new ProductError(409,'Phiên bản chưa được gửi duyệt.');mce_query("UPDATE mce_versions SET status='draft' WHERE id=?",[$version]); }
-            else throw new ProductError(422,'Trạng thái không hợp lệ.');mce_audit($action,'version:'.$version);
+            else throw new ProductError(422,'Trạng thái không hợp lệ.',['status'=>'Trạng thái không hợp lệ.']);mce_audit($action,'version:'.$version);
         });
     }
     private static function entityRow(string $kind,array $data): array {
@@ -94,28 +94,33 @@ final class Content {
         $row=[];foreach($fields as $f) {
             if(in_array($f,['sort_order','path_id'],true))$row[$f]=(int)($data[$f]??0);
             elseif(in_array($f,['audio_id','image_id'],true))$row[$f]=empty($data[$f])?null:(int)$data[$f];
-            else {$max=match($f){'slug','lemma','ipa'=>150,'part_of_speech'=>60,'topic'=>100,'level','status'=>20,'description','body','objectives','prerequisites','meaning','example','translation'=>15000,default=>200};$row[$f]=mce_text($data[$f]??'',$max,!in_array($f,['ipa','prerequisites'],true));}
+            else {$max=match($f){'slug','lemma','ipa'=>150,'part_of_speech'=>60,'topic'=>100,'level','status'=>20,'description','body','objectives','prerequisites','meaning','example','translation'=>15000,default=>200};$row[$f]=mce_field($f,fn()=>mce_text($data[$f]??'',$max,!in_array($f,['ipa','prerequisites'],true)));}
         }
-        if(isset($row['slug']))self::slug($row['slug']);
-        if($kind==='vocabulary')self::slug($row['topic']);
+        if($kind!=='units') {
+            $previous=$id?mce_one('SELECT seo_title,seo_description FROM mce_'.$kind.' WHERE id=?',[$id]):[];
+            foreach(['seo_title'=>160,'seo_description'=>320] as $field=>$max)$row[$field]=mce_field($field,fn()=>Seo::text($data[$field]??($previous[$field]??''),$max));
+        }
+        if(isset($row['slug']))mce_field('slug',fn()=>self::slug($row['slug']));
+        if($kind==='vocabulary')mce_field('topic',fn()=>self::slug($row['topic']));
         if(!empty($row['audio_id'])) {
-            $m=mce_one('SELECT * FROM mce_media WHERE id=?',[$row['audio_id']]);if(!$m||!str_starts_with($m['mime'],'audio/')||!$m['license_text']||!is_file(mce_storage()->path($m['storage_key'])))throw new ProductError(422,'Chọn audio từ thư viện có quyền sử dụng.');
+            $m=mce_one('SELECT * FROM mce_media WHERE id=?',[$row['audio_id']]);if(!$m||!str_starts_with($m['mime'],'audio/')||!$m['license_text']||!is_file(mce_storage()->path($m['storage_key'])))throw new ProductError(422,'Chọn audio từ thư viện có quyền sử dụng.',['audio_id'=>'Chọn audio từ thư viện có quyền sử dụng.']);
         }
-        if(!empty($row['image_id'])){$image=mce_one('SELECT mime FROM mce_media WHERE id=?',[$row['image_id']]);if(!$image||!str_starts_with($image['mime'],'image/'))throw new ProductError(422,'Ảnh lộ trình cần tệp ảnh trong thư viện.');}
+        if(!empty($row['image_id'])){$image=mce_one('SELECT mime FROM mce_media WHERE id=?',[$row['image_id']]);if(!$image||!str_starts_with($image['mime'],'image/'))throw new ProductError(422,'Ảnh lộ trình cần tệp ảnh trong thư viện.',['image_id'=>'Ảnh lộ trình cần tệp ảnh trong thư viện.']);}
         if(isset($row['status'])) {
-            if(!in_array($row['status'],['draft','in_review','published','archived'],true))throw new ProductError(422,'Trạng thái không hợp lệ.');
+            if(!in_array($row['status'],['draft','in_review','published','archived'],true))throw new ProductError(422,'Trạng thái không hợp lệ.',['status'=>'Trạng thái không hợp lệ.']);
             if(in_array($row['status'],['published','archived'],true))mce_staff(true);
         }
-        if($kind==='units'&&!mce_one('SELECT id FROM mce_paths WHERE id=?',[$row['path_id']]))throw new ProductError(422,'Lộ trình không tồn tại.');
+        if($kind==='units'&&!mce_one('SELECT id FROM mce_paths WHERE id=?',[$row['path_id']]))throw new ProductError(422,'Lộ trình không tồn tại.',['path_id'=>'Lộ trình không tồn tại.']);
         if($kind==='vocabulary_sets'&&$row['status']==='published'&&(!$id||!mce_one("SELECT i.sense_id FROM mce_vocabulary_set_items i JOIN mce_vocabulary v ON v.id=i.sense_id WHERE i.set_id=? AND v.status='published' LIMIT 1",[$id])))throw new ProductError(422,'Thêm ít nhất một nghĩa từ đã xuất bản trước khi xuất bản bộ từ.');
         return $row;
     }
     public static function saveEntity(string $kind,array $data): int {
         mce_staff();$id=(int)($data['id']??0);$row=self::entityRow($kind,$data);
-        return mce_transaction(function()use($kind,$id,$row){
+        return mce_transaction(function()use($kind,$id,$row,$data){
             if(!$id&&($row['status']??'')==='published')throw new ProductError(409,'Gửi duyệt bản nháp rồi xuất bản bằng thao tác duyệt.');
             if($id) {
                 $old=mce_one('SELECT * FROM mce_'.$kind.' WHERE id=? FOR UPDATE',[$id]);if(!$old)throw new ProductError(404,'Nội dung không tồn tại.');
+                if($kind!=='units')foreach(['seo_title','seo_description'] as $field)if(!array_key_exists($field,$data))$row[$field]=$old[$field];
                 if(($row['status']??'')==='published'&&$old['status']!=='published')throw new ProductError(409,'Gửi duyệt bản nháp rồi xuất bản bằng thao tác duyệt.');
                 if(($old['status']??'')==='in_review'&&($row['status']??'')!=='archived')throw new ProductError(409,'Nội dung đang chờ duyệt; không sửa bản đã gửi.');
                 if(in_array($kind,['paths','vocabulary','vocabulary_sets'],true)&&$old['status']==='published'&&$row['status']!=='archived') {
@@ -131,7 +136,7 @@ final class Content {
                     mce_audit('article_draft_created','article:'.$id);return $id;
                 }
                 // Store revisions of public articles before replacing the published projection.
-                if($kind==='articles') mce_query('INSERT INTO mce_article_versions(article_id,document,actor_id,created_at) VALUES (?,?,?,?)',[$id,mce_json($old),mce_uid(),mce_sqltime()]);
+                if($kind==='articles'&&$old['status']==='published') mce_query('INSERT INTO mce_article_versions(article_id,document,actor_id,created_at) VALUES (?,?,?,?)',[$id,mce_json($old),mce_uid(),mce_sqltime()]);
                 mce_query('UPDATE mce_'.$kind.' SET '.implode(',',array_map(fn($k)=>$k.'=?',array_keys($row))).' WHERE id=?',[...array_values($row),$id]);
                 if(isset($old['slug'])&&$old['slug']!==$row['slug']) {
                     $prefix=match($kind){'paths'=>'lo-trinh','vocabulary'=>'tu-vung','articles'=>'kien-thuc','vocabulary_sets'=>'tu-vung/chu-de'};
@@ -168,7 +173,7 @@ final class Content {
             if(!empty($old['membershipOnly'])) {
                 $document=['title'=>$old['title'],'membershipOnly'=>true,'senseIds'=>self::validateSetItems($data['senseIds']??null),'baseSenseIds'=>$old['baseSenseIds']];
             } else {
-                $data['status']='draft';$document=self::entityRow($kind,$data);
+                $data['status']='draft';$data['id']=$entity;$document=self::entityRow($kind,$data);
                 if($kind==='vocabulary_sets'&&isset($old['senseIds']))$document+=['senseIds'=>self::validateSetItems($data['senseIds']??$old['senseIds']),'baseSenseIds'=>$old['baseSenseIds']];
             }
             if(isset($old['reviewFeedback']))$document['reviewFeedback']=$old['reviewFeedback'];
@@ -191,7 +196,7 @@ final class Content {
                 $old=mce_one('SELECT * FROM mce_articles WHERE id=? FOR UPDATE',[$v['article_id']]);
                 if(!$old||$old['status']==='archived')throw new ProductError(409,'Bài viết đã lưu trữ hoặc không còn tồn tại.');
                 mce_query('INSERT INTO mce_article_versions(article_id,document,actor_id,created_at) VALUES (?,?,?,?)',[$v['article_id'],mce_json($old),mce_uid(),mce_sqltime()]);
-                $d['status']='published';mce_query("UPDATE mce_articles SET slug=?,title=?,body=?,status='published',revision=revision+1,updated_at=? WHERE id=?",[$d['slug'],$d['title'],$d['body'],mce_sqltime(),$v['article_id']]);
+                $d['status']='published';$d=self::entityRow('articles',$d+['id'=>$v['article_id']]);mce_query("UPDATE mce_articles SET slug=?,title=?,body=?,seo_title=?,seo_description=?,status='published',revision=revision+1,updated_at=? WHERE id=?",[$d['slug'],$d['title'],$d['body'],$d['seo_title'],$d['seo_description'],mce_sqltime(),$v['article_id']]);
                 if($old['slug']!==$d['slug'])self::redirect('/kien-thuc/'.$old['slug'],'/kien-thuc/'.$d['slug']);
             } else throw new ProductError(422,'Thao tác không hợp lệ.');
             mce_query('UPDATE mce_article_versions SET document=? WHERE id=?',[mce_json($d),$version]);mce_audit('article_'.$action,'article_version:'.$version,$action==='return'?['reason'=>$reason]:[]);
@@ -246,7 +251,7 @@ final class Content {
         mce_query('DELETE FROM mce_vocabulary_set_items WHERE set_id=?',[$set]);foreach($ids as $id)mce_query('INSERT INTO mce_vocabulary_set_items(set_id,sense_id) VALUES (?,?)',[$set,$id]);
     }
     public static function saveSetItems(int $set,mixed $ids): void {
-        mce_staff();mce_transaction(function()use($set,$ids){
+        mce_staff();$save=function()use($set,$ids){
             $record=mce_one('SELECT * FROM mce_vocabulary_sets WHERE id=? FOR UPDATE',[$set]);if(!$record)throw new ProductError(404,'Không tìm thấy bộ từ.');
             if($record['status']==='archived')throw new ProductError(409,'Không sửa thành viên bộ đã lưu trữ.');
             if($record['status']==='in_review')throw new ProductError(409,'Không sửa thành viên khi bộ từ đang chờ duyệt.');
@@ -257,7 +262,7 @@ final class Content {
                 mce_audit('set_membership_proposed','set:'.$set);return;
             }
             self::replaceSetItems($set,$ids);mce_audit('set_membership_saved','set:'.$set);
-        });
+        };if(db()->inTransaction())$save();else mce_transaction($save);
     }
     public static function upload(array $file,array $data): int {
         mce_staff();mce_limit('upload',30);
@@ -274,74 +279,97 @@ final class Content {
         mce_staff();mce_limit('import',10);if(strlen($raw)>1024*1024)throw new ProductError(422,'Batch tối đa 1 MB.');
         if(!str_starts_with(ltrim($raw),'{')) {
             $stream=fopen('php://temp','r+');fwrite($stream,$raw);rewind($stream);$headers=fgetcsv($stream,0,',','"','');
-            $rows=[];if(!$headers||!in_array('externalId',$headers,true)){fclose($stream);throw new ProductError(422,'CSV cần header theo template từ vựng.');}
+            $rows=[];if(!$headers||count(array_unique($headers))!==count($headers)||!in_array('externalId',$headers,true)){fclose($stream);throw new ProductError(422,'CSV cần header theo template từ vựng.');}
             while(($row=fgetcsv($stream,0,',','"',''))!==false) {
                 if($row===[null])continue;
                 if(count($row)!==count($headers)){fclose($stream);throw new ProductError(422,'CSV có số cột không khớp tại dòng '.(count($rows)+2).'.');}
                 $rows[]=array_combine($headers,$row);if(count($rows)>1000){fclose($stream);throw new ProductError(422,'CSV tối đa 1000 records.');}
             }fclose($stream);$doc=['schemaVersion'=>1,'namespace'=>'csv-vocabulary','vocabulary'=>$rows];
-        } else {try{$doc=mce_decode($raw);}catch(Throwable $e){throw new ProductError(422,'JSON không hợp lệ.');}}
-        if(!is_array($doc)||!is_string($doc['namespace']??null)||!preg_match('/^[a-z0-9-]{1,50}$/D',$doc['namespace']))throw new ProductError(422,'Namespace không hợp lệ.');
+        } else {try{$doc=mce_decode($raw);}catch(Throwable $e){throw new ProductError(422,'JSON không hợp lệ.',['raw'=>'Kiểm tra cú pháp JSON.']);}}
+        if(!is_array($doc)||!is_string($doc['namespace']??null)||!preg_match('/^[a-z0-9-]{1,50}$/D',$doc['namespace']))throw new ProductError(422,'Namespace không hợp lệ.',['namespace'=>'Dùng chữ thường, số và gạch ngang, tối đa 50 ký tự.']);
         if(count(array_intersect(array_keys($doc),['paths','units','articles','vocabulary_sets','vocabulary','lessons']))!==1)throw new ProductError(422,'Mỗi batch chỉ chứa một loại dữ liệu.');
         foreach(['paths','units','articles','vocabulary_sets'] as $kind)if(isset($doc[$kind])) {
             if(($doc['schemaVersion']??0)!==1||!is_array($doc[$kind])||!array_is_list($doc[$kind])||count($doc[$kind])>1000)throw new ProductError(422,'Batch cần schemaVersion=1 và tối đa 1000 records.');
             $errors=[];$keys=[];$slugs=[];
             foreach($doc[$kind] as $i=>$record)try {
                 if(!is_array($record))throw new ProductError(422,'Record phải là object.');
-                $key=strtolower(mce_text($record['externalId']??'',100));if(isset($keys[$key]))throw new ProductError(422,'externalId trùng.');$keys[$key]=true;
-                $record['status']='draft';$row=self::entityRow($kind,$record);
-                if(isset($row['slug'])){if(isset($slugs[$row['slug']])||mce_one('SELECT id FROM mce_'.$kind.' WHERE slug=?',[$row['slug']]))throw new ProductError(422,'Slug đã tồn tại hoặc trùng trong batch.');$slugs[$row['slug']]=true;}
-                if(mce_one('SELECT entity_id FROM mce_external_refs WHERE namespace=? AND external_id=? AND kind=?',[$doc['namespace'],$key,$kind]))throw new ProductError(422,'externalId đã tồn tại.');
-            }catch(Throwable $e){$errors[]=['record'=>$i+1,'field'=>$kind.'.'.$i,'message'=>$e instanceof ProductError?$e->getMessage():'Record không hợp lệ.'];}
-            $id=bin2hex(random_bytes(16));mce_query('INSERT INTO mce_imports(id,actor_id,document,errors) VALUES (?,?,?,?)',[$id,mce_uid(),mce_json($doc),mce_json($errors)]);return ['id'=>$id,'errors'=>$errors,'count'=>count($doc[$kind]),'status'=>'preview'];
+                $key=strtolower(mce_field('externalId',fn()=>mce_text($record['externalId']??'',100)));if(isset($keys[$key]))throw new ProductError(422,'externalId trùng.',['externalId'=>'externalId bị trùng.']);$keys[$key]=true;
+                $record['status']='draft';$record['id']=0;$row=self::entityRow($kind,$record);
+                if(isset($row['slug'])){if(isset($slugs[$row['slug']])||mce_one('SELECT id FROM mce_'.$kind.' WHERE slug=?',[$row['slug']]))throw new ProductError(422,'Slug đã tồn tại hoặc trùng trong batch.',['slug'=>'Slug đã tồn tại hoặc trùng trong batch.']);$slugs[$row['slug']]=true;}
+                if(mce_one('SELECT entity_id FROM mce_external_refs WHERE namespace=? AND external_id=? AND kind=?',[$doc['namespace'],$key,$kind]))throw new ProductError(422,'externalId đã tồn tại.',['externalId'=>'externalId đã tồn tại.']);
+            }catch(Throwable $e){$errors=[...$errors,...ImportStatus::errors($e,$kind.'.'.$i,$i)];}
+            $id=bin2hex(random_bytes(16));mce_query('INSERT INTO mce_imports(id,actor_id,document,errors) VALUES (?,?,?,?)',[$id,mce_uid(),mce_json($doc),mce_json($errors)]);ImportStatus::write($id,0,count($doc[$kind]),'preview');return ['id'=>$id,'errors'=>$errors,'count'=>count($doc[$kind]),'status'=>'preview'];
         }
         if(isset($doc['vocabulary'])) {
-            if(($doc['schemaVersion']??0)!==1||!is_array($doc['vocabulary'])||count($doc['vocabulary'])>1000||!preg_match('/^[a-z0-9-]{1,50}$/D',$doc['namespace']??''))throw new ProductError(422,'Batch từ vựng không hợp lệ.');
+            if(($doc['schemaVersion']??0)!==1||!is_array($doc['vocabulary'])||!array_is_list($doc['vocabulary'])||count($doc['vocabulary'])>1000||!preg_match('/^[a-z0-9-]{1,50}$/D',$doc['namespace']??''))throw new ProductError(422,'Batch từ vựng không hợp lệ.');
             $errors=[];$keys=[];$slugs=[];
             foreach($doc['vocabulary'] as $i=>$v) {
                 try {
-                    if(isset($v['schemaVersion'])&&(int)$v['schemaVersion']!==1)throw new ProductError(422,'schemaVersion record phải bằng 1.');
-                    foreach(['externalId','slug','lemma','part_of_speech','topic','meaning','example','translation','level'] as $f) mce_text($v[$f]??'',in_array($f,['meaning','example','translation'],true)?15000:200);
-                    $v['status']='draft';self::entityRow('vocabulary',$v);
-                    if(isset($slugs[$v['slug']]))throw new ProductError(422,'Slug trùng trong batch.');$slugs[$v['slug']]=true;
-                    self::slug($v['slug']);$key=strtolower(mce_text($v['externalId'],100));if(isset($keys[$key]))throw new ProductError(422,'externalId trùng.');$keys[$key]=true;
-                    if(mce_one('SELECT id FROM mce_vocabulary WHERE slug=?',[$v['slug']])||mce_one("SELECT entity_id FROM mce_external_refs WHERE namespace=? AND external_id=? AND kind='vocabulary'",[$doc['namespace'],$key]))throw new ProductError(422,'Nội dung đã tồn tại, không ghi đè.');
-                } catch(Throwable $e){$errors[]=['record'=>$i+1,'field'=>'vocabulary.'.$i,'message'=>$e instanceof ProductError?$e->getMessage():'Record không hợp lệ.'];}
+                    if(isset($v['schemaVersion'])&&(int)$v['schemaVersion']!==1)throw new ProductError(422,'schemaVersion record phải bằng 1.',['schemaVersion'=>'Cần phiên bản 1.']);
+                    if(!is_array($v))throw new ProductError(422,'Record phải là object.');foreach(['externalId','slug','lemma','part_of_speech','topic','meaning','example','translation','level'] as $f)mce_field($f,fn()=>mce_text($v[$f]??'',in_array($f,['meaning','example','translation'],true)?15000:200));
+                    $v['status']='draft';$v['id']=0;self::entityRow('vocabulary',$v);
+                    if(isset($slugs[$v['slug']]))throw new ProductError(422,'Slug trùng trong batch.',['slug'=>'Slug trùng trong batch.']);$slugs[$v['slug']]=true;
+                    mce_field('slug',fn()=>self::slug($v['slug']));$key=strtolower(mce_field('externalId',fn()=>mce_text($v['externalId'],100)));if(isset($keys[$key]))throw new ProductError(422,'externalId trùng.',['externalId'=>'externalId bị trùng.']);$keys[$key]=true;
+                    if(mce_one('SELECT id FROM mce_vocabulary WHERE slug=?',[$v['slug']]))throw new ProductError(422,'Slug đã tồn tại.',['slug'=>'Không ghi đè slug đã tồn tại.']);if(mce_one("SELECT entity_id FROM mce_external_refs WHERE namespace=? AND external_id=? AND kind='vocabulary'",[$doc['namespace'],$key]))throw new ProductError(422,'externalId đã tồn tại.',['externalId'=>'Không ghi đè externalId.']);
+                } catch(Throwable $e){$errors=[...$errors,...ImportStatus::errors($e,'vocabulary.'.$i,$i)];}
             }
-            $id=bin2hex(random_bytes(16));mce_query('INSERT INTO mce_imports(id,actor_id,document,errors) VALUES (?,?,?,?)',[$id,mce_uid(),mce_json($doc),mce_json($errors)]);return ['id'=>$id,'errors'=>$errors,'count'=>count($doc['vocabulary']),'status'=>'preview'];
+            $id=bin2hex(random_bytes(16));mce_query('INSERT INTO mce_imports(id,actor_id,document,errors) VALUES (?,?,?,?)',[$id,mce_uid(),mce_json($doc),mce_json($errors)]);ImportStatus::write($id,0,count($doc['vocabulary']),'preview');return ['id'=>$id,'errors'=>$errors,'count'=>count($doc['vocabulary']),'status'=>'preview'];
         }
-        if(!is_array($doc)||($doc['schemaVersion']??0)!==1||!preg_match('/^[a-z0-9-]{1,50}$/D',$doc['namespace']??'')||!is_array($doc['lessons']??null)||count($doc['lessons'])>1000)throw new ProductError(422,'Batch cần schemaVersion=1, namespace và tối đa 1000 lessons.');
+        if(!is_array($doc)||($doc['schemaVersion']??0)!==1||!preg_match('/^[a-z0-9-]{1,50}$/D',$doc['namespace']??'')||!is_array($doc['lessons']??null)||!array_is_list($doc['lessons'])||count($doc['lessons'])>1000)throw new ProductError(422,'Batch cần schemaVersion=1, namespace và tối đa 1000 lessons.');
         $errors=[];$keys=[];$slugs=[];
         foreach($doc['lessons'] as $i=>$row) {
             try {
-                if(!is_array($row))throw new ProductError(422,'Record không hợp lệ.');self::slug($row['slug']??'');mce_text($row['title']??'',200);
-                $slug=$row['slug'];if(isset($slugs[$slug]))throw new ProductError(422,'Slug trùng trong batch.');$slugs[$slug]=true;
-                $key=$doc['namespace'].':'.strtolower(mce_text($row['externalId']??'',100));if(isset($keys[$key]))throw new ProductError(422,'externalId trùng trong batch.');$keys[$key]=true;
-                if(!mce_one('SELECT id FROM mce_units WHERE id=?',[(int)($row['unitId']??0)]))throw new ProductError(422,'unitId không tồn tại.');
-                Assessment::document($row['document']??[]);
+                if(!is_array($row))throw new ProductError(422,'Record không hợp lệ.');mce_field('slug',fn()=>self::slug($row['slug']??''));mce_field('title',fn()=>mce_text($row['title']??'',200));
+                $slug=$row['slug'];if(isset($slugs[$slug]))throw new ProductError(422,'Slug trùng trong batch.',['slug'=>'Slug trùng trong batch.']);$slugs[$slug]=true;
+                $key=$doc['namespace'].':'.strtolower(mce_field('externalId',fn()=>mce_text($row['externalId']??'',100)));if(isset($keys[$key]))throw new ProductError(422,'externalId trùng trong batch.',['externalId'=>'externalId trùng trong batch.']);$keys[$key]=true;
+                if(!mce_one('SELECT id FROM mce_units WHERE id=?',[(int)($row['unitId']??0)]))throw new ProductError(422,'unitId không tồn tại.',['unitId'=>'Chọn chương tồn tại.']);
+                ImportStatus::document($row['document']??null);
                 if(mce_one('SELECT id FROM mce_lessons WHERE external_key=? OR slug=?',[$key,$row['slug']]))throw new ProductError(422,'externalId hoặc slug đã tồn tại. Batch không ghi đè nội dung.');
-            }catch(Throwable $e){$errors[]=['record'=>$i+1,'field'=>'lessons.'.$i,'message'=>$e instanceof ProductError?$e->getMessage():'Cấu trúc record không hợp lệ.'];}
+            }catch(Throwable $e){$errors=[...$errors,...ImportStatus::errors($e,'lessons.'.$i,$i)];}
         }
         $id=bin2hex(random_bytes(16));mce_query('INSERT INTO mce_imports(id,actor_id,document,errors) VALUES (?,?,?,?)',[$id,mce_uid(),mce_json($doc),mce_json($errors)]);
-        return ['id'=>$id,'errors'=>$errors,'count'=>count($doc['lessons']),'status'=>'preview'];
+        ImportStatus::write($id,0,count($doc['lessons']),'preview');return ['id'=>$id,'errors'=>$errors,'count'=>count($doc['lessons']),'status'=>'preview'];
     }
     public static function importCommit(string $id,bool $fromWorker=false): void {
-        mce_staff();mce_transaction(function()use($id,$fromWorker){
-            $job=mce_one('SELECT * FROM mce_imports WHERE id=? AND actor_id=? FOR UPDATE',[mce_key($id),mce_uid()]);if(!$job)throw new ProductError(404,'Không tìm thấy batch.');if($job['status']==='committed')return;
-            if(mce_decode($job['errors']))throw new ProductError(422,'Batch còn lỗi. Không có nội dung nào được nhập.');
-            $doc=mce_decode($job['document']);
-            $kind=null;foreach(['paths','units','articles','vocabulary_sets'] as $candidate)if(isset($doc[$candidate])){$kind=$candidate;break;}
-            if(!$fromWorker&&count($kind?$doc[$kind]:($doc['vocabulary']??$doc['lessons']))>100) {
-                mce_query("INSERT IGNORE INTO mce_jobs(type,payload,event_key,available_at) VALUES ('import',?,?,?)",[mce_json(['actorId'=>mce_uid(),'importId'=>$id]),'import:'.$id,mce_sqltime()]);
-                mce_query("UPDATE mce_imports SET status='queued' WHERE id=?",[$id]);mce_audit('import_queued',$id);return;
-            }
-            if($kind)foreach($doc[$kind] as $r){$r['status']='draft';$row=self::entityRow($kind,$r);mce_query('INSERT INTO mce_'.$kind.'('.implode(',',array_keys($row)).') VALUES ('.implode(',',array_fill(0,count($row),'?')).')',array_values($row));$entity=(int)db()->lastInsertId();mce_query('INSERT INTO mce_external_refs(namespace,external_id,kind,entity_id) VALUES (?,?,?,?)',[$doc['namespace'],$r['externalId'],$kind,$entity]);}
-            elseif(isset($doc['vocabulary'])) foreach($doc['vocabulary'] as $v) {
-                mce_query("INSERT INTO mce_vocabulary(slug,lemma,ipa,part_of_speech,topic,meaning,example,translation,level,status) VALUES (?,?,?,?,?,?,?,?,?,'draft')",[$v['slug'],$v['lemma'],$v['ipa']??'',$v['part_of_speech'],$v['topic'],$v['meaning'],$v['example'],$v['translation'],$v['level']]);
-                $sense=(int)db()->lastInsertId();self::vocabularySet($sense,$v['topic']);
-                mce_query("INSERT INTO mce_external_refs(namespace,external_id,kind,entity_id) VALUES (?,?,'vocabulary',?)",[$doc['namespace'],$v['externalId'],$sense]);
-            } else foreach($doc['lessons'] as $r){Assessment::document($r['document']);mce_query('INSERT INTO mce_lessons(unit_id,slug,external_key) VALUES (?,?,?)',[$r['unitId'],$r['slug'],$doc['namespace'].':'.$r['externalId']]);$lesson=(int)db()->lastInsertId();mce_query('INSERT INTO mce_versions(lesson_id,title,document,author_id) VALUES (?,?,?,?)',[$lesson,$r['title'],mce_json($r['document']),mce_uid()]);}
-            mce_query("UPDATE mce_imports SET status='committed' WHERE id=?",[$id]);mce_audit('import_committed',$id);
-        });
+        mce_staff();$id=mce_key($id);$started=false;$total=0;$processed=0;$kind='';
+        try {
+            mce_transaction(function()use($id,$fromWorker,&$started,&$total,&$processed,&$kind){
+                $job=mce_one('SELECT * FROM mce_imports WHERE id=? AND actor_id=? FOR UPDATE',[$id,mce_uid()]);if(!$job)throw new ProductError(404,'Không tìm thấy batch.');if($job['status']==='committed')return;
+                foreach(mce_decode($job['errors']) as $error)if(($error['phase']??'preview')!=='commit')throw new ProductError(422,'Batch còn lỗi. Không có nội dung nào được nhập.');
+                $doc=mce_decode($job['document']);foreach(['paths','units','articles','vocabulary_sets','vocabulary','lessons'] as $candidate)if(isset($doc[$candidate])){$kind=$candidate;break;}
+                if(!$kind||!is_array($doc[$kind]))throw new ProductError(422,'Batch không còn hợp lệ.');$records=$doc[$kind];$total=count($records);
+                if(!$fromWorker&&$total>100){
+                    if($job['status']==='failed')throw new ProductError(409,'Batch đã lỗi. Kiểm tra chẩn đoán và retry từ Operations.');
+                    mce_query("INSERT IGNORE INTO mce_jobs(type,payload,event_key,available_at) VALUES ('import',?,?,?)",[mce_json(['actorId'=>mce_uid(),'importId'=>$id]),'import:'.$id,mce_sqltime()]);
+                    mce_query("UPDATE mce_imports SET status='queued' WHERE id=?",[$id]);ImportStatus::write($id,0,$total,'queued');mce_audit('import_queued',$id);return;
+                }
+                $started=true;$processed=0;ImportStatus::write($id,0,$total,'running');
+                mce_query("UPDATE mce_imports SET status='running',errors='[]' WHERE id=?",[$id]);
+                foreach($records as $i=>$r){
+                    try {
+                        if($kind==='lessons'){
+                            ImportStatus::document($r['document']??null);$key=$doc['namespace'].':'.strtolower(trim($r['externalId']));
+                            mce_query('INSERT INTO mce_lessons(unit_id,slug,external_key) VALUES (?,?,?)',[$r['unitId'],$r['slug'],$key]);$entity=(int)db()->lastInsertId();
+                            mce_query('INSERT INTO mce_versions(lesson_id,title,document,author_id) VALUES (?,?,?,?)',[$entity,$r['title'],mce_json($r['document']),mce_uid()]);
+                        }else{
+                            $r['status']='draft';$r['id']=0;$row=self::entityRow($kind,$r);mce_query('INSERT INTO mce_'.$kind.'('.implode(',',array_keys($row)).') VALUES ('.implode(',',array_fill(0,count($row),'?')).')',array_values($row));$entity=(int)db()->lastInsertId();
+                            if($kind==='vocabulary')self::vocabularySet($entity,$row['topic']);
+                            mce_query('INSERT INTO mce_external_refs(namespace,external_id,kind,entity_id) VALUES (?,?,?,?)',[$doc['namespace'],strtolower(trim($r['externalId'])),$kind,$entity]);
+                        }
+                    }catch(Throwable $e){
+                        if($e instanceof PDOException&&(int)($e->errorInfo[1]??0)===1062)$e=new ProductError(409,'Slug hoặc externalId đã tồn tại; không ghi đè.',[str_contains($e->errorInfo[2]??'','slug')?'slug':'externalId'=>'Giá trị đã tồn tại.']);
+                        $errors=ImportStatus::errors($e,$kind.'.'.$i,$i,'commit');throw new ProductError($e instanceof ProductError?$e->status:503,'Import lỗi ở record '.($i+1).'; không có record nào được lưu.',['__import'=>mce_json($errors)]);
+                    }
+                    $processed=$i+1;if($processed%10===0||$processed===$total)ImportStatus::write($id,$processed,$total,'running');
+                }
+                mce_query("UPDATE mce_imports SET status='committed' WHERE id=?",[$id]);mce_audit('import_committed',$id);
+            });
+            if($started)ImportStatus::write($id,$total,$total,'committed');
+        }catch(Throwable $e){
+            if($started){$errors=$e instanceof ProductError&&isset($e->fields['__import'])?mce_decode($e->fields['__import']):ImportStatus::errors($e,$kind.'.'.$processed,$processed,'commit');
+                mce_query("UPDATE mce_imports SET status='failed',errors=? WHERE id=? AND actor_id=? AND status<>'committed'",[mce_json($errors),$id,mce_uid()]);ImportStatus::write($id,$processed,$total,'failed');
+                throw new ProductError($e instanceof ProductError?$e->status:503,$e->getMessage(),['importId'=>'Xem lỗi theo record/field của batch.']);
+            }throw $e;
+        }
     }
 }

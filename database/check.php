@@ -29,7 +29,7 @@ try {
         $pdo->query('SELECT '.$columns.' FROM '.$table.' LIMIT 0');
         echo 'PASS: '.$table." table and required columns exist.\n";
     }
-    foreach(['profiles','paths','units','lessons','versions','attempts','items','progress','vocabulary','vocabulary_sets','vocabulary_set_items','review_cards','review_events','jobs','exports','audit','migrations'] as $table)$pdo->query('SELECT * FROM mce_'.$table.' LIMIT 0');
+    foreach(['profiles','paths','units','lessons','versions','attempts','items','progress','vocabulary','vocabulary_sets','vocabulary_set_items','review_cards','review_events','jobs','exports','audit','migrations','journeys','page_seo','import_progress'] as $table)$pdo->query('SELECT * FROM mce_'.$table.' LIMIT 0');
     echo "PASS: product schema and required extensions exist.\n";
     echo "Read-only checks passed. If registration still fails, check INSERT/UPDATE permissions and the PHP error log.\n";
 } catch (Throwable $e) {

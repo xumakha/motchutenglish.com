@@ -24,3 +24,19 @@
 .design-actions{align-items:center}.redesign .design-actions .inline-form{margin:0}.mobile-auth{display:none}
 @media(max-width:900px){.redesign .nav.open .mobile-auth{display:flex;flex-direction:column;border-top:2px solid #14295730;margin-top:8px;padding-top:8px}.mobile-auth form{margin:0}.mobile-auth button{background:none;border:0;color:var(--ink);font:600 15px var(--font);padding:12px;min-height:44px;cursor:pointer}}
 @media(prefers-reduced-motion:reduce){.redesign *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+/* Field feedback and keyboard focus (A10). */
+.redesign .field-error{color:#9c251f;font-weight:600;margin:6px 0 12px;overflow-wrap:anywhere}
+.redesign [aria-invalid="true"]{border-color:#9c251f;outline:2px solid #9c251f;outline-offset:2px}
+.redesign :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #142957;outline-offset:4px}
+.redesign #form-error:focus,.redesign .save-status:focus{outline:3px solid #142957;outline-offset:3px}
+.redesign .lesson-flashcard{border:2px solid var(--ink);border-radius:16px;padding:clamp(16px,4vw,28px);background:var(--sun-soft);min-width:0}
+.redesign .lesson-flashcard-face[hidden]{display:none}
+.redesign .lesson-flashcard-face h3{margin-top:0}
+.redesign .lesson-flashcard textarea{width:100%;box-sizing:border-box}
+.redesign .lesson-flashcard .flashcard-answer{font-size:1.2rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.redesign .lesson-flashcard button{margin:6px 6px 6px 0;max-width:100%;white-space:normal}
+/* Keep keyboard targets below the measured sticky header; save messages remain in flow. */
+html:has(body.redesign){scroll-padding-top:calc(var(--header-offset,90px) + 16px)}
+.redesign .save-status{position:static}
+.redesign .nav.open{max-height:calc(100dvh - var(--header-offset,90px));overflow-y:auto}
+.redesign #main-content:focus{outline:none}

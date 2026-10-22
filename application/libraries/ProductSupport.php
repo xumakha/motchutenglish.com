@@ -3,6 +3,13 @@ declare(strict_types=1);
 final class ProductError extends RuntimeException {
     public function __construct(public int $status, string $message, public array $fields=[]) { parent::__construct($message); }
 }
+function mce_field(string $field,callable $read): mixed {
+    try{return $read();}catch(ProductError $e){throw new ProductError($e->status,$e->getMessage(),$e->fields?:[$field=>$e->getMessage()]);}
+}
+function mce_form_error_state(array $values,array $fields): array {
+    $safe=[];foreach($values as $key=>$value)if(!preg_match('/password|token|csrf|current|secret/i',(string)$key))$safe[$key]=$value;
+    return ['values'=>$safe,'fields'=>$fields];
+}
 function mce_query(string $sql, array $params=[]): PDOStatement { $q=db()->prepare($sql);$q->execute($params);return $q; }
 function mce_one(string $sql,array $params=[]): ?array { return mce_query($sql,$params)->fetch() ?: null; }
 function mce_all(string $sql,array $params=[]): array { return mce_query($sql,$params)->fetchAll(); }
@@ -32,12 +39,15 @@ function mce_transaction(callable $fn): mixed {
 function mce_uid(): int { if (!current_user()) throw new ProductError(401,'Bạn cần đăng nhập để thực hiện thao tác này.');return (int)current_user()['id']; }
 function mce_role(): string { return current_user()?learning_role(db(),mce_uid()):'guest'; }
 function mce_staff(bool $admin=false): void { if (!in_array(mce_role(),$admin?['admin']:['editor','admin'],true)) throw new ProductError(403,'Bạn không có quyền thực hiện thao tác này.'); }
-function mce_profile(int $uid): array {
-    if(!mce_one('SELECT user_id FROM mce_profiles WHERE user_id=?',[$uid])) {
+function mce_profile(int $uid,bool $forUpdate=false): array {
+    $sql='SELECT * FROM mce_profiles WHERE user_id=?'.($forUpdate?' FOR UPDATE':'');
+    $profile=mce_one($sql,[$uid]);
+    if(!$profile) {
         $minutes=(int)mce_setting('default_minutes','10');if(!in_array($minutes,[5,10,15,20],true))$minutes=10;
         mce_query('INSERT INTO mce_profiles(user_id,minutes) VALUES (?,?) ON DUPLICATE KEY UPDATE user_id=VALUES(user_id)',[$uid,$minutes]);
+        $profile=mce_one($sql,[$uid]);
     }
-    $profile=mce_one('SELECT * FROM mce_profiles WHERE user_id=?',[$uid]);if(mce_setting('gamification','1')==='0')$profile['gamification']=0;
+    if(mce_setting('gamification','1')==='0')$profile['gamification']=0;
     static $cohorts=[];
     if(!isset($cohorts[$uid])&&!$profile['deleted_at']&&!mce_one('SELECT user_id FROM mce_cohorts WHERE user_id=?',[$uid])) {
         $created=mce_one('SELECT created_at FROM users WHERE id=?',[$uid])['created_at'];$date=(new DateTimeImmutable($created,new DateTimeZone('UTC')))->setTimezone(new DateTimeZone($profile['timezone']))->format('Y-m-d');
@@ -52,8 +62,8 @@ function mce_audit(string $action,string $target,array $details=[]): void {
     $GLOBALS['mce_settings_cache']=[];
 }
 function mce_event(string $key,string $type,string $resource,?int $uid=null): bool {
-    $id=bin2hex(random_bytes(16));$inserted=mce_query('INSERT IGNORE INTO mce_events(id,event_key,user_id,type,resource_id,occurred_at) VALUES (?,?,?,?,?,?)',[$id,$key,$uid,$type,$resource,mce_sqltime()])->rowCount()>0;
-    if($inserted&&$uid&&class_exists('MarketingAnalytics'))MarketingAnalytics::enqueue($id,$uid,$type,$resource);
+    $at=mce_sqltime();$id=bin2hex(random_bytes(16));$inserted=mce_query('INSERT IGNORE INTO mce_events(id,event_key,user_id,type,resource_id,occurred_at) VALUES (?,?,?,?,?,?)',[$id,$key,$uid,$type,$resource,$at])->rowCount()>0;
+    if($inserted&&class_exists('MarketingAnalytics')){MarketingAnalytics::record($uid,$type,$resource,$at);if($uid)MarketingAnalytics::enqueue($id,$uid,$type,$resource);}
     return $inserted;
 }
 function mce_key(mixed $key): string { if (!is_string($key)||!preg_match('/^[a-f0-9]{32}$/D',$key)) throw new ProductError(422,'Mã yêu cầu không hợp lệ.');return $key; }

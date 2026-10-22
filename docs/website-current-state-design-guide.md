@@ -1,6 +1,6 @@
 # Một Chút English — Website hiện tại và tài liệu đầu vào redesign
 
-> Cập nhật: **21/10/2026**. Tài liệu mô tả code và hành vi hiện tại để phục vụ thiết kế lại giao diện. Đây không phải mô tả một sản phẩm đã hoàn thành toàn bộ spec. Phần đề xuất hoặc cần backend mới được ghi riêng.
+> Cập nhật: **22/10/2026**. Tài liệu mô tả code và hành vi hiện tại để phục vụ thiết kế lại giao diện. Đây không phải mô tả một sản phẩm đã hoàn thành toàn bộ spec. Phần đề xuất hoặc cần backend mới được ghi riêng.
 
 ## Mục lục
 
@@ -150,7 +150,7 @@ flowchart TD
 | `/kien-thuc/{slug}` | Một bài kiến thức | Public |
 | `/tim-kiem` | Tìm bài/từ/bài viết | Public; `?q=hello` |
 | `/kiem-tra-dau-vao` | Giới thiệu kiểm tra gợi ý | Public; học thử theo cấu hình bài |
-| `/chien-dich/{pathSlug}` | Landing gắn path khả dụng | Nhận UTM; attribution reporting chưa đầy đủ |
+| `/chien-dich/{pathSlug}` | Landing gắn path khả dụng | UTM allowlist, opt-in, báo cáo journey tại CMS |
 | `/gioi-thieu` | Giới thiệu sản phẩm | Public |
 | `/lien-he` | Hướng dẫn liên hệ/báo lỗi | Email từ settings nếu có |
 | `/dieu-khoan` | Điều khoản | CMS text hoặc bản thông tin ban đầu |
@@ -165,9 +165,9 @@ flowchart TD
 | `/bat-dau` | Onboarding/mục tiêu | Đăng nhập; có thể bỏ qua |
 | `/on-tap` | Thẻ đến hạn | Đăng nhập; có daily limit |
 | `/on-tap?more=1` | Ôn thêm tự nguyện | Chỉ thẻ đến hạn |
-| `/on-tap?manage=1` | Quản lý thẻ | Hiện tối đa 100 mục |
+| `/on-tap?manage=1` | Quản lý thẻ | Phân trang 30 mục/trang |
 | `/so-tu-vung` | Sổ từ/notes | `q`, `filter=all/review/hidden` |
-| `/tien-do` | Điểm, hoạt động, badges, streak calendar | Chưa có weekly dashboard đầy đủ |
+| `/tien-do` | Điểm, hoạt động, badges, streak calendar | Có thống kê tuần và lịch sử lượt học phân trang |
 | `/tai-khoan` | Cài đặt đầy đủ | Mục tiêu, bảo mật, nhắc học, privacy, export/delete |
 | `/reward-shop` | Shop trang trí | Xu ảo; không có thanh toán thật |
 
@@ -306,7 +306,7 @@ Intro bộ 20 câu cố định, giới hạn ý nghĩa kết quả, CTA tạo a
 
 ### 4.8 Campaign và thông tin
 
-Campaign nhận path slug, hiện mục tiêu/mô tả, CTA bài đầu/path. Chưa có campaign builder trong CMS hoặc attribution/funnel hoàn chỉnh.
+Campaign nhận path slug, hiện mục tiêu/mô tả, CTA bài đầu/path. A08 đã có opt-in và attribution nguồn đầu trong 30 ngày; CMS operations có funnel consented landing → guest trial → signup → first lesson → return sau 24 giờ. Chưa có campaign builder; báo cáo không đại diện khách từ chối đo lường.
 
 Giới thiệu hiện ngắn, có CTA catalog. Liên hệ hướng dẫn report/account và email nếu đã cấu hình, chưa có contact-ticket form riêng. Terms/privacy dùng CMS text hoặc bản thông tin ban đầu cần chủ dự án duyệt.
 
@@ -357,17 +357,17 @@ Thẻ due, quá hạn trước, trong daily limit. Hiện từng thẻ: front �
 
 Khoảng ôn tối đa180 ngày; UTC. Không cần hiển thị công thức trên UI. Rating không đổi XP. Có `?more=1` để ôn thêm tự nguyện.
 
-States: front/back, saving, lỗi/chưa lưu, hết thẻ, đạt limit, session complete. **Giới hạn:** snapshot có thể chứa audioId nhưng review back chưa render audio; POS cũng chưa đầy đủ.
+States: front/back, saving, lỗi/chưa lưu, hết thẻ, đạt limit, session complete. A06 đã thêm loại từ và audio ở mặt sau khi snapshot có dữ liệu; có tốc độ, lỗi tải và thử lại, không autoplay. Snapshot cũ thiếu POS/audio vẫn ôn được, không tự ghi đè bằng nội dung hiện tại.
 
 ### 5.4 Quản lý thẻ
 
 `/on-tap?manage=1`: front, trạng thái đang ôn/tạm ẩn/đã bỏ, khoảng ôn; ẩn/hiện, reset sau xác nhận, bỏ khỏi queue sau xác nhận. Không xóa nội dung gốc/lịch sử.
 
-Hiện tối đa100 mục, chưa pagination hoặc lịch sử ôn screen đầy đủ.
+Đã có phân trang 30 mục/trang (A05); màn lịch sử ôn đầy đủ chưa có.
 
 ### 5.5 Sổ từ
 
-`/so-tu-vung`: tìm từ/nghĩa, filter tất cả/đang ôn/tạm ẩn, card từ, private notes và save/remove. Notes plain text tối đa2.000 ký tự. Empty mới dùng khác empty do filter. Hiện tối đa100 kết quả, chưa pagination.
+`/so-tu-vung`: tìm từ/nghĩa, filter tất cả/đang ôn/tạm ẩn, card từ, private notes và save/remove. Notes plain text tối đa2.000 ký tự. Empty mới dùng khác empty do filter. Đã có phân trang 30 kết quả/trang (A05), giữ tìm kiếm/bộ lọc khi chuyển trang và sau thao tác.
 
 ### 5.6 Tiến độ
 
@@ -380,7 +380,7 @@ Hiện tối đa100 mục, chưa pagination hoặc lịch sử ôn screen đầy
 - Badges: bài đầu, chương đầu,7 ngày thực học,50 thẻ khác nhau.
 - Streak calendar learned/protected/missed; bật/tắt auto-protect.
 
-Chưa có weekly chart/filter đầy đủ hoặc list mọi attempt cũ mở theo version. Nếu mockup có chart/history chi tiết, ghi rõ cần query/API bổ sung.
+A07 đã có chọn tuần (thứ Hai–Chủ nhật), tổng lượt hoàn thành/ngày hoạt động/lượt ôn/accuracy/thời gian và danh sách hoạt động ngày. Lịch sử tất cả thời gian phân trang 30 lượt, liên kết trực tiếp đúng attempt/version cũ kể cả bài archived, không gồm preview. Chưa có biểu đồ tương tác.
 
 ### 5.7 Shop và động lực
 
@@ -446,7 +446,7 @@ Không arbitrary HTML/script hoặc full rich-content editor.
 | `listening_fill` | Audio + blanks | Test không lộ transcript trước finish |
 | `closed` | Textarea câu ngắn | Accepted answers, không AI |
 | `self` | Textarea + mẫu/tiêu chí | Self-assessed, objective score null |
-| `flashcard` | Luồng ghi nhớ/tự đánh giá tương tự text | Khác flip-card `/on-tap`; chưa phải flip renderer hoàn chỉnh |
+| `flashcard` | Mặt trước + ghi nhớ tùy chọn; nộp để lật sang đáp án mẫu/tiêu chí; xem lại hai mặt | Practice/preview chỉ lật sau server xác nhận; test chỉ có mặt sau sau finish. Điểm null; khác rating/lịch ôn `/on-tap` |
 
 Payload trả lời thực tế: choiceID/string; true_false bool; fill/match object; order array tokenIDs; correction/closed/self/flashcard text. Không thay stableID bằng chữ A/B hoặc vị trí đáp án.
 
@@ -461,7 +461,7 @@ Payload trả lời thực tế: choiceID/string; true_false bool; fill/match ob
 | Unavailable | Audio lỗi, không coi là sai |
 | Practice retry | Cho luyện, không ghi đè điểm đầu |
 
-Actions: save draft, submit, skip, previous/next, đánh dấu block đã đọc, finish; retry practice; report khi login. Sau finish, câu sai có thể đưa concept vào review. Report gồm đáp án/chính tả/audio/khác + mô tả, gắn version/position.
+Actions: save draft, submit, skip, previous/next, đánh dấu block đã đọc, finish; retry practice; report khi login. Sau finish, câu sai có thể đưa concept vào review nếu attempt đã thuộc tài khoản và không phải preview (`canSaveConcepts`). Bài thử chưa claim phải xác nhận chuyển trước; API cũng kiểm các điều kiện này. Report gồm đáp án/chính tả/audio/khác + mô tả, gắn version/position.
 
 ### 6.6 Lưu, offline và conflict
 
@@ -535,13 +535,13 @@ Hiện biên tập document JSON, chưa full block builder/drag-and-drop editor.
 
 Lesson workflow: draft → in_review → published; return về draft; archive/restore. Sửa published tạo version khác; attempt giữ snapshot. Preview cùng player, không reward.
 
-Metadata/article proposals chưa đủ luồng mở lại sửa/return (A04). A03 đã bổ sung gửi duyệt trước lần xuất bản đầu tiên; thay đổi thành viên bộ từ published dùng snapshot đề xuất riêng, chỉ admin được xuất bản sau review. Đề xuất có membership cũ khác danh sách hiện tại bị từ chối để tránh ghi đè.
+A04 đã có mở đúng proposal để sửa bằng JSON, trả về nháp kèm lý do và gửi duyệt lại; lưu kiểm hash để tránh ghi đè từ tab cũ. A03 đã bổ sung gửi duyệt trước lần xuất bản đầu tiên; thay đổi thành viên bộ từ published dùng snapshot đề xuất riêng, chỉ admin được xuất bản sau review. Đề xuất có membership cũ khác danh sách hiện tại bị từ chối để tránh ghi đè.
 
 ### 8.4 Media và import/export
 
 Media nhận JPG/PNG/WebP/MP3/OGG/WAV≤ 10 MB, kiểm MIME/extension, alt/source/license. Cần empty/uploading/success/type/size/metadata error. Không thiết kế upload SVG/script hoặc crop/trim/transcode như tính năng sẵn có.
 
-Import: template → upload/dán → dry-run → lỗi/count → confirm → draft/queue → status. JSON có lesson/path/unit/article/set, CSV vocabulary.1 MB / 1.000 records; trên 100 records vào queue; atomic; duplicate từ chối; không tự overwrite published. Chưa processed/total progress đầy đủ. Export content qua queue, tải tại account.
+Import: template → upload/dán → dry-run → lỗi/count → confirm → draft/queue → status. JSON có lesson/path/unit/article/set, CSV vocabulary.1 MB / 1.000 records; trên 100 records vào queue; atomic; duplicate từ chối; không tự overwrite published. A11 đã có processed/total và committed riêng, polling trạng thái, lỗi theo record/field path. Processed không có nghĩa đã lưu trước commit. Export content qua queue, tải tại account.
 
 Không tạo tùy chọn partial import/overwrite published nếu chưa triển khai backend.
 
@@ -618,13 +618,13 @@ Yêu cầu reset → hàng đợi email → liên kết token → mật khẩu m
 - Thiết kế360/390/768/1440px, thêm text dài và zoom.
 - Touch target khoảng44 px trở lên, focus rõ, keyboard order hợp lý.
 - Đúng/sai có chữ/icon, không chỉ màu.
-- Label/error gắn input, status announcements khi cần.
+- Label/error gắn input, status announcements khi cần. A10 giữ hint cũ, giới hạn lỗi đúng form, focus summary/ô lỗi và giữ focus khi sắp xếp token.
 - Order/match có tap/keyboard alternative.
 - Audio transcript đúng mode; reducedmotion, không autoplay.
 - Không popup xin đăng ký trước khi khách thấy nội dung.
 - Player giảm navigation nhưng giữ đường thoát/save state.
 
-Browser test hiện có chỉ bao phủ một số luồng/viewport, không phải WCAG certification.
+Browser test hiện có chỉ bao phủ một số luồng/viewport, không phải WCAG certification. A10 bổ sung menu Enter/Escape, skip link focus main, header scroll-padding theo chiều cao thực và save status nằm trong luồng trang. Chrome kiểm main landmark/tên textbox/mặt thẻ hidden, nhưng chưa có kết quả screen reader. Xem [checklist accessibility](accessibility-a10.md).
 
 ## 11. Hướng dẫn redesign và ràng buộc kỹ thuật
 
@@ -638,10 +638,10 @@ Layout/spacing/type/theme/card/nav/groupedsettings/feedback/adminforms có thể
 | Tabs nhóm account | UI, giữ form/state |
 | Media picker / tìm sense | UI + search/API wiring nếu muốn đầy đủ |
 | Visual block editor | Phát triển thêm; hiện JSON |
-| Biểu đồ tuần/lịch sử đầy đủ các lượt học | Cần query/contract/listpermission |
-| Audio/POS trong thẻ ôn | Snapshot/renderer/test bổ sung |
-| Funnel/attribution | Events/data/reporting mới |
-| Flashcard lật trong lesson | Renderer/hành vi self-assessed cần thay |
+| Thống kê tuần/lịch sử lượt học | Đã có SSR và phân trang (A07); biểu đồ tương tác cần bổ sung UI |
+| Audio/POS trong thẻ ôn | Đã có ở mặt sau khi snapshot có dữ liệu (A06) |
+| Funnel/attribution | Đã có báo cáo consented campaign (A08); xem contract trong api.md |
+| Flashcard lật trong lesson | Đã có renderer hai mặt; dùng payload/modelAnswer/criteria hiện tại, không có lịch ôn hoặc rating mới trong lesson |
 | Payment/AI/sociallogin/speaking | Ngoài scope hiện tại hoặc tùy chọn chưa có |
 
 ### 11.2 Những ý nghĩa không được làm sai
@@ -706,7 +706,7 @@ Tên viết gọn theo nhóm, không phải mọi endpoint cùng HTTP method. Đ
 
 ### 11.6 SEO/privacy
 
-Public SSR/canonical/meta/OG/breadcrumb khi phù hợp. Private/auth/admin/search/results noindex theo cấu hình. Robots không là kiểm soát truy cập. Không render hidden answerkeys/private notes rồi chỉ CSS-hide; không gửi PII/answers/notes lên analytics.
+Public SSR/canonical/meta/OG/breadcrumb khi phù hợp. A09 có seo_title/seo_description trong bản nháp path/sense/set/article; lesson dùng document.seo; trang chủ/catalog/thông tin/campaign/legacy cấu hình tại admin/settings. Để trống dùng fallback, robots/canonical giữ nguyên. Private/auth/admin/search/results noindex theo cấu hình. Robots không là kiểm soát truy cập. Không render hidden answerkeys/private notes rồi chỉ CSS-hide; không gửi PII/answers/notes lên analytics.
 
 ## 12. Giới hạn hiện tại
 
@@ -714,13 +714,13 @@ Chi tiết ở [audit21/10/2026](spec-audit-2026-10-21.md). Các điểm ảnh h
 
 Cập nhật sau audit: A01 (phục hồi queue) và A13 (múi giờ API/HTML/nhắc học) đã được sửa và kiểm thử riêng. Danh sách bên dưới giữ các giới hạn còn mở; xem audit và operations để biết bằng chứng.
 
-1. Notebook/reviewmanage chưa pagination quá100.
-2. Audio/POS trong thẻ ôn và flashcard lật trong lesson chưa hoàn chỉnh.
-3. Thống kê tuần/lịch sử đầy đủ các lượt học chưa có đầy đủ.
-4. Draft metadata/bài viết còn thiếu mở lại sửa/return (A04); snapshot duyệt thành viên bộ từ đã bổ sung trong A03.
-5. Field errors/accessibility cần hoàn thiện.
-6. Import processed/total và fieldpaths chưa đầy đủ.
-7. SEOoverride toànpublic và marketingfunnel chưa đầy đủ.
+1. A05 đã bổ sung phân trang Sổ từ và Quản lý thẻ ôn, truy cập được các mục vượt 100.
+2. A06 đã bổ sung Audio/POS trong thẻ ôn. Lesson flashcard nay có hai mặt, ghi nhớ tùy chọn, lật sau server xác nhận và test redaction. Đây là tự đánh giá, không phải ratings/lịch ôn mới; chưa có bộ field từ điển có cấu trúc riêng cho mặt sau lesson.
+3. A07 đã bổ sung thống kê tuần và lịch sử lượt học có phân trang; chưa có biểu đồ tương tác.
+4. A03/A04 đã bổ sung snapshot duyệt thành viên bộ từ, mở đúng bản nháp để sửa và trả về nháp kèm lý do; editor hiện dùng JSON.
+5. A10 đã có lỗi theo control, focus/hint và kiểm Chrome order/match/CMS; kiểm thủ công screen reader/WCAG vẫn chưa nghiệm thu.
+6. A11 đã có processed/total, committed và đường dẫn lỗi sâu; báo lỗi đầu tiên của mỗi record, sửa rồi dry-run lại.
+7. A09 đã thêm SEO title/description cho entity và trang public; A08 có campaign funnel, GA4 ingestion thật chưa nghiệm thu.
 8. Localbenchmark50 phiên0 lỗi nhưng p95 khoảng1.145 giây, chưa đạt800 ms; chưa là staging.
 9. SMTP/audio có quyền/legal/contact/hosting/HTTPS/cron/offhostbackup/analytics tùy chọn cần cấu hình/nghiệm thu thực.
 

@@ -2,13 +2,41 @@
 (() => {
   window.mceProductReady = true;
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
-  if(document.querySelector('#form-error'))document.querySelectorAll('form').forEach(form=>form.setAttribute('aria-describedby','form-error'));
+  let fieldErrorSequence=0;
+  function markFields(scope,fields,summary) {
+    scope.querySelectorAll('[data-field-error]').forEach(node=>{
+      scope.querySelectorAll('[aria-describedby]').forEach(control=>{const ids=control.getAttribute('aria-describedby').split(/\s+/).filter(id=>id!==node.id);if(ids.length)control.setAttribute('aria-describedby',ids.join(' '));else control.removeAttribute('aria-describedby');});node.remove();
+    });
+    scope.querySelectorAll('[aria-invalid="true"]').forEach(control=>control.removeAttribute('aria-invalid'));
+    let first=null;
+    Object.entries(fields||{}).forEach(([name,message])=>{
+      const controls=[...scope.querySelectorAll('input:not([type=hidden]),select,textarea,fieldset')].filter(control=>control.name===name||control.dataset.field===name);
+      if(!controls.length)return;
+      const error=document.createElement('p');error.id='field-error-'+(++fieldErrorSequence);error.dataset.fieldError='';error.className='field-error';error.textContent=String(message);
+      controls[controls.length-1].closest('label')?.after(error);if(!error.isConnected)controls[controls.length-1].after(error);
+      controls.forEach(control=>{control.setAttribute('aria-invalid','true');const ids=new Set((control.getAttribute('aria-describedby')||'').split(/\s+/).filter(Boolean));ids.add(error.id);control.setAttribute('aria-describedby',[...ids].join(' '));});
+      first??=controls.find(control=>!control.disabled&&control.tagName!=='FIELDSET')||controls.find(control=>!control.disabled);if(first?.tagName==='FIELDSET')first.tabIndex=-1;
+    });
+    if(first)for(let node=first.parentElement;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+    if(summary){summary.tabIndex=-1;if(first){if(!first.id)first.id='invalid-control-'+fieldErrorSequence;const link=document.createElement('a');link.href='#'+first.id;link.textContent='Đến ô cần sửa';link.onclick=event=>{event.preventDefault();first.focus();};summary.append(document.createTextNode(' '),link);}summary.focus();}
+  }
+  const serverErrors=document.querySelector('#form-error-state'),summary=document.querySelector('#form-error');
+  if(serverErrors&&summary) {
+    const {values={},fields={}}=JSON.parse(serverErrors.textContent);
+    const identity=['command','id','senseId','cardId','setId','versionId','draftId','kind','type','action'];
+    const form=[...document.forms].find(form=>values._formAction?new URL(form.action).pathname==='/'+values._formAction:values.command&&identity.every(key=>values[key]===undefined||String(form.elements.namedItem(key)?.value??'')===String(values[key])));
+    if(form){
+      [...form.elements].forEach(control=>{if(control.name in values&&!['hidden','password','file','submit','button'].includes(control.type)){const value=values[control.name];if(control.type==='checkbox'||control.type==='radio')control.checked=String(value)===String(control.value);else control.value=typeof value==='object'?JSON.stringify(value,null,2):String(value??'');}});
+      [...form.elements].filter(control=>control.type==='checkbox'&&!(control.name in values)).forEach(control=>control.checked=false);
+      markFields(form,fields,summary);
+    }else{summary.tabIndex=-1;summary.focus();}
+  }
   const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
   function rich(text) {const fragment=document.createDocumentFragment(),pattern=/(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g;let end=0;for(const match of text.matchAll(pattern)){fragment.append(document.createTextNode(text.slice(end,match.index)));const bold=match[0].startsWith('**'),n=bold?2:1;fragment.append(el(bold?'strong':'em',match[0].slice(n,-n)));end=match.index+match[0].length;}fragment.append(document.createTextNode(text.slice(end)));return fragment;}
   async function api(route, body) {
     const response = await fetch('/api/v1/' + route, {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf}, body:JSON.stringify(body)});
     const result = await response.json();
-    if (!response.ok) { const error = new Error(result.error?.message || 'Chưa thể lưu dữ liệu.'); error.status=response.status; error.current=result.error?.currentAttempt; throw error; }
+      if (!response.ok) { const error = new Error(result.error?.message || 'Chưa thể lưu dữ liệu.'); error.status=response.status; error.current=result.error?.currentAttempt;error.fields=result.error?.fieldErrors||{}; throw error; }
     return result.data;
   }
   const fragmentToken=new URLSearchParams(location.hash.slice(1)).get('token');
@@ -21,7 +49,29 @@
     }
   }
   document.querySelector('[data-map-toggle]')?.addEventListener('click', () => document.querySelector('#path-list')?.classList.toggle('path-map'));
-  document.querySelectorAll('[data-native-rate]').forEach(select=>{const box=select.closest('.study-audio'),audio=box.querySelector('audio');select.onchange=()=>audio.playbackRate=Number(select.value);audio.onerror=()=>box.querySelector('[data-audio-error]').textContent='Chưa tải được audio. Bạn có thể thử lại sau.';});
+  document.querySelectorAll('[data-native-rate]').forEach(select=>{
+    const box=select.closest('.study-audio'),audio=box.querySelector('audio'),status=box.querySelector('[data-audio-error]'),retry=box.querySelector('[data-native-retry]');
+    select.onchange=()=>audio.playbackRate=Number(select.value);
+    audio.onerror=()=>{status.textContent='Chưa tải được audio. Bạn vẫn có thể ôn thẻ hoặc thử tải lại.';if(retry)retry.hidden=false;};
+    audio.addEventListener('loadeddata',()=>{status.textContent='';if(retry)retry.hidden=true;audio.playbackRate=Number(select.value);});
+    retry?.addEventListener('click',()=>{status.textContent='Đang tải lại audio…';retry.hidden=true;audio.load();});
+  });
+  document.querySelectorAll('[data-import-id][data-import-poll="1"]').forEach(box=>{
+    async function refresh(){
+      if(document.hidden){setTimeout(refresh,3000);return;}
+      try{
+        const response=await fetch('/api/v1/admin/import-status/'+box.dataset.importId,{credentials:'same-origin'}),result=await response.json();
+        if(!response.ok)throw Error(result.error?.message||'Không đọc được tiến độ.');const s=result.data;
+        box.querySelector('[data-import-status]').textContent='Trạng thái: '+s.status+' · '+s.phase;
+        const progress=box.querySelector('[data-import-progress]');progress.max=Math.max(1,s.total);progress.value=s.processed;
+        box.querySelector('[data-import-count]').textContent='Đã xử lý '+s.processed+' / '+s.total+' record. Đã xác nhận lưu: '+s.committed+'.';
+        box.querySelector('[data-import-job]').textContent=s.job?'Worker: '+s.job.status+' · lần thử '+s.job.attempts+' · lịch UTC '+s.job.available_at:'';
+        const errors=box.querySelector('[data-import-errors]');errors.replaceChildren();s.errors.forEach(e=>{const li=document.createElement('li');li.textContent='Record '+e.record+' · '+e.field+': '+e.message;errors.append(li);});
+        if(['queued','running'].includes(s.status)||['pending','running'].includes(s.job?.status))setTimeout(refresh,3000);
+      }catch(error){box.querySelector('[data-import-status]').textContent=error.message+' Tải lại trang để kiểm tra; chưa xác nhận lưu.';}
+    }
+    setTimeout(refresh,1000);
+  });
   const ratings = document.querySelectorAll('[data-rating]');
   ratings.forEach(button => button.addEventListener('click', async () => {
     const group=button.closest('[data-card]'), card=button.closest('.review-card'), status=document.querySelector('#review-status');
@@ -50,9 +100,10 @@
       if(action!=='heartbeat')try{localStorage.removeItem(key+':outbox');}catch{}
       if(action==='submit'||action==='skip'){delete local[body.exerciseId];try{localStorage.setItem(key,JSON.stringify(local));}catch{}}
       if(action==='finish')try{localStorage.removeItem(key);}catch{}
-      if(rerender)render();return true;
+      if(rerender){render();if(['navigate','submit','skip','finish'].includes(action)){const target=action==='finish'?host.querySelector('.panel.green h2'):(host.querySelector('[data-feedback-heading]')||host.querySelector('.exercise-panel h2'));if(target){target.tabIndex=-1;target.focus();}}}return true;
     } catch(error) {
       status.textContent=navigator.onLine?error.message:'Đang mất mạng. Bản nháp giữ trên thiết bị; máy chủ chưa xác nhận lưu.';
+      if(error.status===422&&action!=='heartbeat')markFields(host,Object.keys(error.fields||{}).length?error.fields:(action==='submit'?{response:error.message}:{}),status);
       if(action!=='heartbeat'&&error.status&&error.status<500)try{localStorage.removeItem(key+':outbox');}catch{}
       if(error.status===409) {if(error.current){state=error.current;render();}const reload=el('button','Tải trạng thái mới','button secondary');reload.onclick=()=>location.reload();status.append(reload);}
       return false;
@@ -82,11 +133,34 @@
   }
   function exerciseCard(item) {
     const e=item.exercise,p=e.payload, box=el('section',undefined,'panel exercise-panel'),heading=el('h2');
+    heading.tabIndex=-1;
     if(e.type==='correction'&&p.errorSegment){const chars=Array.from(p.prompt),{start,length}=p.errorSegment;heading.append(document.createTextNode(chars.slice(0,start).join('')),el('mark',chars.slice(start,start+length).join('')),document.createTextNode(chars.slice(start+length).join('')));}else heading.textContent=p.prompt;box.append(heading);
     if(p.audioId)box.append(audio(p.audioId,item.feedback?.transcript,()=>{if(!['submitted','skipped','unavailable'].includes(item.state))box.append(button('Báo sự cố và bỏ qua nghe',()=>send('audio_error',{exerciseId:e.id}),true));}));
     const submitted=['submitted','skipped','unavailable'].includes(item.state),disabled=submitted||state.status==='finished';
     let value=disabled?item.response:(local[e.id]??item.response??null);
     const change=v=>{value=v;localSave(e.id,v);clearTimeout(draftTimer);const save=()=>{if(busy){draftTimer=setTimeout(save,500);return;}if(navigator.onLine&&state.status==='active')send('draft',{exerciseId:e.id,response:value},false);};draftTimer=setTimeout(save,900);};
+    if(e.type==='flashcard') {
+      const card=el('div',undefined,'lesson-flashcard'),front=el('div',undefined,'lesson-flashcard-face'),frontTitle=el('h3','Mặt trước'),back=el('div',undefined,'lesson-flashcard-face');
+      card.dataset.lessonFlashcard='';front.dataset.flashcardFront='';back.dataset.flashcardBack='';back.id='flashcard-back-'+e.id;frontTitle.tabIndex=-1;
+      front.append(frontTitle,el('p','Hãy nhớ lại câu trả lời trước khi lật thẻ. Thẻ này được tự đánh giá, không có điểm đúng/sai tự động.'));
+      const fields=el('fieldset'),label=el('label','Ghi nhớ của bạn (không bắt buộc)'),input=el('textarea');
+      fields.disabled=disabled;fields.dataset.field='response';fields.append(el('legend','Tự nhớ lại'));input.maxLength=4000;input.rows=3;input.value=typeof value==='string'?value:'';input.oninput=()=>change(input.value);label.append(input);fields.append(label);front.append(fields);
+      if(!disabled) {
+        const reveal=button(state.mode==='test'?'Nộp thẻ — xem mặt sau khi hoàn thành bài':'Lật thẻ và tự đánh giá',()=>{clearTimeout(draftTimer);send('submit',{exerciseId:e.id,response:value??''});});reveal.dataset.flashcardReveal='';
+        front.append(button('Lưu bản nháp',()=>{clearTimeout(draftTimer);send('draft',{exerciseId:e.id,response:value??''},false);},true),reveal,button('Bỏ qua thẻ',()=>{clearTimeout(draftTimer);send('skip',{exerciseId:e.id});},true));
+      } else front.append(el('p',item.state==='skipped'?'Đã bỏ qua thẻ.':'Đã nộp — giữ ghi nhớ lần đầu.'));
+      card.append(front);box.append(card);
+      if(item.feedback) {
+        const g=item.feedback,title=el('h3','Mặt sau · Tự đánh giá');title.tabIndex=-1;title.dataset.feedbackHeading='';
+        back.append(title,el('p',g.acceptedAnswerDisplay,'flashcard-answer'),el('p',g.feedback));
+        if(g.criteria){back.append(el('p','Đối chiếu với tiêu chí:'));const criteria=el('ul');(Array.isArray(g.criteria)?g.criteria:[g.criteria]).forEach(text=>criteria.append(el('li',text)));back.append(criteria);}
+        back.append(el('p','Tự kiểm tra mức nhớ của bạn. Thẻ này không được tính vào độ chính xác khách quan.'));
+        front.hidden=true;card.append(back);
+        const flip=button('Xem mặt trước',()=>{const showBack=back.hidden;back.hidden=!showBack;front.hidden=showBack;flip.textContent=showBack?'Xem mặt trước':'Xem mặt sau';flip.setAttribute('aria-expanded',String(showBack));(showBack?title:frontTitle).focus();},true);
+        flip.dataset.flashcardFlip='';flip.setAttribute('aria-controls',back.id);flip.setAttribute('aria-expanded','true');card.append(flip);
+      } else if(disabled)card.append(el('p','Mặt sau sẽ xuất hiện sau khi hoàn thành bài kiểm tra.'));
+      return box;
+    }
     const fields=el('fieldset');fields.disabled=disabled;fields.append(el('legend','Câu trả lời của bạn'));
     if(['choice','listening_choice','true_false'].includes(e.type)) {
       const choices=e.type==='true_false'?{true:'Đúng',false:'Sai'}:p.choices;
@@ -97,15 +171,25 @@
       if(!value||typeof value!=='object')value={};Object.entries(p.left).forEach(([id,text])=>{const label=el('label',text+' '),select=el('select');const blank=el('option','Chọn nghĩa phù hợp');blank.value='';select.append(blank);Object.entries(p.right).forEach(([rid,right])=>{const o=el('option',right);o.value=rid;o.selected=value[id]===rid;select.append(o);});select.onchange=()=>change({...value,[id]:select.value});label.append(select);fields.append(label);});
     } else if(e.type==='order') {
       if(!Array.isArray(value))value=[];
-      const available=el('div',undefined,'token-list'),selected=el('ol');
-      const draw=()=>{available.replaceChildren();selected.replaceChildren();Object.entries(p.tokens).forEach(([id,text])=>{if(!value.includes(id))available.append(button(text,()=>{change([...value,id]);draw();},true));});value.forEach((id,i)=>{const li=el('li');li.append(el('span',p.tokens[id]),button('Bỏ '+p.tokens[id],()=>{change(value.filter((_,n)=>n!==i));draw();},true));if(i>0)li.append(button('Lên',()=>{const next=[...value];[next[i-1],next[i]]=[next[i],next[i-1]];change(next);draw();},true));if(i<value.length-1)li.append(button('Xuống',()=>{const next=[...value];[next[i],next[i+1]]=[next[i+1],next[i]];change(next);draw();},true));selected.append(li);});};draw();fields.append(el('p','Chạm từ để chọn. Dùng Lên/Xuống để đổi vị trí, Bỏ để chọn lại.'),available,selected);
+      const available=el('div',undefined,'token-list'),selected=el('ol'),announcement=el('p');announcement.setAttribute('role','status');announcement.setAttribute('aria-live','polite');
+      const draw=(focusId=null,focusAction='remove')=>{
+        available.replaceChildren();selected.replaceChildren();
+        Object.entries(p.tokens).forEach(([id,text])=>{if(!value.includes(id)){const add=button(text,()=>{change([...value,id]);draw(id);announcement.textContent='Đã thêm '+text+' ở vị trí '+value.length;},true);add.dataset.orderToken=id;add.dataset.orderAction='add';add.setAttribute('aria-label','Thêm '+text);available.append(add);}});
+        value.forEach((id,i)=>{
+          const li=el('li'),remove=button('Bỏ '+p.tokens[id],()=>{change(value.filter((_,n)=>n!==i));draw(id,'add');announcement.textContent='Đã bỏ '+p.tokens[id];},true);remove.dataset.orderToken=id;remove.dataset.orderAction='remove';li.append(el('span',p.tokens[id]),remove);
+          for(const [action,delta,label] of [['up',-1,'Lên'],['down',1,'Xuống']])if(i+delta>=0&&i+delta<value.length){const move=button(label,()=>{const next=[...value];[next[i],next[i+delta]]=[next[i+delta],next[i]];change(next);draw(id,action);announcement.textContent=p.tokens[id]+' ở vị trí '+(i+delta+1);},true);move.dataset.orderToken=id;move.dataset.orderAction=action;move.setAttribute('aria-label','Đưa '+p.tokens[id]+' đến vị trí '+(i+delta+1));li.append(move);}
+          selected.append(li);
+        });
+        if(focusId){const buttons=[...fields.querySelectorAll('[data-order-token]')];(buttons.find(b=>b.dataset.orderToken===focusId&&b.dataset.orderAction===focusAction)||buttons.find(b=>b.dataset.orderToken===focusId))?.focus();}
+      };
+      fields.append(el('p','Chạm hoặc dùng bàn phím chọn từ. Dùng Lên/Xuống để đổi vị trí, Bỏ để chọn lại.'),available,selected,announcement);draw();
     } else {const label=el('label',['self','flashcard'].includes(e.type)?'Câu trả lời hoặc ghi nhớ của bạn (tự đánh giá)':'Nhập câu trả lời'),input=el('textarea');input.maxLength=4000;input.rows=3;input.value=typeof value==='string'?value:'';input.oninput=()=>change(input.value);label.append(input);fields.append(label);}
-    box.append(fields);
+    fields.dataset.field='response';fields.setAttribute('aria-label','Câu trả lời');box.append(fields);
     if(!disabled) {
       box.append(button('Lưu bản nháp',()=>{clearTimeout(draftTimer);send('draft',{exerciseId:e.id,response:value},false);},true),button(['self','flashcard'].includes(e.type)?'Xem đáp án mẫu và tự đánh giá':'Nộp câu trả lời',()=>{clearTimeout(draftTimer);send('submit',{exerciseId:e.id,response:value});}),button('Bỏ qua câu',()=>{clearTimeout(draftTimer);send('skip',{exerciseId:e.id});},true));
     } else box.append(el('p',item.state==='unavailable'?'Audio chưa khả dụng - không tính sai':(item.state==='skipped'?'Đã bỏ qua':'Đã nộp - giữ kết quả lần đầu.')));
     if(item.feedback) {
-      const g=item.feedback;box.append(el('h3',g.gradingMode==='unavailable'?'Audio chưa khả dụng':(g.gradingMode==='self_assessed'?'Tự đánh giá':(g.isCorrect?'✓ Chính xác':'Cần ôn thêm'))),el('p','Đáp án: '+g.acceptedAnswerDisplay),el('p',g.feedback));
+      const g=item.feedback,feedbackHeading=el('h3',g.gradingMode==='unavailable'?'Audio chưa khả dụng':(g.gradingMode==='self_assessed'?'Tự đánh giá':(g.isCorrect?'✓ Chính xác':'Cần ôn thêm')));feedbackHeading.dataset.feedbackHeading='';feedbackHeading.tabIndex=-1;box.append(feedbackHeading,el('p','Đáp án: '+g.acceptedAnswerDisplay),el('p',g.feedback));
       if(g.criteria)box.append(el('p','Tiêu chí: '+(Array.isArray(g.criteria)?g.criteria.join('; '):g.criteria)));
       if(g.maxScore>1)box.append(el('p','Điểm từng phần: '+g.score+'/'+g.maxScore));
       if(state.mode!=='test'&&g.gradingMode!=='unavailable'&&!['self','flashcard'].includes(e.type)) {
@@ -113,16 +197,16 @@
         box.append(button('Luyện lại câu này (giữ điểm lần đầu)',()=>{fields.disabled=false;status.textContent='Bạn đang luyện lại. Điểm lần đầu và lịch sử không thay đổi.';},true));
         box.append(button('Kiểm tra lần luyện lại',async()=>{try{const r=await api('attempts/'+state.id+'/retry',{exerciseId:e.id,response:value});trial.textContent=(r.feedback.isCorrect?'✓ Chính xác. ':'Cần ôn thêm. ')+r.feedback.feedback+' Điểm lần đầu được giữ nguyên.';}catch(error){trial.textContent=error.message;}},true),trial);
       }
-      if(state.status==='finished'&&host.dataset.account!=='guest'&&g.isCorrect===false)box.append(button('Đưa kiến thức này vào ôn tập',async()=>{try{await api('review/concept',{attemptId:state.id,exerciseId:e.id});status.textContent='Đã thêm kiến thức vào lịch ôn.';}catch(error){status.textContent=error.message;}},true));
+      if(state.canSaveConcepts&&host.dataset.account!=='guest'&&g.isCorrect===false)box.append(button('Đưa kiến thức này vào ôn tập',async()=>{try{await api('review/concept',{attemptId:state.id,exerciseId:e.id});status.textContent='Đã thêm kiến thức vào lịch ôn.';}catch(error){status.textContent=error.message;}},true));
     }
     return box;
   }
   function report() {
     if(host.dataset.account==='guest')return;
     const details=el('details'),summary=el('summary','Báo lỗi nội dung'),form=el('form');details.append(summary,form);
-    const label=el('label','Loại lỗi '),category=el('select');Object.entries({answer:'Đáp án',typo:'Chính tả',audio:'Audio',other:'Khác'}).forEach(([id,text])=>{const o=el('option',text);o.value=id;category.append(o);});label.append(category);
-    const textLabel=el('label','Mô tả lỗi '),textarea=el('textarea');textarea.required=true;textarea.maxLength=2000;textLabel.append(textarea);const submit=el('button','Gửi báo lỗi','button secondary');submit.type='submit';form.append(label,textLabel,submit);
-    form.onsubmit=async event=>{event.preventDefault();try{await api('reports',{versionId:state.versionId,position:state.items[index]?.exercise.id??'lesson',category:category.value,description:textarea.value});status.textContent='Đã gửi báo lỗi để biên tập viên kiểm tra.';details.open=false;}catch(error){status.textContent=error.message;}};return details;
+    const label=el('label','Loại lỗi '),category=el('select');category.name='category';Object.entries({answer:'Đáp án',typo:'Chính tả',audio:'Audio',other:'Khác'}).forEach(([id,text])=>{const o=el('option',text);o.value=id;category.append(o);});label.append(category);
+    const textLabel=el('label','Mô tả lỗi '),textarea=el('textarea');textarea.name='description';textarea.required=true;textarea.maxLength=2000;textLabel.append(textarea);const submit=el('button','Gửi báo lỗi','button secondary');submit.type='submit';form.append(label,textLabel,submit);
+    form.onsubmit=async event=>{event.preventDefault();try{await api('reports',{versionId:state.versionId,position:state.items[index]?.exercise.id??'lesson',category:category.value,description:textarea.value});status.textContent='Đã gửi báo lỗi để biên tập viên kiểm tra.';details.open=false;}catch(error){status.textContent=error.message;if(error.status===422)markFields(form,error.fields,status);}};return details;
   }
   function render() {
     host.replaceChildren();const done=state.items.filter(i=>['submitted','skipped','unavailable'].includes(i.state)).length;

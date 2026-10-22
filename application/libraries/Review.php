@@ -15,13 +15,27 @@ final class Review {
         $start=new DateTimeImmutable(Motivation::day($p,$now).' 00:00:00',new DateTimeZone($p['quest_timezone']));
         return (int)mce_query('SELECT COUNT(*) FROM mce_review_events WHERE user_id=? AND occurred_at>=? AND occurred_at<?',[$uid,mce_sqltime($start),mce_sqltime($start->modify('+1 day'))])->fetchColumn();
     }
-    public static function queue(int $uid,bool $extra=false,bool $manage=false,?DateTimeImmutable $now=null): array {
+    public static function pagination(int $total,mixed $requested): array {
+        $pages=max(1,(int)ceil($total/30));
+        $page=is_scalar($requested)&&preg_match('/^[0-9]{1,9}$/D',(string)$requested)?max(1,(int)$requested):1;
+        $page=min($pages,$page);return ['page'=>$page,'pages'=>$pages,'total'=>$total,'size'=>30,'offset'=>($page-1)*30];
+    }
+    public static function notebook(int $uid,string $q,string $filter,mixed $page=1): array {
+        return mce_transaction(function()use($uid,$q,$filter,$page){
+            $from=" FROM mce_user_vocabulary uv JOIN mce_vocabulary v ON v.id=uv.sense_id LEFT JOIN mce_review_cards c ON c.user_id=uv.user_id AND c.target_key=CONCAT('sense:',v.id) WHERE uv.user_id=? AND (v.lemma LIKE ? OR v.meaning LIKE ?)".($filter==='review'?' AND c.id IS NOT NULL AND c.hidden=0':($filter==='hidden'?' AND c.hidden=1':''));
+            $args=[$uid,'%'.$q.'%','%'.$q.'%'];$paging=self::pagination((int)mce_query('SELECT COUNT(*)'.$from,$args)->fetchColumn(),$page);
+            $words=mce_all('SELECT v.*,uv.notes,uv.hidden,c.id AS card_id,c.due_at,c.hidden AS card_hidden,c.interval_days'.$from.' ORDER BY uv.created_at DESC,uv.sense_id DESC LIMIT 30 OFFSET '.$paging['offset'],$args);
+            return ['words'=>$words,'paging'=>$paging];
+        });
+    }
+    public static function queue(int $uid,bool $extra=false,bool $manage=false,?DateTimeImmutable $now=null,mixed $page=1): array {
         $now??=mce_now();
-        return mce_transaction(function()use($uid,$extra,$manage,$now){
+        return mce_transaction(function()use($uid,$extra,$manage,$now,$page){
             $p=Motivation::lock($uid,false,$now);Motivation::quests($uid,$p,$now);
             $used=self::usedToday($uid,$p,$now);$limit=$extra?100:max(0,(int)$p['review_limit']-$used);
-            $cards=$manage?mce_all('SELECT * FROM mce_review_cards WHERE user_id=? ORDER BY hidden,due_at,id LIMIT 100',[$uid]):mce_all('SELECT id,snapshot,revision,due_at FROM mce_review_cards WHERE user_id=? AND hidden=0 AND due_at<=? ORDER BY due_at,id LIMIT '.$limit,[$uid,mce_sqltime($now)]);
-            return ['profile'=>$p,'used'=>$used,'cards'=>$cards];
+            $paging=$manage?self::pagination((int)mce_query('SELECT COUNT(*) FROM mce_review_cards WHERE user_id=?',[$uid])->fetchColumn(),$page):null;
+            $cards=$manage?mce_all('SELECT * FROM mce_review_cards WHERE user_id=? ORDER BY hidden,due_at,id LIMIT 30 OFFSET '.$paging['offset'],[$uid]):mce_all('SELECT id,snapshot,revision,due_at FROM mce_review_cards WHERE user_id=? AND hidden=0 AND due_at<=? ORDER BY due_at,id LIMIT '.$limit,[$uid,mce_sqltime($now)]);
+            return ['profile'=>$p,'used'=>$used,'cards'=>$cards,'paging'=>$paging];
         });
     }
     public static function rate(int $uid,int $cardId,string $rating,string $key,int $revision,bool $extra=false): array {

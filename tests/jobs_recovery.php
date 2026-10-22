@@ -71,9 +71,11 @@ $import=bin2hex(random_bytes(16));$export=bin2hex(random_bytes(16));$file=bin2he
 $dir=ROOT_PATH.'/writable/exports';if(!is_dir($dir))mkdir($dir,0700,true);file_put_contents(Exports::file($file),'partial');
 mce_query("INSERT INTO mce_imports(id,actor_id,document,errors,status) VALUES (?,?,'{}','[]','running')",[$import,$owner]);
 mce_query("INSERT INTO mce_exports(id,user_id,kind,status,file_key,expires_at) VALUES (?,?,'personal','running',?,?)",[$export,$owner,$file,mce_sqltime(mce_now()->modify('+1 day'))]);
+ImportStatus::write($import,40,100,'running');
 $importJob=recoveryJob('import',['actorId'=>$owner,'importId'=>$import]);$exportJob=recoveryJob('export',['userId'=>$owner,'exportId'=>$export]);
 jobCheck(Jobs::run(1)['recovery']['requeued']===2,'Interrupted import/export not requeued');
 jobCheck(mce_one('SELECT status FROM mce_imports WHERE id=?',[$import])['status']==='queued','Import projection still running');
+jobCheck((int)mce_one('SELECT processed FROM mce_import_progress WHERE import_id=?',[$import])['processed']===0,'Recovered import progress not reset');
 jobCheck(mce_one('SELECT status FROM mce_exports WHERE id=?',[$export])['status']==='queued','Export projection still running');
 mce_query('UPDATE mce_jobs SET available_at=? WHERE id=?',[mce_sqltime(),$exportJob]);
 jobCheck(Jobs::run(1)['processed']===1,'Recovered export failed');

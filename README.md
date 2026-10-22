@@ -9,14 +9,14 @@ Bật MySQL trong XAMPP. Copy `config-example/database.php` sang `application/co
 ```powershell
 .\php-local.ps1 database/setup-local.php
 .\php-local.ps1 database/check.php
-.\php-local.ps1 database/create-admin.php --local
+.\php-local.ps1 database/create-admin.php admin@motchutenglish.local "Quan tri vien" --local
 .\php-local.ps1 database/seed-product.php --publish-reviewed-samples
 .\start.ps1
 ```
 
 Nếu PowerShell chặn script theo policy của máy, chạy từng lệnh bằng `powershell -NoProfile -ExecutionPolicy Bypass -File .\php-local.ps1 ...` hoặc launcher `powershell -NoProfile -ExecutionPolicy Bypass -File .\start.ps1`; không đổi policy toàn máy.
 
-Mở http://localhost:8080. CLI `create-admin` in vị trí tệp mật khẩu riêng trong `writable/`, không có mật khẩu seed cố định. Trên production dùng chế độ nhập tương tác, không dùng `--local`. Nếu đã có admin, không tạo lại. Mẫu seed mặc định là draft; flag xuất bản chỉ dành cho nội dung mẫu đã được người vận hành xem xét. Bản nháp nghe thiếu file vẫn không được xuất bản.
+Mở http://localhost:8080. Lệnh tạo admin ở trên chỉ chạy khi cài mới; đổi email/tên theo tài khoản bạn muốn tạo. Nếu email đã tồn tại, công cụ từ chối và không đổi mật khẩu. CLI in vị trí tệp mật khẩu riêng trong `writable/`, không có mật khẩu seed cố định. Production truyền mật khẩu qua stdin, không dùng `--local`; ví dụ Docker tại [operations.md](docs/operations.md). Mẫu seed mặc định là draft; flag xuất bản chỉ dành cho nội dung mẫu đã được người vận hành xem xét. Bản nháp nghe thiếu file vẫn không được xuất bản.
 
 Trang chính: `/lo-trinh`, `/hoc`, `/on-tap`, `/so-tu-vung`, `/tien-do`, `/tai-khoan`, `/reward-shop`. CMS `/admin/lessons`; có lộ trình, chương, bài, câu hỏi, từ, bộ từ, kiến thức, media, import, báo lỗi, roles, settings, audit, vận hành. Luồng cũ `/courses`, `/listening`, `/dashboard` vẫn được giữ để tương thích.
 
@@ -54,3 +54,5 @@ Runner tạo database riêng `mce_auth_test_*`, không reset database ứng dụ
 - [Đối chiếu spec](docs/spec-traceability.md), [tiến độ và điều kiện ra mắt](docs/progress.md).
 
 Dockerfile/Compose và CI là cấu hình chuẩn bị cho staging; chưa có staging/production được triển khai trong phiên làm việc này. Cần domain, hosting, HTTPS, SMTP, lịch backup ngoài máy, media hợp lệ và nội dung pháp lý do chủ dự án duyệt.
+
+Image cài Python 3.12+ cho media backup, kiểm extension PHP và dùng `mariadb-dump`/`mariadb` cho SQL. Các lệnh trong container dùng `python3`; Windows thường dùng `python`. Kiểm cài mới local riêng: `python tests/install_smoke.py` (cần quyền CREATE DATABASE, giữ database test để kiểm tra). Bài kiểm tra này không thay thế Docker build hoặc nghiệm thu production.

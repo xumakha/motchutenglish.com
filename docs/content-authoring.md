@@ -13,3 +13,12 @@ Import `/admin/imports`: JSON schemaVersion1 theo template lesson/import/paths/u
 Xuất catalog qua yêu cầu queue ở CMS, tệp riêng24h. Content export có metadata/versions/media references, không gồm users/password/token/notes. Đây không thay thế SQL+media backup. Report lưu version và vị trí; editor/admin xử lý open/in_progress/resolved/rejected kèm lý do và audit.
 
 Seed: `seed-product.php` idempotent, 2 lộ trình khả dụng x2chương, mỗi chương ít nhất3bài;15bài gồm4checkpoint, thêm placement20 và2 bản nháp nghe;90exercises,40senses/4sets,3bài kiến thức gốc. Không seed người học/thành tích. Mẫu nghe giữ draft đến khi chủ dự án tải audio hợp lệ và duyệt nội dung. Không quảng cáo hai lộ trình mở rộng chưa có bài.
+
+
+## Flashcard trong lesson — cập nhật 22/10/2026
+
+Dùng `type: "flashcard"` với `payload.prompt` làm mặt trước, `payload.modelAnswer` làm đáp án mẫu mặt sau, `payload.criteria` dạng chuỗi/danh sách làm tiêu chí, và `explanation` làm hướng dẫn đối chiếu. Ghi nhớ cá nhân là text tùy chọn trong response cũ; không đổi schema hoặc chuyển thành objective answer.
+
+Practice/preview: người học tự nhớ, tùy chọn ghi chú rồi “Lật thẻ và tự đánh giá”; mặt sau chỉ được dựng từ feedback máy chủ sau khi nộp thành công. Test: nộp thẻ nhưng không hiện đáp án/tiêu chí trước finish. Sau khi có feedback, nút xem mặt trước/sau chỉ đổi giao diện, không nộp lại hoặc thay điểm. Skip giữ nhãn đã bỏ qua. Refresh giữ ghi nhớ đã nộp; mất mạng không lật giả thành công, outbox có thể gửi lại khi kết nối.
+
+`score`, `maxScore`, `isCorrect` vẫn null với thẻ tự đánh giá; không cộng vào objective accuracy. Đây không phải phiên `/on-tap` và không lưu bốn ratings/đặt lịch ôn từ thao tác lật. Payload hiện chưa có bộ field mặt sau IPA/POS/ví dụ riêng; có thể biên soạn chúng trong modelAnswer dạng text, không chèn HTML hoặc coi là dictionary widget mới.

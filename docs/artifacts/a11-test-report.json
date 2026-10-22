@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-10-22T03:58:50.453014+00:00",
+  "database": "mce_auth_test_4baeebfa1ff0",
+  "passed": true,
+  "checks": [
+    "full integration suite",
+    "11 exercise field paths and metadata/CSV/block paths",
+    "live 50/101 worker telemetry with zero partial content",
+    "rollback and queued retry",
+    "A01 recovery reset",
+    "Chrome actual worker polling"
+  ]
+}

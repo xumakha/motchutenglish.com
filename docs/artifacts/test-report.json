@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-21T09:41:14.731723+00:00",
+  "timestamp": "2026-10-22T05:06:02.759591+00:00",
   "environment": "isolated local database; external mail/analytics disabled",
   "checks": [
     {
@@ -10,52 +10,72 @@
     {
       "check": "database/setup-local.php",
       "status": "passed",
-      "seconds": 1.787
+      "seconds": 2.254
     },
     {
       "check": "tests/product_unit.php",
       "status": "passed",
-      "seconds": 0.065
+      "seconds": 0.071
     },
     {
       "check": "tests/jobs_recovery.php",
       "status": "passed",
-      "seconds": 0.954
+      "seconds": 1.444
     },
     {
       "check": "tests/timezone.php",
       "status": "passed",
-      "seconds": 1.166
+      "seconds": 1.295
     },
     {
       "check": "tests/timezone_http.py",
       "status": "passed",
-      "seconds": 1.605
+      "seconds": 1.818
     },
     {
       "check": "tests/product_http.py",
       "status": "passed",
-      "seconds": 26.161
+      "seconds": 55.126
+    },
+    {
+      "check": "tests/progress_history.php",
+      "status": "passed",
+      "seconds": 0.633
+    },
+    {
+      "check": "tests/marketing.php",
+      "status": "passed",
+      "seconds": 0.607
+    },
+    {
+      "check": "tests/imports.php",
+      "status": "passed",
+      "seconds": 1.227
     },
     {
       "check": "tests/motivation.php",
       "status": "passed",
-      "seconds": 0.524
+      "seconds": 0.499
+    },
+    {
+      "check": "tests/browser.mjs",
+      "status": "passed",
+      "seconds": 25.353
     },
     {
       "check": "tests/learning_http.py",
       "status": "passed",
-      "seconds": 10.073
+      "seconds": 8.636
     },
     {
       "check": "tests/product_fixture.php",
       "status": "passed",
-      "seconds": 0.074
+      "seconds": 0.072
     },
     {
       "check": "tests/auth_http.py",
       "status": "passed",
-      "seconds": 8.995
+      "seconds": 8.571
     },
     {
       "check": "tests/auth_hash.php",
@@ -65,12 +85,12 @@
     {
       "check": "tests/site_http.py",
       "status": "passed",
-      "seconds": 5.358
+      "seconds": 4.891
     },
     {
       "check": "tests/account_http.py",
       "status": "passed",
-      "seconds": 10.252
+      "seconds": 9.566
     }
   ],
   "all_passed": true

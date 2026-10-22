@@ -3,7 +3,7 @@ declare(strict_types=1);
 final class Motivation {
     public static function lock(int $uid,bool $allowDeleted=false,?DateTimeImmutable $now=null): array {
         $now??=mce_now();
-        mce_profile($uid);$p=mce_one('SELECT * FROM mce_profiles WHERE user_id=? FOR UPDATE',[$uid]);
+        $p=mce_profile($uid,true);
         if($p['deleted_at']&&!$allowDeleted)throw new ProductError(401,'Tài khoản đang được xóa.');
         $pending=mce_one('SELECT * FROM mce_timezone_changes WHERE user_id=?',[$uid]);
         if($pending&&$pending['effective_after']<=mce_sqltime($now)) {

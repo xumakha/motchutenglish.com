@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-10-22T04:05:35.369744+00:00",
+  "database": "mce_auth_test_acf0cd8f5210",
+  "restoreDatabase": "mce_restore_test_af93bbba7faf",
+  "passed": true,
+  "checks": [
+    "fresh setup",
+    "repeat additive migration",
+    "schema and extensions check",
+    "missing admin arguments rejected",
+    "documented local admin arguments and launcher",
+    "existing admin is not overwritten",
+    "admin password through stdin",
+    "reviewed sample seed",
+    "worker tick",
+    "worker run",
+    "SQL backup",
+    "SQL restore into a new database",
+    "media backup CLI",
+    "media restore CLI",
+    "media restore rejects traversal"
+  ],
+  "dockerBuild": "not run locally; Docker unavailable; CI container job added"
+}
