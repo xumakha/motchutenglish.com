@@ -18,12 +18,14 @@
     "db:migrate": "tsx scripts/db.ts migrate",
     "db:reset": "tsx scripts/db.ts reset",
     "admin": "tsx --conditions=react-server scripts/admin.ts",
-    "test:db": "vitest run --project db"
+    "test:db": "vitest run --project db",
+    "seed": "tsx --conditions=react-server scripts/seed.ts"
   },
   "dependencies": {
     "@next/env": "16.4.2",
     "better-auth": "1.7.12",
     "drizzle-orm": "0.45.4",
+    "file-type": "^22.2.0",
     "luxon": "^3.7.2",
     "mysql2": "3.24.6",
     "next": "16.4.2",

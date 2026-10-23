@@ -490,3 +490,24 @@ Operations notes for Phase 8:
 - Start with `pnpm start` (standalone `server.js`), not `next start`.
 
 Not yet covered from the Phase 1 gate: `tests/site_http.py` checks the legacy public pages, which arrive in Phase 5.
+
+### Phase 2 (done on `migration/phase-2`)
+
+Built (domain modules only; screens are Phase 5, HTTP routes Phase 4):
+- **Assessment** (`web/src/domain/assessment`): validation, normalisation, grading, solutions, public view. A golden file produced by running the PHP class (`web/tests/golden/assessment.php`) is replayed in CI: 99 sample exercises, 614 answer cases, 84 normalisation cases and 34 broken-document cases match PHP exactly.
+- **Study** (`domain/study/attempts.ts`): start, preview, read, the eight player actions, retry, finish with progress, guest claim, public attempt (arrays instead of key-ordered objects).
+- **Content** (`domain/content`): lesson versions and workflow, entity proposals and workflows, vocabulary-set membership, reorder, unit archive, reports, imports (JSON/CSV, atomic commit, worker hand-off), media upload and visibility.
+- **Legacy lessons** (`domain/legacy`), **seed** (`pnpm seed`), new table `mce_media_refs` (migration 0001).
+- Fixes done: 1, 2, 4, 5, 6, 7, 11 (lookup table; Range serving lands with the route in Phase 4), 12, 13, 18, 23.
+- Tests: 348 unit (incl. golden), 31 database; CI also seeds the sample catalog.
+
+Bugs found in earlier phases while doing this: redirect lookups ignored the leading slash PHP stores (fixed); mysql2 parsed some JSON columns twice (fixed with `jsonStrings`).
+
+Changes from the plan:
+| Plan said | Now | Why |
+|---|---|---|
+| Fix 10 (search) in Phase 2 | Phase 5, with the search page | The search table and query belong with the page that uses them |
+| Reward hooks in Study | No-op hooks (`domain/motivation/hooks.ts`) until Phase 3 | Lessons complete correctly; XP/quests/streaks arrive with the motivation module |
+| `progressHistory` (weekly stats) in Study | Phase 3 | It is part of the progress page and review pagination |
+| Catalog cache rotation (`catalog_revision`) | Dropped | Phase 4 actions call `updateTag('catalog')` |
+| Rate limits inside content functions (import, upload) | Applied by the caller (Phase 4 actions) | Domain functions stay free of request details |

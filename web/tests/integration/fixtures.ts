@@ -22,12 +22,14 @@ export function templateDocument(): LessonDocument {
 
 export async function createUser(role: "learner" | "editor" | "admin" = "learner"): Promise<Actor> {
   const t = tag();
-  const [{ id }] = await db()
-    .insert(users)
-    .values({ name: `Test ${t}`, email: `t-${t}@example.test` })
-    .$returningId();
-  if (role !== "learner") await db().insert(learningRoles).values({ userId: id!, role });
-  return { userId: id!, role, guestKey: null };
+  const id = await insertedId(
+    db()
+      .insert(users)
+      .values({ name: `Test ${t}`, email: `t-${t}@example.test` })
+      .$returningId(),
+  );
+  if (role !== "learner") await db().insert(learningRoles).values({ userId: id, role });
+  return { userId: id, role, guestKey: null };
 }
 
 export const guest = (): Actor => ({ userId: null, role: "guest", guestKey: sha256(tag()) });
@@ -39,46 +41,58 @@ export async function publishedLesson(
 ) {
   const author = await createUser("admin");
   const t = tag();
-  const [{ id: pathId }] = await db()
-    .insert(paths)
-    .values({
-      slug: `path-${t}`,
-      title: "Path",
-      description: "d",
-      objectives: "o",
-      prerequisites: "",
-      status: "published",
-    })
-    .$returningId();
-  const [{ id: unitId }] = await db()
-    .insert(units)
-    .values({ pathId: pathId!, title: "Unit", objectives: "o" })
-    .$returningId();
-  const [{ id: lessonId }] = await db()
-    .insert(lessons)
-    .values({ unitId: unitId!, slug: `lesson-${t}`, subtype })
-    .$returningId();
-  const [{ id: versionId }] = await db()
-    .insert(versions)
-    .values({
-      lessonId: lessonId!,
-      title: "Lesson",
-      document,
-      status: "published",
-      authorId: author.userId!,
-      publishedAt: new Date(),
-    })
-    .$returningId();
+  const pathId = await insertedId(
+    db()
+      .insert(paths)
+      .values({
+        slug: `path-${t}`,
+        title: "Path",
+        description: "d",
+        objectives: "o",
+        prerequisites: "",
+        status: "published",
+      })
+      .$returningId(),
+  );
+  const unitId = await insertedId(
+    db().insert(units).values({ pathId: pathId, title: "Unit", objectives: "o" }).$returningId(),
+  );
+  const lessonId = await insertedId(
+    db()
+      .insert(lessons)
+      .values({ unitId: unitId, slug: `lesson-${t}`, subtype })
+      .$returningId(),
+  );
+  const versionId = await insertedId(
+    db()
+      .insert(versions)
+      .values({
+        lessonId: lessonId,
+        title: "Lesson",
+        document,
+        status: "published",
+        authorId: author.userId!,
+        publishedAt: new Date(),
+      })
+      .$returningId(),
+  );
   const { eq } = await import("drizzle-orm");
-  await db().update(lessons).set({ currentVersion: versionId! }).where(eq(lessons.id, lessonId!));
+  await db().update(lessons).set({ currentVersion: versionId }).where(eq(lessons.id, lessonId));
   return {
-    pathId: pathId!,
-    unitId: unitId!,
-    lessonId: lessonId!,
-    versionId: versionId!,
+    pathId: pathId,
+    unitId: unitId,
+    lessonId: lessonId,
+    versionId: versionId,
     author,
     slug: `lesson-${t}`,
   };
+}
+
+/** First id from a drizzle $returningId() result. */
+async function insertedId(rows: Promise<{ id: number }[]>): Promise<number> {
+  const [row] = await rows;
+  if (!row) throw new Error("insert returned no id");
+  return row.id;
 }
 
 export const requestKey = () => randomBytes(16).toString("hex");
