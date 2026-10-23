@@ -454,3 +454,39 @@ Move media to object storage (the storage module stays an adapter); visual block
 | **Total** | **~17.5 (15–18 with overlap)** |
 
 This assumes one experienced developer working full time. Keeping the legacy flows adds ~1.5 weeks and fixing all bugs adds ~1.5 weeks; Better Auth and the fresh schema save ~1 week.
+
+---
+
+## 12. Progress log
+
+### Phase 0 (done, PR #1)
+Scaffold in `web/`, tooling, CI, zod contracts for all 61 PHP API operations with a drift test against `Product.php`.
+
+### Phase 1 (done on `migration/phase-1`)
+
+Built:
+- Drizzle schema for all tables (`web/src/db/schema/*`), baseline migration `web/drizzle/0000_baseline.sql`, `pnpm db:reset` / `db:migrate`. 60 app tables + the Drizzle migrations table; database created with `utf8mb4_unicode_ci`.
+- `db/client.ts` (UTC sessions, DATE as strings, MariaDB JSON parsing), `db/tx.ts` (READ COMMITTED, deadlock retry, error → 409/422 map).
+- `env.ts` validated at first use (fix 21).
+- Better Auth with serial ids, DB sessions, browser-session cookies, reset-password mail queued by verification id (fix 22).
+- Login / register / account pages and POST-only `/logout`; fixed-window limiter on `rate_limits` with an atomic count; failure-only login lockout per IP + email (fix 8).
+- `proxy.ts`: request id, `?page=` / `index.php` / slug redirects (301), optimistic 303 to `/login` for private pages, same-origin check for every POST.
+- Security headers in `next.config.ts`, `/health`, admin CLI (`pnpm admin create|set-role|check`).
+- Tests: 32 unit, 4 database, 8 browser flows; CI runs them against MariaDB 10.11.
+
+Changes from the plan (decided during Phase 1):
+
+| Plan said | Now | Why |
+|---|---|---|
+| Nonce-based CSP | Static CSP with `'unsafe-inline'` scripts | Next.js 16 docs: nonces force fully dynamic rendering and are incompatible with Cache Components' static shells. Switch to nonces later only if Cache Components is dropped |
+| `/api/auth/*` route (Better Auth handler) | Not mounted; Server Actions call `auth.api` | No extra public endpoints to rate-limit or protect |
+| CSRF token in forms and `X-CSRF-Token` | Origin / `Sec-Fetch-Site` check in `proxy.ts` for every POST/PUT/PATCH/DELETE | Next.js lets Server Actions without an `Origin` through with a warning; the proxy rejects them |
+| Seed script in Phase 1 | Moved to Phase 2 | It needs lesson validation and vocabulary-set logic from the content module |
+| `db/locks.ts` (`lockProfile`) in Phase 1 | Phase 2/3 with its first callers | Avoid untested helpers |
+
+Operations notes for Phase 8:
+- Run behind a reverse proxy that **appends** the client IP to `X-Forwarded-For`; the limiter trusts the rightmost entry.
+- Multi-instance deploys need a shared `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`.
+- Start with `pnpm start` (standalone `server.js`), not `next start`.
+
+Not yet covered from the Phase 1 gate: `tests/site_http.py` checks the legacy public pages, which arrive in Phase 5.

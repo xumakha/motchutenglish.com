@@ -9,7 +9,22 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-isolated-only
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      APP_ENV: test
+      APP_URL: http://127.0.0.1:3000
+      DATABASE_URL: mysql://root:ci-isolated-only@127.0.0.1:3306/mce_ci
+      BETTER_AUTH_SECRET: ci-only-secret-0123456789abcdef0123456789abcdef
+      MAIL_DRIVER: log
     defaults:
       run:
         working-directory: web
@@ -33,6 +48,12 @@ jobs:
         run: pnpm format:check
       - name: Unit tests (includes PHP route contract coverage)
         run: pnpm test
+      - name: Create database and apply migrations
+        run: pnpm db:reset
+      - name: Database tests
+        run: pnpm test:db
+      - name: Admin CLI health check
+        run: pnpm admin check
       - name: Build
         run: pnpm build
       - name: Install Playwright browser

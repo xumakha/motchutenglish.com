@@ -13,6 +13,7 @@ const viewports = [
 
 export default defineConfig({
   testDir: "tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -25,8 +26,9 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `pnpm start --port ${port}`,
-        url: baseURL,
+        command: "pnpm start",
+        env: { PORT: String(port), HOSTNAME: "127.0.0.1" },
+        url: `${baseURL}/health`,
         reuseExistingServer: !process.env.CI,
       },
 });

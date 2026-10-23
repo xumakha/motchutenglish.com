@@ -43,3 +43,6 @@ next-env.d.ts
 # tests
 /playwright-report
 /test-results
+
+# runtime files (media, exports, mail log, local credentials)
+/writable
