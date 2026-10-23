@@ -6,8 +6,20 @@ const base = {
   BETTER_AUTH_SECRET: "x".repeat(32),
 };
 
+// Start from a clean slate so the machine's own environment (e.g. CI's MAIL_DRIVER) can't leak in.
+const KNOWN = [
+  "APP_ENV",
+  "APP_URL",
+  "DATABASE_URL",
+  "BETTER_AUTH_SECRET",
+  "MAIL_DRIVER",
+  "MAIL_FROM",
+  "SMTP_HOST",
+];
+
 async function loadEnv(vars: Record<string, string>) {
   vi.resetModules();
+  for (const key of KNOWN) vi.stubEnv(key, undefined);
   for (const [key, value] of Object.entries(vars)) vi.stubEnv(key, value);
   return (await import("./env")).env;
 }
