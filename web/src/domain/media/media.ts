@@ -168,12 +168,7 @@ export async function canViewMedia(actor: Actor, mediaId: number): Promise<boole
       .select({ id: attempts.id })
       .from(attempts)
       .innerJoin(mediaRefs, eq(mediaRefs.versionId, attempts.versionId))
-      .where(
-        and(
-          eq(attempts.userId, actor.userId),
-          eq(mediaRefs.mediaId, mediaId),
-        ),
-      )
+      .where(and(eq(attempts.userId, actor.userId), eq(mediaRefs.mediaId, mediaId)))
       .limit(1),
   );
 }

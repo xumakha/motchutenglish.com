@@ -525,14 +525,12 @@ export async function articleWorkflow(
       const old = await selectRow(tx, "articles", v.articleId, true);
       if (!old || old.status === "archived")
         throw conflict("Bài viết đã lưu trữ hoặc không còn tồn tại.");
-      await tx
-        .insert(articleVersions)
-        .values({
-          articleId: v.articleId,
-          document: old,
-          actorId: actor.userId!,
-          createdAt: new Date(),
-        });
+      await tx.insert(articleVersions).values({
+        articleId: v.articleId,
+        document: old,
+        actorId: actor.userId!,
+        createdAt: new Date(),
+      });
       const row = await entityRow(actor, "articles", {
         ...d,
         status: "published",
