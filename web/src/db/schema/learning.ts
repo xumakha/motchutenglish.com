@@ -20,26 +20,8 @@ export type AttemptMode = "practice" | "test" | "preview";
 export type AttemptStatus = "active" | "finished";
 export type ItemState = "unanswered" | "draft" | "submitted" | "skipped" | "unavailable";
 
-/**
- * Shuffled order shown to the learner. Arrays replace PHP's key-ordered objects (plan §3.5), so
- * order survives JSON round trips and numeric ids stay strings.
- */
-export interface PresentedOrder {
-  choices?: string[];
-  tokens?: string[];
-  /** Match exercises: opaque right-side keys in display order, each mapped to its pair id. */
-  right?: { key: string; pairId: string }[];
-}
-
-export interface Grading {
-  score: number | null;
-  maxScore: number | null;
-  isCorrect: boolean | null;
-  feedback: string;
-  acceptedAnswerDisplay: string | null;
-  gradingMode: "objective" | "self_assessed" | "unavailable";
-  criteria?: unknown;
-}
+export type { Grading, PresentedOrder } from "@/domain/assessment/grade";
+import type { Grading, PresentedOrder } from "@/domain/assessment/grade";
 
 export const attempts = mysqlTable(
   "mce_attempts",

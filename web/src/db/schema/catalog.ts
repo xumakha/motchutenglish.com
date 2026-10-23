@@ -15,8 +15,9 @@ import { users } from "./auth";
 
 export type ContentStatus = "draft" | "in_review" | "published" | "archived";
 
-/** Lesson document (schemaVersion 1). Typed precisely by the assessment module in Phase 2. */
-export type LessonDocument = Record<string, unknown>;
+import type { LessonDocument } from "@/domain/assessment/types";
+
+export type { LessonDocument };
 
 export const media = mysqlTable("mce_media", {
   id: id(),
