@@ -1,3 +1,10 @@
+## Repository layout during the migration
+
+- The PHP app (`application/`, `index.php`, `database/`) is the reference implementation until cutover.
+- The Next.js + TypeScript rewrite lives in `web/`. Run its commands from `web/` (`pnpm check`, `pnpm build`, `pnpm test:e2e`).
+- Next.js docs for the installed version are in `web/node_modules/next/dist/docs/`.
+- The migration plan is `docs/migration/nextjs-typescript-plan.md`.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
