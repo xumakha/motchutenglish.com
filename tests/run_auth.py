@@ -26,7 +26,7 @@ modules=subprocess.check_output(['php','-m'],text=True).lower().splitlines()
 ini_dir=root/'writable/test-ini'
 ini_dir.mkdir(parents=True,exist_ok=True)
 (ini_dir/'required.ini').write_text(''.join('extension='+module+'\n' for module in ['intl','fileinfo'] if module not in modules))
-env['PHP_INI_SCAN_DIR']=str(ini_dir)
+env['PHP_INI_SCAN_DIR']=os.environ.get('PHP_INI_SCAN_DIR','')+os.pathsep+str(ini_dir)
 (root/'writable/sessions').mkdir(parents=True,exist_ok=True)
 subprocess.run(['php','database/setup-local.php'],env=env,check=True)
 with (root/'writable/auth-test-server.log').open('w') as log:
