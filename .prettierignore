@@ -1,0 +1,15 @@
+.next
+node_modules
+pnpm-lock.yaml
+next-env.d.ts
+playwright-report
+test-results
+public
+templates
+dist
+docs
+legacy
+seed
+ops
+.github
+.claude

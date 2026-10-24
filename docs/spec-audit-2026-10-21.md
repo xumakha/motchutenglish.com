@@ -1,5 +1,7 @@
 # Rà soát spec so với bản hiện tại — 21/10/2026
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Hiện trạng: [migration/security-checklist.md](migration/security-checklist.md), [migration/fix-tests.md](migration/fix-tests.md) và mục Phase 7 của [progress log trong kế hoạch chuyển đổi](migration/nextjs-typescript-plan.md#12-progress-log).
+
 ## Trạng thái tổng hợp sau A14 — 22/10/2026
 
 Bảng phát hiện và mô tả môi trường audit 21/10 bên dưới được giữ làm lịch sử. Các câu “chưa sửa trong lượt này” chỉ nói về lượt audit gốc; trạng thái mới ưu tiên bảng này và các phần cập nhật A03–A12 cuối tài liệu.

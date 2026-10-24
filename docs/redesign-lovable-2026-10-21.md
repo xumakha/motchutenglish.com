@@ -1,5 +1,7 @@
 # Áp dụng giao diện Lovable — 21/10/2026
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Giao diện này được giữ nguyên khi chuyển sang Next.js: màn hình ở `app/` và `src/components`, CSS và font ở `public/assets`, kiểm tra trình duyệt ở `tests/e2e`.
+
 Nguồn tham chiếu: `lovable-project-03b741b6.zip` do chủ dự án cung cấp. Đã tạm dừng các phần sửa logic tiếp theo (A03 trở đi) để ưu tiên giao diện. A01/A13 đã sửa trước đó được giữ lại.
 
 ## Phạm vi

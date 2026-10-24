@@ -1,5 +1,7 @@
 # A02 — chẩn đoán và tối ưu local, 22/10/2026
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Benchmark hiện nay: `pnpm benchmark`, kết quả `docs/artifacts/a02-next-local.json` (xem [testing.md](testing.md#hiệu-năng-a02)).
+
 A02 còn mở ở bước nghiệm thu staging. Ba lượt mới trên Apache riêng + PHP 8.5 FastCGI đã đạt p95 dưới 800 ms tại local. Các lượt CGI cũ bên dưới vẫn được giữ làm lịch sử; thay runtime không chứng minh riêng thay đổi code đã làm giảm latency.
 
 ## Thay đổi

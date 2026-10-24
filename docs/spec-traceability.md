@@ -1,5 +1,7 @@
 # Đối chiếu toàn bộ spec — cập nhật 22/10/2026
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Code hiện nay: [architecture.md](architecture.md), [testing.md](testing.md), [migration/fix-tests.md](migration/fix-tests.md).
+
 Nguồn: [specification.md](specification.md). “Có code” và “đã nghiệm thu ra mắt” là hai trạng thái khác nhau. Bảng ghi vị trí thực hiện và bằng chứng, không thay thế số đo staging.
 
 | Mục | Yêu cầu | Thực hiện | Bằng chứng/phạm vi |

@@ -1,3 +1,10 @@
+## Repository layout
+
+- The Next.js 16 + TypeScript app is the repo root (`app/`, `src/`, `proxy.ts`). Run `pnpm check`, `pnpm test:db`, `pnpm build`, `pnpm test:e2e` from here.
+- Tests: `src/**/*.test.ts` (unit), `tests/integration` (database), `tests/e2e` (Playwright), `tests/http` (black-box HTTP suites, `python3 tests/http/run_next.py`).
+- The PHP app it replaced is at git tag `php-final`. The migration plan and its progress log are in `docs/migration/nextjs-typescript-plan.md`.
+- Next.js docs for the installed version are in `node_modules/next/dist/docs/`.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

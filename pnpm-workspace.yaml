@@ -1,0 +1,6 @@
+allowBuilds:
+  esbuild: true
+  sharp: false
+  unrs-resolver: false
+patchedDependencies:
+  "@better-auth/drizzle-adapter": patches/@better-auth__drizzle-adapter.patch

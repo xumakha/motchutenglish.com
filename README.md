@@ -1,58 +1,89 @@
 # Một Chút English
 
-Ứng dụng học tiếng Anh cho người Việt, PHP MVC/PDO và MariaDB. Code hiện hữu và lịch sử cũ được giữ lại; hệ thống học mới dùng các bảng `mce_`. Không cần Node hoặc build frontend để chạy website. Node/Chrome chỉ phục vụ kiểm thử trình duyệt.
+Vietnamese English-learning site: lessons with graded exercises, spaced review, a vocabulary notebook, streaks and rewards, and a CMS for editors. Next.js 16 + TypeScript + MariaDB.
 
-## Chạy local Windows/XAMPP
+The PHP app it replaced is at git tag `php-final`. How the move happened: [`docs/migration/nextjs-typescript-plan.md`](docs/migration/nextjs-typescript-plan.md).
 
-Bật MySQL trong XAMPP. Copy `config-example/database.php` sang `application/config/database.php`, điền database local. Không đưa file này lên Git. PHP hỗ trợ >=8.3 <8.6, cần pdo_mysql, mbstring, intl, fileinfo; `php-local.ps1` bật extension cục bộ nếu DLL có sẵn.
+## Local setup
 
-```powershell
-.\php-local.ps1 database/setup-local.php
-.\php-local.ps1 database/check.php
-.\php-local.ps1 database/create-admin.php admin@motchutenglish.local "Quan tri vien" --local
-.\php-local.ps1 database/seed-product.php --publish-reviewed-samples
-.\start.ps1
+Needs Node 24+, pnpm, and a MariaDB (10.11 in CI) user that can create databases.
+
+Copy `.env.example` to `.env.local` and fill in at least:
+
+```sh
+APP_URL=http://localhost:3000
+DATABASE_URL=mysql://USER:PASSWORD@127.0.0.1:3306/mce_dev
+BETTER_AUTH_SECRET=at-least-32-random-characters
+MAIL_DRIVER=log
 ```
 
-Nếu PowerShell chặn script theo policy của máy, chạy từng lệnh bằng `powershell -NoProfile -ExecutionPolicy Bypass -File .\php-local.ps1 ...` hoặc launcher `powershell -NoProfile -ExecutionPolicy Bypass -File .\start.ps1`; không đổi policy toàn máy.
+`.env.example` describes every variable; `src/env.ts` validates them and sets the defaults. A bad value stops the app at boot.
 
-Mở http://localhost:8080. Lệnh tạo admin ở trên chỉ chạy khi cài mới; đổi email/tên theo tài khoản bạn muốn tạo. Nếu email đã tồn tại, công cụ từ chối và không đổi mật khẩu. CLI in vị trí tệp mật khẩu riêng trong `writable/`, không có mật khẩu seed cố định. Production truyền mật khẩu qua stdin, không dùng `--local`; ví dụ Docker tại [operations.md](docs/operations.md). Mẫu seed mặc định là draft; flag xuất bản chỉ dành cho nội dung mẫu đã được người vận hành xem xét. Bản nháp nghe thiếu file vẫn không được xuất bản.
-
-Trang chính: `/lo-trinh`, `/hoc`, `/on-tap`, `/so-tu-vung`, `/tien-do`, `/tai-khoan`, `/reward-shop`. CMS `/admin/lessons`; có lộ trình, chương, bài, câu hỏi, từ, bộ từ, kiến thức, media, import, báo lỗi, roles, settings, audit, vận hành. Luồng cũ `/courses`, `/listening`, `/dashboard` vẫn được giữ để tương thích.
-
-## Lệnh vận hành
-
-```powershell
-.\php-local.ps1 database/migrate.php
-.\php-local.ps1 database/worker.php tick
-.\php-local.ps1 database/worker.php run 50
-.\php-local.ps1 database/worker.php cleanup
-.\php-local.ps1 database/worker.php reconcile
+```sh
+pnpm install
+pnpm db:reset                              # drop + create the database, apply migrations (refuses in production)
+pnpm seed --publish-reviewed-samples       # sample catalog; plain `pnpm seed` leaves it as drafts
+pnpm admin create you@example.com "Name" --local   # admin; password written to writable/local-admin-*.txt
+pnpm dev                                   # http://localhost:3000
 ```
 
-Email mặc định tắt và UI báo đúng trạng thái. Để thử email, đặt `MAIL_DRIVER=log` trong môi trường development rồi chạy worker; liên kết chỉ nằm trong tệp private. Production bắt buộc SMTP thật. Biến môi trường xem `.env.example`; ứng dụng PHP không tự đọc `.env`.
+Other admin commands: `pnpm admin set-role EMAIL admin|editor|learner`, `pnpm admin check`. Without `--local`, `pnpm admin create` reads the password from stdin. `--local` is refused unless the database is on `127.0.0.1`/`localhost`.
 
-## Kiểm thử
+## Checks and tests
 
-```powershell
-$env:THREADED_TESTS='1'
-$env:BROWSER_TESTS='1'
-$env:PERFORMANCE_TESTS='1'
-$env:RESTORE_TESTS='1'
-$env:MYSQLDUMP_BIN='C:\xampp\mysql\bin\mysqldump.exe'
-$env:MYSQL_BIN='C:\xampp\mysql\bin\mysql.exe'
-python tests/run_auth.py
+```sh
+pnpm check        # typecheck, lint, format check, unit tests
+pnpm test:db      # database tests (needs DATABASE_URL on a migrated database)
+pnpm build
+pnpm test:e2e     # Playwright at 360/390/768/1440 px; starts `pnpm start`, so build first
+pnpm benchmark    # A02: 50 concurrent graded submits against a running build
+python3 tests/http/run_next.py   # black-box HTTP suites in their own database
 ```
 
-Runner tạo database riêng `mce_auth_test_*`, không reset database ứng dụng. Cần quyền CREATE DATABASE cho local test. Database kiểm thử được giữ để kiểm tra; không chạy suite bằng tài khoản production. Báo cáo và ảnh ở `docs/artifacts/`.
+Details: [`docs/testing.md`](docs/testing.md).
 
-## Tài liệu
+## Where things are
 
-- [Kiến trúc](docs/architecture.md), [quyết định](docs/decisions.md), [dữ liệu](docs/data-model.md).
-- [Biên tập và import](docs/content-authoring.md), [API](docs/api.md).
-- [Deploy, worker, backup, restore](docs/operations.md), [kiểm thử](docs/testing.md).
-- [Đối chiếu spec](docs/spec-traceability.md), [tiến độ và điều kiện ra mắt](docs/progress.md).
+- `app/`: pages, `/api/v1/[...route]`, file routes (`/media`, `/du-lieu`).
+- `src/domain/`: business rules (assessment, study, content, review, motivation, identity, exports).
+- `src/contracts/`: zod contract for every API route; `pnpm docs:api` writes [`docs/api-v1.md`](docs/api-v1.md) from it.
+- `src/server/`, `src/actions/`: request handling for `/api/v1` and Server Actions.
+- `src/worker/`: background jobs and operations CLI.
+- `proxy.ts`: request id, redirects, same-origin check, sign-in redirect.
+- `drizzle/`: migrations. `seed/`, `templates/`: sample catalog and import templates.
 
-Dockerfile/Compose và CI là cấu hình chuẩn bị cho staging; chưa có staging/production được triển khai trong phiên làm việc này. Cần domain, hosting, HTTPS, SMTP, lịch backup ngoài máy, media hợp lệ và nội dung pháp lý do chủ dự án duyệt.
+More: [`docs/architecture.md`](docs/architecture.md), [`docs/api.md`](docs/api.md), [`docs/data-model.md`](docs/data-model.md).
 
-Image cài Python 3.12+ cho media backup, kiểm extension PHP và dùng `mariadb-dump`/`mariadb` cho SQL. Các lệnh trong container dùng `python3`; Windows thường dùng `python`. Kiểm cài mới local riêng: `python tests/install_smoke.py` (cần quyền CREATE DATABASE, giữ database test để kiểm tra). Bài kiểm tra này không thay thế Docker build hoặc nghiệm thu production.
+## Worker
+
+Background jobs (email, reminders, exports, large imports, account deletion, analytics) run in a separate process, never inside a web request. Only one worker runs at a time; a second one exits with `{"busy":true}`.
+
+```sh
+pnpm worker run [limit]       # process due jobs (default 50, max 100)
+pnpm worker tick              # close streak days, queue reminders
+pnpm worker cleanup           # retention cleanup; warns about pending jobs over 1 hour late
+pnpm worker reconcile         # rebuild reward balances from the ledger
+pnpm worker backup            # SQL dump into writable/backups (needs mariadb-dump)
+pnpm worker restore-drill FILE  # restore a dump into a new mce_restore_test_* database and compare counts
+```
+
+Production runs the bundled copy (`pnpm build:worker` → `dist/worker.mjs`, no dev dependencies needed):
+
+```cron
+* * * * *    node dist/worker.mjs run 50
+*/5 * * * *  node dist/worker.mjs tick
+15 3 * * *   node dist/worker.mjs cleanup
+30 3 * * *   node dist/worker.mjs backup
+```
+
+## Mail
+
+- `MAIL_DRIVER=disabled` (default): features that need mail say it is unavailable.
+- `MAIL_DRIVER=log`: each message is a private JSON file in `writable/mail`. Development and test only; refused when `APP_ENV=production`.
+- `MAIL_DRIVER=smtp`: needs `MAIL_FROM`, `SMTP_HOST`, and STARTTLS or TLS (`SMTP_ENCRYPTION`).
+
+If the SMTP connection fails after the server started reading the message, the job is marked "delivery uncertain" and is never resent automatically. Check the mail provider before retrying it by hand.
+
+## Deployment
+
+See [`docs/operations.md`](docs/operations.md).
