@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 // Auth flows ported from tests/auth_http.py. Each test registers a fresh account, so the suite can
 // run against any migrated database without fixtures.

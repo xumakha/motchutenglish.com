@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Page } from "./fixtures";
 import { lessonId, query } from "./db";
 
 // /api/v1 over HTTP (ports of the API parts of tests/product_http.py). Needs the seeded sample

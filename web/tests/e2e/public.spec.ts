@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { query } from "./db";
 
 // Public and identity screens (Phase 5 port of the public branches of views/product/page.php).

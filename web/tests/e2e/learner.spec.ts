@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { query } from "./db";
 
 // Signed-in learner screens (views/product/page.php learner branches). Each test registers a

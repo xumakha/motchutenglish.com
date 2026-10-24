@@ -516,7 +516,20 @@ export const routes = {
     method: "POST",
     auth: "staff",
     transport: "action",
-    input: z.object({ setId: positiveId, ids: z.array(positiveId).max(500) }),
+    input: z.object({
+      setId: positiveId,
+      // Forms send "3,1,2" (or nothing to clear the set); JSON sends [3, 1, 2]. An empty list is
+      // allowed, as in PHP.
+      ids: z.preprocess(
+        (v) =>
+          v === undefined
+            ? []
+            : typeof v === "string"
+              ? v.split(",").filter((x) => x.trim() !== "")
+              : v,
+        z.array(positiveId).max(1000),
+      ),
+    }),
     output: savedResult,
   },
   "admin.draftSave": {

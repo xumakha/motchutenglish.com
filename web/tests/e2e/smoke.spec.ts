@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("home page renders in Vietnamese", async ({ page }) => {
   const response = await page.goto("/");

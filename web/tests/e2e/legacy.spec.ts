@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { query } from "./db";
 
 // Legacy screens: the static courses.json pages with browser-only progress (assets/js/app.js) and

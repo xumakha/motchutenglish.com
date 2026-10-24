@@ -1,6 +1,7 @@
 import "server-only";
 import { and, eq, isNotNull, ne } from "drizzle-orm";
 import { db } from "@/db/client";
+import legacyCatalog from "../../public/assets/json/courses.json";
 import { articles, lessons, paths, units, versions, vocabulary, vocabularySets } from "@/db/schema";
 
 // Existence checks for public content URLs, run in proxy.ts before the page renders so a missing
@@ -15,7 +16,26 @@ const routes: [RegExp, (slug: string) => Promise<boolean>][] = [
   [new RegExp(`^/tu-vung/chu-de/(${SLUG})$`), publishedSet],
   [new RegExp(`^/tu-vung/(?!chu-de$)(${SLUG})$`), publishedWord],
   [new RegExp(`^/kien-thuc/(${SLUG})$`), publishedArticle],
+  // Legacy static catalog (assets/json/courses.json).
+  [new RegExp(`^/courses/(${SLUG}(?:/${SLUG})?)$`), legacyCourse],
+  [new RegExp(`^/listening/(${SLUG})$`), legacyListening],
 ];
+
+interface LegacyCatalog {
+  courses: { id: string; lessons: { id: string }[] }[];
+  listening: { id: string }[];
+}
+const legacy = legacyCatalog as unknown as LegacyCatalog;
+
+async function legacyCourse(path: string) {
+  const [courseId, lessonId] = path.split("/");
+  const course = legacy.courses.find((c) => c.id === courseId);
+  return !!course && (lessonId === undefined || course.lessons.some((l) => l.id === lessonId));
+}
+
+async function legacyListening(id: string) {
+  return legacy.listening.some((l) => l.id === id);
+}
 
 async function publishedPath(slug: string) {
   const [row] = await db()

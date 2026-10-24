@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { lessonId } from "./db";
 
 // The lesson player (port of the browser checks in tests/browser.mjs). Uses the seeded preview

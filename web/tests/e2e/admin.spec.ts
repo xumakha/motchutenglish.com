@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { query } from "./db";
 
 // CMS screens (/admin/{section}, views/product/admin.php). Each test registers a fresh account
