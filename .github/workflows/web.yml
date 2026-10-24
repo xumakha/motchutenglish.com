@@ -40,6 +40,8 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install MariaDB client (backup and restore drill tests)
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
       - name: Typecheck
         run: pnpm typecheck
       - name: Lint
@@ -60,6 +62,13 @@ jobs:
           pnpm seed --publish-reviewed-samples
       - name: Build
         run: pnpm build
+      - name: Build and smoke-test the bundled worker
+        run: |
+          pnpm build:worker
+          node dist/worker.mjs tick
+          node dist/worker.mjs run 50
+          node dist/worker.mjs cleanup
+          node dist/worker.mjs reconcile
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
       - name: End-to-end tests

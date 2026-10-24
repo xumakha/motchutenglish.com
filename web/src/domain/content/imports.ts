@@ -44,7 +44,12 @@ const INLINE_LIMIT = 100;
 let progressDb: ReturnType<typeof drizzle> | undefined;
 
 /** Written outside the import transaction so pollers see progress while content stays atomic. */
-async function writeProgress(importId: string, processed: number, total: number, phase: string) {
+export async function writeProgress(
+  importId: string,
+  processed: number,
+  total: number,
+  phase: string,
+) {
   try {
     progressDb ??= drizzle({ client: createDbPool(undefined, 1) });
     await progressDb

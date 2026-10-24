@@ -567,3 +567,23 @@ Changes from the plan:
 | Flash messages at page top | Inside the form | Server Actions return state to the form; text is unchanged |
 | `/api/auth` route | None; actions call `auth.api` | No OAuth or client SDK needed |
 | — | Admin 403/404 and `/ket-qua` return 200 with noindex | Private pages; revisit in Phase 7 |
+
+### Phase 6 (done on `migration/phase-6`)
+
+Built:
+- **Worker** (`web/src/worker/jobs.ts`, CLI `pnpm worker run|tick|cleanup|reconcile|backup|restore-drill`): same rules as `Jobs.php`. One worker at a time (GET_LOCK on its own connection), backoff `min(3600, 30·2^tries)`, 5 tries, crash recovery (requeue import/export/delete; mail/reminder/analytics → failed "uncertain"; finished results acknowledged), imports run as their actor (fix 23).
+- **Mail** (`worker/mail`): `log` sink (private JSON files) and SMTP over STARTTLS/TLS with a verified peer and 15 s timeouts. Templates have HTML and text parts. Link tokens are minted at send time (fix 22); a definite failure releases the token so the retry sends a working link.
+- **Fixes**: 9 (cleanup purges limiter rows older than 1 day), 16 (only failed jobs expire; cleanup warns about pending jobs over 1 hour late), 24 (analytics older than 72 h fail at once).
+- **Operations**: SQL backup (`MYSQL_PWD`, 0600 files) and restore drill into a new database with row-count checks. Production runs one bundled file, `dist/worker.mjs` (`pnpm build:worker`, 4.5 MB). Cron lines are in `web/README.md`.
+- Tests: 21 new DB tests. Fake SMTP server (8 cases: failures before the body are retryable, after it "uncertain"), crash recovery with the real CLI killed mid-job (port of `jobs_recovery.php`), the account email flow through the worker (port of `account_http.py`), backup and restore drill.
+- CI: installs the MariaDB client and smoke-tests the bundled worker.
+
+Changes from the plan:
+| Plan said | Now | Why |
+|---|---|---|
+| React Email templates | Plain React components rendered with `react-dom/server` | `@react-email/components` is pulled from npm ("no longer supported") |
+| Nodemailer transport, classify by `err.command` | Nodemailer's `SMTPConnection`, "uncertain" once the server starts reading the body | Nodemailer labels every dropped connection `CONN`, whatever the stage |
+| `.eml` files in dev | JSON files, like the PHP sink | Same shape the PHP fixture reads; holds both parts |
+| Separate `backup.ts` / `restore-drill.ts` scripts | Subcommands of the worker CLI | One bundled file to ship |
+| Gate: `tests/account_http.py` against the TS CLI | Ported as a Vitest DB test | The Python suite needs the PHP fixture CLI and CSRF form; the TS fixture CLI is Phase 7 |
+| Alert on pending jobs over 1 hour | `cleanup` prints a warning and returns the count | No alerting system yet; hook it up at cutover |
