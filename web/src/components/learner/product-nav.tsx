@@ -22,7 +22,7 @@ export function LearnerHeading({ title }: { title: string }) {
           page-* class. PHP put both on <body>; here they sit on different elements, so the rule
           always matches. The inline display restores `.redesign .product-nav` until the shared
           CSS or shell is fixed. */}
-      <nav className="product-nav" aria-label="Học tiếng Anh" style={{ display: "flex" }}>
+      <nav className="product-nav" aria-label="Học tiếng Anh">
         {LINKS.map(([href, label]) => (
           <Link key={href} href={href}>
             {label}

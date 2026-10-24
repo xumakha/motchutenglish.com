@@ -1,4 +1,9 @@
-/* The PHP <body> carried the design background; here the root body does. */
+/* The PHP <body> carried class "redesign" and the page class together; here the .site-frame
+   wrapper does (the CSS keys off both on one element), so the two body-level rules live here. */
+html {
+  scroll-padding-top: calc(var(--header-offset, 90px) + 16px);
+}
 body {
   margin: 0;
+  background: #fffcf5;
 }

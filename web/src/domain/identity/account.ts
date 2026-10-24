@@ -26,6 +26,7 @@ import { deleteExportsFor } from "../exports/exports";
 import { enqueue, enqueueMail } from "../jobs/enqueue";
 import { localDay, lockProfile } from "../motivation/profile";
 import { randomHex, sha256 } from "../php";
+import { isTimezone } from "../timezone";
 
 // Port of application/libraries/Identity.php plus the account routes of Product::execute.
 // Passwords and sessions belong to Better Auth; this module adds the app's rules on top: the
@@ -69,7 +70,7 @@ export async function updateProfile(actor: Actor, input: ProfileInput, now = new
     ["goal", GOALS.includes(goal as string)],
     ["selfLevel", LEVELS.includes(level as string)],
     ["minutes", MINUTES.includes(minutes)],
-    ["timezone", Intl.supportedValuesOf("timeZone").includes(timezone) || timezone === "UTC"],
+    ["timezone", isTimezone(timezone)],
     ["reviewLimit", Number.isInteger(reviewLimit) && reviewLimit >= 1 && reviewLimit <= 100],
   ];
   const fields = Object.fromEntries(

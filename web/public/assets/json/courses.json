@@ -19,7 +19,11 @@
           ],
           "question": {
             "prompt": "Câu nào giới thiệu tên đúng?",
-            "choices": ["My name is Linh.", "I name Linh.", "Me Linh."],
+            "choices": [
+              "My name is Linh.",
+              "I name Linh.",
+              "Me Linh."
+            ],
             "answer": 0,
             "explanation": "Dùng “My name is + tên” để giới thiệu bản thân."
           }
@@ -29,10 +33,18 @@
           "title": "Đồ vật quanh bạn",
           "text": "This is a book. That is a pen. The book is on the table.",
           "translation": "Đây là một cuốn sách. Kia là một cây bút. Cuốn sách ở trên bàn.",
-          "vocabulary": ["Book — Sách", "Pen — Bút", "Table — Bàn"],
+          "vocabulary": [
+            "Book — Sách",
+            "Pen — Bút",
+            "Table — Bàn"
+          ],
           "question": {
             "prompt": "Điền từ: This ___ a book.",
-            "choices": ["are", "is", "am"],
+            "choices": [
+              "are",
+              "is",
+              "am"
+            ],
             "answer": 1,
             "explanation": "“This” là số ít, nên dùng “is”."
           }
@@ -49,7 +61,11 @@
           ],
           "question": {
             "prompt": "“Every morning” nghĩa là gì?",
-            "choices": ["Mỗi tuần", "Mỗi buổi tối", "Mỗi buổi sáng"],
+            "choices": [
+              "Mỗi tuần",
+              "Mỗi buổi tối",
+              "Mỗi buổi sáng"
+            ],
             "answer": 2,
             "explanation": "“Every” nghĩa là mỗi, “morning” là buổi sáng."
           }
@@ -59,10 +75,18 @@
           "title": "Mua sắm đơn giản",
           "text": "How much is this bag? It is twenty dollars. I would like this one, please.",
           "translation": "Chiếc túi này giá bao nhiêu? Nó giá hai mươi đô la. Tôi muốn lấy chiếc này.",
-          "vocabulary": ["How much — Bao nhiêu tiền", "Bag — Túi", "I would like — Tôi muốn"],
+          "vocabulary": [
+            "How much — Bao nhiêu tiền",
+            "Bag — Túi",
+            "I would like — Tôi muốn"
+          ],
           "question": {
             "prompt": "Dùng câu nào để hỏi giá?",
-            "choices": ["How are you?", "How much is this?", "Where are you?"],
+            "choices": [
+              "How are you?",
+              "How much is this?",
+              "Where are you?"
+            ],
             "answer": 1,
             "explanation": "“How much is this?” dùng để hỏi giá của một món đồ."
           }
@@ -81,10 +105,18 @@
           "title": "Giới thiệu tại công sở",
           "text": "Hi, I am Linh. I work in marketing. I am happy to join the team.",
           "translation": "Chào, tôi là Linh. Tôi làm trong lĩnh vực tiếp thị. Tôi rất vui được tham gia đội ngũ.",
-          "vocabulary": ["Marketing — Tiếp thị", "Join — Tham gia", "Team — Đội ngũ"],
+          "vocabulary": [
+            "Marketing — Tiếp thị",
+            "Join — Tham gia",
+            "Team — Đội ngũ"
+          ],
           "question": {
             "prompt": "Điền từ: I work ___ marketing.",
-            "choices": ["on", "in", "to"],
+            "choices": [
+              "on",
+              "in",
+              "to"
+            ],
             "answer": 1,
             "explanation": "Dùng “work in” khi nói về lĩnh vực làm việc."
           }
@@ -94,10 +126,18 @@
           "title": "Viết email ngắn",
           "text": "Dear Anna, please find the report attached. Let me know if you have any questions. Best regards, Linh.",
           "translation": "Anna thân mến, vui lòng xem báo cáo đính kèm. Hãy cho tôi biết nếu bạn có câu hỏi. Trân trọng, Linh.",
-          "vocabulary": ["Attached — Đính kèm", "Report — Báo cáo", "Best regards — Trân trọng"],
+          "vocabulary": [
+            "Attached — Đính kèm",
+            "Report — Báo cáo",
+            "Best regards — Trân trọng"
+          ],
           "question": {
             "prompt": "“Attached” có nghĩa là gì?",
-            "choices": ["Đính kèm", "Ngày mai", "Cuộc họp"],
+            "choices": [
+              "Đính kèm",
+              "Ngày mai",
+              "Cuộc họp"
+            ],
             "answer": 0,
             "explanation": "“Attached” chỉ tài liệu hoặc tệp được gửi kèm email."
           }
@@ -114,7 +154,11 @@
           ],
           "question": {
             "prompt": "Cuộc họp được đề nghị vào lúc nào?",
-            "choices": ["9 giờ hôm nay", "10 giờ ngày mai", "2 giờ ngày mai"],
+            "choices": [
+              "9 giờ hôm nay",
+              "10 giờ ngày mai",
+              "2 giờ ngày mai"
+            ],
             "answer": 1,
             "explanation": "“At ten tomorrow” nghĩa là lúc 10 giờ ngày mai."
           }
@@ -131,7 +175,11 @@
           ],
           "question": {
             "prompt": "“By Friday” thể hiện điều gì?",
-            "choices": ["Nơi gửi tệp", "Hạn gửi tệp", "Tên tệp"],
+            "choices": [
+              "Nơi gửi tệp",
+              "Hạn gửi tệp",
+              "Tên tệp"
+            ],
             "answer": 1,
             "explanation": "“By” chỉ hạn chót: trước hoặc vào thời điểm đó."
           }
@@ -150,10 +198,18 @@
           "title": "Part 2 · Hỏi và đáp",
           "text": "Where is the meeting room? It is on the second floor.",
           "translation": "Phòng họp ở đâu? Nó ở tầng hai.",
-          "vocabulary": ["Where — Ở đâu", "Floor — Tầng", "Meeting — Cuộc họp"],
+          "vocabulary": [
+            "Where — Ở đâu",
+            "Floor — Tầng",
+            "Meeting — Cuộc họp"
+          ],
           "question": {
             "prompt": "Chọn câu trả lời cho: Where is the meeting room?",
-            "choices": ["At nine o’clock.", "On the second floor.", "Yes, I do."],
+            "choices": [
+              "At nine o’clock.",
+              "On the second floor.",
+              "Yes, I do."
+            ],
             "answer": 1,
             "explanation": "Câu hỏi “Where” cần câu trả lời về địa điểm."
           }
@@ -163,10 +219,18 @@
           "title": "Part 5 · Chia động từ",
           "text": "She works at a bank. Her office opens at nine every morning.",
           "translation": "Cô ấy làm ở một ngân hàng. Văn phòng của cô ấy mở cửa lúc chín giờ mỗi sáng.",
-          "vocabulary": ["Bank — Ngân hàng", "Office — Văn phòng", "Open — Mở cửa"],
+          "vocabulary": [
+            "Bank — Ngân hàng",
+            "Office — Văn phòng",
+            "Open — Mở cửa"
+          ],
           "question": {
             "prompt": "Điền từ: She ___ at a bank.",
-            "choices": ["work", "working", "works"],
+            "choices": [
+              "work",
+              "working",
+              "works"
+            ],
             "answer": 2,
             "explanation": "Hiện tại đơn với chủ ngữ “She” thêm -s vào động từ."
           }
@@ -176,10 +240,18 @@
           "title": "Part 7 · Đọc thông báo",
           "text": "The office will be closed on Monday. We will reopen on Tuesday. For urgent requests, please send an email.",
           "translation": "Văn phòng đóng cửa vào thứ Hai và mở lại vào thứ Ba. Với yêu cầu khẩn cấp, vui lòng gửi email.",
-          "vocabulary": ["Closed — Đóng cửa", "Reopen — Mở lại", "Urgent — Khẩn cấp"],
+          "vocabulary": [
+            "Closed — Đóng cửa",
+            "Reopen — Mở lại",
+            "Urgent — Khẩn cấp"
+          ],
           "question": {
             "prompt": "When will the office reopen?",
-            "choices": ["On Tuesday", "On Monday", "On Sunday"],
+            "choices": [
+              "On Tuesday",
+              "On Monday",
+              "On Sunday"
+            ],
             "answer": 0,
             "explanation": "Thông báo ghi “We will reopen on Tuesday”."
           }
@@ -189,10 +261,18 @@
           "title": "Part 5 · Giới từ thời gian",
           "text": "The meeting starts at nine on Monday. Please arrive on time.",
           "translation": "Cuộc họp bắt đầu lúc chín giờ vào thứ Hai. Vui lòng đến đúng giờ.",
-          "vocabulary": ["At nine — Lúc chín giờ", "On Monday — Vào thứ Hai", "On time — Đúng giờ"],
+          "vocabulary": [
+            "At nine — Lúc chín giờ",
+            "On Monday — Vào thứ Hai",
+            "On time — Đúng giờ"
+          ],
           "question": {
             "prompt": "The meeting starts ___ nine.",
-            "choices": ["in", "on", "at"],
+            "choices": [
+              "in",
+              "on",
+              "at"
+            ],
             "answer": 2,
             "explanation": "Dùng “at” trước giờ cụ thể, “on” trước ngày."
           }
@@ -211,7 +291,11 @@
       "translation": "Khách gọi một cốc cà phê nhỏ. Nhân viên báo giá ba đô la.",
       "question": {
         "prompt": "What size coffee does the customer want?",
-        "choices": ["A large coffee", "A small coffee", "A medium coffee"],
+        "choices": [
+          "A large coffee",
+          "A small coffee",
+          "A medium coffee"
+        ],
         "answer": 1,
         "explanation": "Khách nói: “A small coffee, please.”"
       }
@@ -226,7 +310,11 @@
       "translation": "Cuộc họp đội ngũ diễn ra lúc mười giờ. Người tham gia cần mang báo cáo.",
       "question": {
         "prompt": "What should the speaker bring?",
-        "choices": ["A coffee", "A laptop", "A report"],
+        "choices": [
+          "A coffee",
+          "A laptop",
+          "A report"
+        ],
         "answer": 2,
         "explanation": "Anna nói: “Please bring your report.”"
       }
@@ -241,7 +329,11 @@
       "translation": "Tàu rời ga lúc tám giờ ba mươi, tại sân ga số ba.",
       "question": {
         "prompt": "Which platform does the train leave from?",
-        "choices": ["Platform one", "Platform three", "Platform eight"],
+        "choices": [
+          "Platform one",
+          "Platform three",
+          "Platform eight"
+        ],
         "answer": 1,
         "explanation": "Câu trả lời là “Platform three”."
       }
@@ -250,19 +342,31 @@
   "placementQuestions": [
     {
       "prompt": "Chọn câu giới thiệu tên đúng.",
-      "choices": ["I name Linh.", "My name is Linh.", "Me is Linh."],
+      "choices": [
+        "I name Linh.",
+        "My name is Linh.",
+        "Me is Linh."
+      ],
       "answer": 1,
       "explanation": "My name is + tên."
     },
     {
       "prompt": "This ___ a book.",
-      "choices": ["are", "am", "is"],
+      "choices": [
+        "are",
+        "am",
+        "is"
+      ],
       "answer": 2,
       "explanation": "This là số ít."
     },
     {
       "prompt": "He ___ to work every day.",
-      "choices": ["go", "goes", "going"],
+      "choices": [
+        "go",
+        "goes",
+        "going"
+      ],
       "answer": 1,
       "explanation": "He đi với goes ở hiện tại đơn."
     },
@@ -278,13 +382,21 @@
     },
     {
       "prompt": "I have lived here ___ 2020.",
-      "choices": ["for", "during", "since"],
+      "choices": [
+        "for",
+        "during",
+        "since"
+      ],
       "answer": 2,
       "explanation": "Since dùng trước mốc thời gian."
     },
     {
       "prompt": "If it rains tomorrow, we ___ stay home.",
-      "choices": ["will", "would", "have"],
+      "choices": [
+        "will",
+        "would",
+        "have"
+      ],
       "answer": 0,
       "explanation": "Điều kiện loại 1 dùng will trong mệnh đề chính."
     }

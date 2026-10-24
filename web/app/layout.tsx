@@ -30,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* eslint-disable-next-line @next/next/no-css-tags -- dynamic site colours, not a bundle */}
         <link rel="stylesheet" href="/theme.css" />
       </head>
-      <body className="redesign">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

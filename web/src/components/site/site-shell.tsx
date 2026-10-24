@@ -192,7 +192,7 @@ export function SiteShell({
   children: ReactNode;
 }) {
   return (
-    <div className={`site-frame page-${page}${lessonMode ? " lesson-mode" : ""}`}>
+    <div className={`site-frame redesign page-${page}${lessonMode ? " lesson-mode" : ""}`}>
       <SkipLink />
       <header className="site-header">
         <div className="site-header-inner">
