@@ -1,0 +1,273 @@
+:root {
+  --primary: #146b50;
+  --accent: #f7ce53;
+  --surface: #fffefa;
+  --text: #203c32;
+  --ink: #203c32;
+  --background: #fafbf5;
+  --line: #dce7de;
+  --accent-soft: #fff2bf;
+  --border: #dce7de;
+  --radius: 16px;
+  --space: 16px;
+  --shadow: 0 4px 20px #173c3210;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.product-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  margin-bottom: 20px;
+  align-items: center;
+}
+.product-nav a {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f0f5ef;
+  color: #24543f;
+}
+.inline-form {
+  display: inline-block;
+  margin: 6px 8px 6px 0;
+}
+.prose {
+  white-space: pre-wrap;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.table-scroll {
+  overflow: auto;
+  max-width: 100%;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+td,
+th {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+progress {
+  width: 100%;
+  height: 16px;
+  accent-color: var(--primary);
+}
+.auth-form select,
+.auth-form textarea,
+.search-form input,
+.search-form select,
+.exercise-panel input,
+.exercise-panel select,
+.exercise-panel textarea {
+  font: inherit;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-width: 100%;
+  background: white;
+  color: var(--text);
+}
+.search-form {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.search-form label {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  min-width: 180px;
+}
+.code-input {
+  font-family: monospace;
+  font-size: 14px;
+  tab-size: 2;
+}
+.path-map .lesson-row {
+  max-width: 640px;
+  margin: 18px auto;
+  border-left: 5px solid var(--accent);
+}
+.path-map .lesson-row:nth-of-type(even) {
+  transform: translateX(20px);
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+.avatar-preview {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #dcefe3;
+  font-size: 32px;
+  font-weight: 700;
+}
+.avatar-mint {
+  background: #bce6d4;
+}
+.avatar-gold {
+  border: 6px solid #efc33d;
+}
+.avatar-sun {
+  background: #ffe9a0;
+  box-shadow: 0 0 0 6px #fff4c8;
+}
+.study-block {
+  margin-top: 16px;
+}
+.study-audio {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.study-audio audio {
+  width: 100%;
+  max-width: 100%;
+}
+.exercise-panel fieldset {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.exercise-panel label {
+  display: grid;
+  gap: 6px;
+}
+.exercise-panel .answer-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+.exercise-panel input[type="radio"] {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+.exercise-panel textarea {
+  width: 100%;
+}
+.token-list,
+.review-ratings,
+.player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.token-list button {
+  min-width: 44px;
+}
+.save-status {
+  position: sticky;
+  top: 0;
+  background: #fffbea;
+  padding: 12px;
+  border-radius: 10px;
+  z-index: 2;
+  min-height: 46px;
+}
+.button,
+summary {
+  min-height: 44px;
+}
+.panel:has(.code-input) {
+  max-width: 100%;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 600px) {
+  .path-map .lesson-row:nth-of-type(even) {
+    transform: none;
+  }
+  .product-nav {
+    gap: 4px;
+  }
+  .product-nav a {
+    font-size: 14px;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .exercise-panel .button {
+    margin-bottom: 8px;
+  }
+  .panel {
+    padding: 18px;
+  }
+  .container {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .page-heading h1 {
+    overflow-wrap: anywhere;
+  }
+  header .nav {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+.mce-no-motion * {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+.lesson-mode main > .container > .product-nav,
+.lesson-mode .site-header > .nav {
+  display: none;
+}
+.lesson-mode main > .container {
+  max-width: 860px;
+}
+.panel h2,
+.panel h3 {
+  overflow-wrap: anywhere;
+}
+.button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.brand-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 230px;
+}
+@media (max-width: 600px) {
+  .brand-name {
+    max-width: 100px;
+  }
+}
+
+.path-image {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius, 16px);
+  margin-bottom: 16px;
+}

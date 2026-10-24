@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthForm } from "../auth-form";
-import { PageHeading } from "../heading";
+import { PageHeading } from "@/components/site/page-heading";
+import { SiteShell } from "@/components/site/site-shell";
 import { RedirectIfSignedIn } from "../redirect-if-signed-in";
 
 export const metadata: Metadata = {
@@ -11,11 +12,11 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <>
+    <SiteShell page="login">
       <PageHeading
         eyebrow="ĐĂNG NHẬP"
         title="Chào mừng bạn trở lại."
-        lead="Học nhẹ nhàng, tiến bộ mỗi ngày."
+        description="Học nhẹ nhàng, tiến bộ mỗi ngày."
       />
       <Suspense>
         <RedirectIfSignedIn>
@@ -26,6 +27,6 @@ export default function LoginPage() {
         <a href="/quen-mat-khau">Quên mật khẩu?</a> -{" "}
         <a href="/tai-khoan">Cài đặt và quyền riêng tư</a>
       </p>
-    </>
+    </SiteShell>
   );
 }
