@@ -58,6 +58,8 @@ test.describe("mobile menu", () => {
 
   test("Enter opens with focus inside, Escape closes and returns focus", async ({ page }) => {
     await page.goto("/");
+    // The signed-in nav streams in and replaces the guest placeholder; wait for the swap.
+    await expect(page.locator("#navigation")).toHaveCount(1);
     const menu = page.locator("button.menu");
     await menu.focus();
     await page.keyboard.press("Enter");
@@ -72,20 +74,27 @@ test.describe("mobile menu", () => {
   });
 });
 
-test("keyboard focus is never hidden under the sticky header", async ({ page }) => {
-  await page.goto("/lo-trinh");
-  for (let i = 0; i < 25; i++) {
-    await page.keyboard.press("Tab");
-    const hidden = await page.evaluate(() => {
-      const el = document.activeElement as HTMLElement | null;
-      const header = document.querySelector(".site-header");
-      if (!el || !header || header.contains(el) || el.classList.contains("skip-link")) return null;
-      const box = el.getBoundingClientRect();
-      const bottom = header.getBoundingClientRect().bottom;
-      return box.bottom <= bottom ? `${el.tagName} ${el.textContent?.trim().slice(0, 40)}` : null;
-    });
-    expect(hidden).toBeNull();
-  }
+test.describe("sticky header", () => {
+  // The site scrolls smoothly; with reduced motion the focus scroll is instant, so positions
+  // read right after Tab are final (the CSS honours prefers-reduced-motion).
+  test.use({ reducedMotion: "reduce" });
+
+  test("keyboard focus is never hidden under the sticky header", async ({ page }) => {
+    await page.goto("/lo-trinh");
+    for (let i = 0; i < 25; i++) {
+      await page.keyboard.press("Tab");
+      const hidden = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null;
+        const header = document.querySelector(".site-header");
+        if (!el || !header || header.contains(el) || el.classList.contains("skip-link"))
+          return null;
+        const box = el.getBoundingClientRect();
+        const bottom = header.getBoundingClientRect().bottom;
+        return box.bottom <= bottom ? `${el.tagName} ${el.textContent?.trim().slice(0, 40)}` : null;
+      });
+      expect(hidden).toBeNull();
+    }
+  });
 });
 
 test("form fields and images are labelled", async ({ page }) => {

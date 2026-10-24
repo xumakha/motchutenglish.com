@@ -88,8 +88,8 @@ jobs:
       - name: Benchmark (A02, 50 concurrent graded submits; reported, not a staging claim)
         run: |
           PORT=3000 HOSTNAME=127.0.0.1 pnpm start > /tmp/next.log 2>&1 &
-          server=$!
-          trap 'kill $server' EXIT
+          # pnpm start runs node as a child process; stop that server when this step ends.
+          trap 'pkill -f .next/standalone/server.js || true' EXIT
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/health >/dev/null && break; sleep 1; done
           pnpm benchmark http://127.0.0.1:3000
       - name: PHP black-box HTTP suites against Next.js (own database, build and server)

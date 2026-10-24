@@ -1,7 +1,7 @@
 import hashlib
 import http.cookiejar, json, re, secrets, urllib.request, urllib.parse, io, wave
 from concurrent.futures import ThreadPoolExecutor
-from http_target import BASE, NEXT, PHP, ROOT, api_headers, assert_denied, call_action, csrf_token, find_form, fixture as target_fixture, login, open_request, register, seed, worker
+from http_target import BASE, NEXT, PHP, ROOT, api_headers, assert_denied, settle_cache, call_action, csrf_token, find_form, fixture as target_fixture, login, open_request, register, seed, worker
 def fixture(*args):return target_fixture('product',*args)
 class Client:
     def __init__(self):self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()));self.csrf=''
@@ -14,7 +14,7 @@ class Client:
         status,body,url,_=login(self.opener,email,'Product-test-123!');assert status==200 and url.endswith('/account')
         if PHP:self.csrf=csrf_token(body)
     def api(self,route,data=None,status=200):
-        code,body,_=self.req('/api/v1/'+route,data,data is not None);assert code==status,(route,code,body);j=json.loads(body);return j.get('data',j.get('error'))
+        code,body,_=self.req('/api/v1/'+route,data,data is not None);assert code==status,(route,code,body);settle_cache(route,code);j=json.loads(body);return j.get('data',j.get('error'))
     def upload(self,filename,content,expected=200):
         boundary='mce'+secrets.token_hex(12);parts=[]
         for key,value in dict(alt='Test-generated asset',source='Generated inside isolated test suite',license='Test fixture owned by this project').items():parts.append(('--'+boundary+'\r\nContent-Disposition: form-data; name="'+key+'"\r\n\r\n'+value+'\r\n').encode())

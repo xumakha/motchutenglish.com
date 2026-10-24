@@ -12,7 +12,7 @@ describe("fix 17: API docs are generated from the code", () => {
     expect(inputFields(routes["attempts.view"])).toEqual([
       "revision: integer",
       "block: string",
-      "position: integer",
+      "position?: integer",
     ]);
     expect(inputFields(routes["admin.report"])[0]).toBe("id: integer");
     const docs = renderApiDocs();

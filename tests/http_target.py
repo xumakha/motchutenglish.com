@@ -14,6 +14,7 @@ import json
 import os
 import re
 import subprocess
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -88,6 +89,15 @@ def open_request(opener, path, data=None, headers=None, method=None, origin=BASE
     except urllib.error.HTTPError as error:
         response = error
     return response.code, text(response.read()), response.geturl(), response.headers
+
+
+def settle_cache(route, code):
+    """Next.js applies a route handler's cache-tag expiry as background work after the response
+    (next/dist/server/route-modules/app-route: pendingWaitUntil), so a page read sent the same
+    instant can still see the old catalog. The CMS forms are Server Actions (updateTag), which
+    are read-your-own-writes; only direct /api/v1 admin writes are eventually consistent."""
+    if NEXT and code < 400 and route.startswith('admin/'):
+        time.sleep(0.2)
 
 
 def api_headers(csrf=''):
@@ -233,19 +243,11 @@ _INTERRUPTED = '<meta name="robots" content="noindex"/>'
 
 
 def assert_denied(result, status, label=''):
-    """A page refused the visitor (403 staff-only / 404 not the owner).
-
-    Next.js known deviation (plan §12, Phase 5: "Admin 403/404 and /ket-qua return 200 with
-    noindex; revisit in Phase 7"): these guards run inside a streamed page, after the 200 status
-    is sent, so the 403/404 view replaces the page on the client and Next.js marks the HTML
-    noindex. A real status needs a role/owner pre-check in proxy.ts. Until then, check for that
-    interruption here; callers check that the protected data is absent.
-    """
-    code, body = result[0], result[1]
-    if PHP or code == status:
-        assert code == status, (label, code)
-        return
-    assert code == 200 and _INTERRUPTED in body, (label, code, 'page was not interrupted')
+    """A page refused the visitor (403 staff-only / 404 not the owner). On Next.js, proxy.ts
+    decides the status before rendering (server/private-access.ts); callers check that the
+    protected data is absent."""
+    code = result[0]
+    assert code == status, (label, code)
 
 
 def csrf_token(body):

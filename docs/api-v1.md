@@ -37,7 +37,7 @@ over `/api/v1`.
 | POST | `attempts/{id}/retry` | guest-or-owner | api | `exerciseId: string`, `response: any` | — | 4 |
 | POST | `attempts/{id}/skip` | guest-or-owner | api | `revision: integer`, `exerciseId: string` | study: 500/60s | — |
 | POST | `attempts/{id}/submit` | guest-or-owner | api | `revision: integer`, `exerciseId: string`, `response: any` | study: 500/60s | — |
-| POST | `attempts/{id}/view` | guest-or-owner | api | `revision: integer`, `block: string`, `position: integer` | study: 500/60s | 6 |
+| POST | `attempts/{id}/view` | guest-or-owner | api | `revision: integer`, `block: string`, `position?: integer` | study: 500/60s | 6 |
 | POST | `attempts/start` | public | action | `lessonId: integer`, `requestKey: string`, `mode?: "practice" \| "test"` | start: 60/900s | — |
 | POST | `avatar` | user | action | `itemId: string` | — | — |
 | GET | `catalog` | public | api | — | — | — |

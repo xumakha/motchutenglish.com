@@ -124,8 +124,12 @@ test.describe("flows", () => {
     });
 
     test("finds lessons, words and articles", async ({ page }) => {
+      // Prefer a word no lesson mentions: results are capped, and a long-lived dev database holds
+      // many test lessons containing the first sample words ("hello").
       const [word] = await query<{ lemma: string }>(
-        "SELECT lemma FROM mce_vocabulary WHERE status = 'published' ORDER BY id LIMIT 1",
+        `SELECT v.lemma FROM mce_vocabulary v WHERE v.status = 'published'
+         ORDER BY EXISTS (SELECT 1 FROM mce_search s WHERE s.body LIKE CONCAT('%', v.lemma, '%')), v.id
+         LIMIT 1`,
       );
       await page.goto("/tim-kiem");
       await page.getByLabel("Tìm bài học, từ hoặc kiến thức").fill(word!.lemma);

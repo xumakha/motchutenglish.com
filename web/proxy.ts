@@ -8,6 +8,7 @@ import {
   UNSAFE_METHODS,
 } from "@/server/proxy-rules";
 import { contentExists } from "@/server/content-exists";
+import { privateStatus } from "@/server/private-access";
 import { redirectFor } from "@/server/redirects";
 
 // Runs before every page, action and route handler:
@@ -16,6 +17,7 @@ import { redirectFor } from "@/server/redirects";
 // - missing public content (unknown slugs) → real 404 status;
 // - optimistic sign-in check: private pages without a session cookie get a real 303 to /login
 //   (the page still verifies the session itself);
+// - staff pages for non-staff → 403, other people's /ket-qua results → 404, before rendering;
 // - same-origin check for state-changing requests. Next.js lets Server Actions without an Origin
 //   header through with a warning; we reject them unless the browser marks them same-origin.
 
@@ -41,16 +43,17 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
 
-  // Missing public content gets a real 404 before streaming starts (no route matches this path).
-  if (
-    (request.method === "GET" || request.method === "HEAD") &&
-    !(await contentExists(request.nextUrl.pathname))
-  ) {
-    const response = NextResponse.rewrite(new URL("/_khong-tim-thay", request.url), {
-      status: 404,
-    });
-    response.headers.set("X-Request-ID", requestId);
-    return response;
+  if (request.method === "GET" || request.method === "HEAD") {
+    // Missing public content gets a real 404 before streaming starts (no route matches this path).
+    const status = !(await contentExists(request.nextUrl.pathname))
+      ? 404
+      : await privateStatus(request.nextUrl.pathname, request.headers);
+    if (status) {
+      const target = status === 403 ? "/khong-co-quyen" : "/_khong-tim-thay";
+      const response = NextResponse.rewrite(new URL(target, request.url), { status });
+      response.headers.set("X-Request-ID", requestId);
+      return response;
+    }
   }
 
   const headers = new Headers(request.headers);
