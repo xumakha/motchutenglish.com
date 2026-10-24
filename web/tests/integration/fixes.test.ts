@@ -120,22 +120,27 @@ describe("fix 10: lesson search uses a FULLTEXT table filled on publish", () => 
   });
 
   it("the vocabulary notebook search escapes `%` and `_` too", async () => {
-    const [word] = await db()
-      .select()
-      .from(vocabulary)
-      .where(
-        and(
-          eq(vocabulary.status, "published"),
-          sql`${vocabulary.lemma} NOT LIKE '%\\%%' AND ${vocabulary.lemma} NOT LIKE '%\\_%'`,
-          sql`${vocabulary.meaning} NOT LIKE '%\\%%' AND ${vocabulary.meaning} NOT LIKE '%\\_%'`,
-        ),
-      )
-      .limit(1);
+    // Its own published word: CI runs these tests before the sample catalog is seeded.
+    const t = Math.random().toString(16).slice(2, 10);
+    const [inserted] = await db()
+      .insert(vocabulary)
+      .values({
+        slug: `fix10-${t}`,
+        lemma: `notebook${t}`,
+        partOfSpeech: "noun",
+        topic: "test",
+        meaning: "từ kiểm thử",
+        example: "",
+        translation: "",
+        status: "published",
+      })
+      .$returningId();
+    const word = { id: inserted!.id, lemma: `notebook${t}` };
     const user = await createUser();
     await db()
       .insert(userVocabulary)
-      .values({ userId: user.userId!, senseId: word!.id, notes: "", hidden: false });
-    expect((await notebook(user, word!.lemma, "all")).words).toHaveLength(1);
+      .values({ userId: user.userId!, senseId: word.id, notes: "", hidden: false });
+    expect((await notebook(user, word.lemma, "all")).words).toHaveLength(1);
     for (const q of ["%", "_", "%_"]) expect((await notebook(user, q, "all")).words).toEqual([]);
   });
 
