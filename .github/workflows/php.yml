@@ -40,8 +40,17 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
       - uses: actions/checkout@v5
-      - name: Install supported PHP runtime extensions
-        run: sudo apt-get update && sudo apt-get install -y php-cli php-mysql php-mbstring php-intl php-xml php-cgi python3 mariadb-client
+      # The runner's preinstalled PHP is not the one apt adds extensions to, so pin the
+      # production version (Dockerfile: php:8.5) with its extensions and php-cgi.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: pdo_mysql, mbstring, intl, xml
+          tools: none
+      - name: Install MariaDB client
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+      - name: Check PHP runtime
+        run: php -m | grep -qi pdo_mysql && command -v php-cgi
       - name: Lint PHP
         run: find application database tests -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Run isolated database and HTTP tests
