@@ -1,33 +1,29 @@
 import hashlib
-import http.cookiejar, json, re, secrets, subprocess, urllib.request, urllib.error, urllib.parse, io, wave
+import http.cookiejar, json, re, secrets, urllib.request, urllib.parse, io, wave
 from concurrent.futures import ThreadPoolExecutor
-BASE='http://127.0.0.1:8089'
-def fixture(*args):return subprocess.check_output(['php','tests/product_fixture.php',*map(str,args)],text=True,encoding='utf-8')
+from http_target import BASE, NEXT, PHP, ROOT, api_headers, assert_denied, call_action, csrf_token, find_form, fixture as target_fixture, login, open_request, register, seed, worker
+def fixture(*args):return target_fixture('product',*args)
 class Client:
     def __init__(self):self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()));self.csrf=''
     def req(self,path,data=None,json_data=False):
         payload=(json.dumps(data).encode() if json_data else urllib.parse.urlencode(data).encode()) if data is not None else None
-        headers={'Content-Type':'application/json','X-CSRF-Token':self.csrf} if json_data else {}
-        try:r=self.opener.open(urllib.request.Request(BASE+path,payload,headers))
-        except urllib.error.HTTPError as e:r=e
-        body=r.read().decode();assert 'Fatal error' not in body and 'Warning:' not in body,(path,body)
-        return r.code,body,r.geturl()
+        code,body,url,_=open_request(self.opener,path,payload,api_headers(self.csrf) if json_data else {})
+        assert 'Fatal error' not in body and 'Warning:' not in body,(path,body)
+        return code,body,url
     def login(self,email):
-        _,body,_=self.req('/login');token=re.search(r'name="csrf" value="([a-f0-9]+)"',body)[1]
-        status,body,url=self.req('/login',dict(csrf=token,email=email,password='Product-test-123!'));assert status==200 and url.endswith('/account')
-        self.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',body)[1]
+        status,body,url,_=login(self.opener,email,'Product-test-123!');assert status==200 and url.endswith('/account')
+        if PHP:self.csrf=csrf_token(body)
     def api(self,route,data=None,status=200):
         code,body,_=self.req('/api/v1/'+route,data,data is not None);assert code==status,(route,code,body);j=json.loads(body);return j.get('data',j.get('error'))
     def upload(self,filename,content,expected=200):
         boundary='mce'+secrets.token_hex(12);parts=[]
         for key,value in dict(alt='Test-generated asset',source='Generated inside isolated test suite',license='Test fixture owned by this project').items():parts.append(('--'+boundary+'\r\nContent-Disposition: form-data; name="'+key+'"\r\n\r\n'+value+'\r\n').encode())
         parts.append(('--'+boundary+'\r\nContent-Disposition: form-data; name="file"; filename="'+filename+'"\r\nContent-Type: application/octet-stream\r\n\r\n').encode()+content+b'\r\n');parts.append(('--'+boundary+'--\r\n').encode())
-        req=urllib.request.Request(BASE+'/api/v1/admin/upload',b''.join(parts),{'Content-Type':'multipart/form-data; boundary='+boundary,'X-CSRF-Token':self.csrf})
-        try:r=self.opener.open(req)
-        except urllib.error.HTTPError as e:r=e
-        body=r.read().decode();assert r.code==expected,(r.code,body);j=json.loads(body);return j.get('data',j.get('error'))
+        headers={'Content-Type':'multipart/form-data; boundary='+boundary,**({'X-CSRF-Token':self.csrf} if PHP else {})}
+        code,body,_,_=open_request(self.opener,'/api/v1/admin/upload',b''.join(parts),headers)
+        assert code==expected,(code,body);j=json.loads(body);return j.get('data',j.get('error'))
 users=json.loads(fixture('setup'))
-for _ in range(2):subprocess.run(['php','database/seed-product.php','--publish-reviewed-samples'],check=True,capture_output=True)
+for _ in range(2):seed('product')
 catalog=json.loads(fixture('catalog'));assert len(catalog['paths'])==2 and len(catalog['lessons'])==16 and len(catalog['vocabulary'])==40
 clients={r:Client() for r in users}
 for role,c in clients.items():c.login(users[role]['email'])
@@ -36,7 +32,7 @@ assert sum(l['subtype']=='checkpoint' for l in catalog['lessons'])==4
 for path in ['/du-lieu/template-paths','/du-lieu/template-units','/du-lieu/template-articles','/du-lieu/template-vocabulary_sets','/chien-dich/'+catalog['paths'][0]['slug']+'?utm_source=test','/tu-vung?page=2','/lo-trinh','/tu-vung','/kien-thuc','/tim-kiem?q=hello','/hoc','/bat-dau','/so-tu-vung','/on-tap','/tien-do','/tai-khoan','/reward-shop','/admin/lessons','/admin/paths','/admin/operations']:
     client=admin if path.startswith(('/admin/','/du-lieu/template-')) else learner
     code,body,url=client.req(path);assert code==200 and not url.endswith('/login'),(path,code,url)
-assert learner.req('/admin/lessons')[0]==403
+assert_denied(learner.req('/admin/lessons'),403,'Learner on /admin/lessons')
 editor.api('admin/role',dict(userId=users['learner']['id'],role='admin'),403)
 lesson=next(l for l in catalog['lessons'] if l['slug']=='chao-hoi-tung-buoc')
 key=secrets.token_hex(16)
@@ -57,15 +53,17 @@ for b in state['blocks']:mutate('view',block=b['id'])
 mutate('navigate',position=2);assert learner.api('attempts/'+key)['position']==2
 mutate('navigate',position=0)
 answers={'hello':'greeting','name':True,'am':{'verb':' am. '},'order':['my','name','is','linh']}
+# PHP shows match sides as {id: text}; Next.js as ordered [{id|key, text}] lists (plan §3, decision 5).
+def by_id(side,key):return side if isinstance(side,dict) else {x[key]:x['text'] for x in side}
 for item in list(state['items']):
     e=item['exercise'];eid=e['id'];response=answers.get(eid)
-    if e['type']=='match':response={left:next(k for k,v in e['payload']['right'].items() if v=={'hello':'Xin chào','thanks':'Cảm ơn'}[left]) for left in e['payload']['left']}
+    if e['type']=='match':response={left:next(k for k,v in by_id(e['payload']['right'],'key').items() if v=={'hello':'Xin chào','thanks':'Cảm ơn'}[left]) for left in by_id(e['payload']['left'],'id')}
     old_revision=state['revision'];mutate('draft',exerciseId=eid,response=response)
     learner.api('attempts/'+key+'/draft',dict(revision=old_revision,exerciseId=eid,response=response))
     learner.api('attempts/'+key+'/draft',dict(revision=old_revision,exerciseId=eid,response=None),409)
     mutate('submit',exerciseId=eid,response=response)
     learner.api('attempts/'+key+'/submit',dict(revision=old_revision,exerciseId=eid,response=response))
-mutate('finish');assert int(state['score'])==6 and int(state['maxScore'])==6
+mutate('finish');assert int(state['score'])==6 and int(state['maxScore'])==6,[(i['exercise']['id'],i['exercise']['type'],i.get('feedback')) for i in state['items']]
 assert 'NEW_VERSION_EXPLANATION' not in json.dumps(state)
 learner.api('attempts/'+key+'/finish',dict(revision=0))
 restore_version=editor.api('admin/version',dict(lessonId=lesson['id'],slug=lesson['slug'],title=lesson['title'],document=original_doc))['versionId']
@@ -138,12 +136,13 @@ admin.api('admin/workflow',dict(versionId=vid,action='archive'));assert other.ap
 with other.opener.open(BASE+'/media/'+str(aid)) as media:assert media.status==200 and media.headers['Content-Type'].startswith('audio/') and media.read().startswith(b'RIFF')
 # CSV dry-run/commit preserves ownership and creates drafts only.
 csv='schemaVersion,externalId,slug,lemma,ipa,part_of_speech,topic,meaning,example,translation,level\n1,csv-one,csv-private-example,example,,noun,tests,vi du,An example.,Mot vi du.,A1\n'
-csv_preview=editor.api('admin/import-preview',dict(raw=csv));assert not csv_preview['errors']
+# Fix 13: a CSV batch names its namespace (PHP fixed it to csv-vocabulary).
+csv_preview=editor.api('admin/import-preview',dict(raw=csv,**({'namespace':'csv-http-test'} if NEXT else {})));assert not csv_preview['errors']
 editor.api('admin/import-commit',dict(importId=csv_preview['id']));editor.api('admin/import-commit',dict(importId=csv_preview['id']))
 # Large commits really enter the DB queue; no network email/analytics is enabled in this test environment.
 rows=[dict(externalId='bulk-'+str(n),slug='bulk-example-'+str(n),lemma='example '+str(n),ipa='',part_of_speech='noun',topic='tests',meaning='sample',example='An example.',translation='Vi du.',level='A1') for n in range(101)]
 bulk=editor.api('admin/import-preview',dict(raw=json.dumps(dict(schemaVersion=1,namespace='large-test',vocabulary=rows))));assert not bulk['errors']
-editor.api('admin/import-commit',dict(importId=bulk['id']));subprocess.run(['php','database/worker.php','run','50'],check=True,capture_output=True)
+editor.api('admin/import-commit',dict(importId=bulk['id']));worker('run','50')
 assert 'committed' in editor.req('/admin/imports')[1] and 'data-import-progress' in editor.req('/admin/imports')[1]
 status=editor.api('admin/import-status/'+bulk['id']);assert status['processed']==101 and status['total']==101 and status['committed']==101
 learner.api('admin/import-status/'+bulk['id'],status=403)
@@ -151,9 +150,9 @@ assert admin.api('admin/import-status/'+bulk['id'])['status']=='committed'
 print('PASS: versioned learning, all product pages, optimistic conflicts, idempotent submit/finish, notes ownership, review, concurrent shop, atomic import and test-mode redaction')
 
 # Every metadata import template passes the same validator as CMS and commits once.
-from pathlib import Path
 for kind in ['paths','units','articles','vocabulary_sets']:
-    batch=json.loads(Path('database/templates/'+kind+'.json').read_text(encoding='utf-8'))
+    # Next.js ships the import templates with the app (web/templates).
+    batch=json.loads((ROOT/('web/templates/' if NEXT else 'database/templates/')/(kind+'.json')).read_text(encoding='utf-8'))
     batch['namespace']='template-'+kind.replace('_','-')
     if kind=='units':batch[kind][0]['path_id']=catalog['paths'][0]['id']
     preview=admin.api('admin/import-preview',dict(raw=json.dumps(batch)));assert preview['errors']==[],(kind,preview)
@@ -165,6 +164,11 @@ set_data=dict(kind='vocabulary_sets',id=set_id,slug='integration-set',title='Int
 admin.api('admin/entity',set_data,409)
 editor.api('admin/entity',dict(set_data,status='in_review'))
 state=lambda kind,id:json.loads(fixture('cms-state',kind,id))
+# The page offers the exact-draft editor: PHP posts the admin/draft-save command; Next.js renders a
+# Server Action form carrying the draft id and its stale-edit hash.
+def draft_form(html,draft_id):
+    if PHP:return 'admin/draft-save' in html
+    return 'name="draftId" value="'+str(draft_id)+'"' in html and 'name="expected"' in html
 draft=state('vocabulary_sets',set_id)['draft']['id']
 editor.api('admin/entity-workflow',dict(draftId=draft,action='publish'),403)
 admin.api('admin/entity-workflow',dict(draftId=draft,action='publish'))
@@ -223,7 +227,7 @@ for kind,fields in [
     assert int(revised['article' if kind=='articles' else 'draft']['id'])==int(version)
     section='articles' if kind=='articles' else kind.replace('_','-')
     code,html,_=editor.req('/admin/'+section+'?draft='+str(version))
-    assert code==200 and 'admin/draft-save' in html and 'Please clarify the example' in html
+    assert code==200 and draft_form(html,version) and 'Please clarify the example' in html
     editor.api(endpoint,dict(action,action='review'))
     admin.api(endpoint,action)
     editor.api('admin/draft-save',save,409)
@@ -242,7 +246,7 @@ member_doc['senseIds']=[catalog['vocabulary'][3]['id']];member_doc['status']='dr
 items_before=state('vocabulary_sets',set_id)['items']
 editor.api('admin/draft-save',dict(type='entity',draftId=stale,expected=hashlib.sha256(member['document'].encode()).hexdigest(),document=member_doc))
 assert state('vocabulary_sets',set_id)['items']==items_before
-code,html,_=editor.req('/admin/vocabulary-sets?draft='+str(stale));assert code==200 and 'admin/draft-save' in html
+code,html,_=editor.req('/admin/vocabulary-sets?draft='+str(stale));assert code==200 and draft_form(html,stale)
 
 print('PASS: A03/A04 reviewed snapshots, return reasons, exact draft editing, conflicts, role checks and unchanged projection')
 assert learner.req('/tu-vung/chu-de/integration-set')[0]==200
@@ -279,7 +283,14 @@ for page in range(1,6):
     ids=list(dict.fromkeys(re.findall(r'name="cardId" value="([0-9]+)"',html)))
     assert len(ids)<=30 and not set(ids)&set(cards_seen);cards_seen+=ids
 assert len(cards_seen)>121
-code,html,url=learner.req('/so-tu-vung?q=Paging&filter=hidden&page=2',dict(csrf=learner.csrf,command='vocabulary/save',senseId=seen[0],notes='Updated private note'))
+if PHP:
+    code,html,url=learner.req('/so-tu-vung?q=Paging&filter=hidden&page=2',dict(csrf=learner.csrf,command='vocabulary/save',senseId=seen[0],notes='Updated private note'))
+else:
+    # The word form's action reports to the page flash from the client, so React cannot submit it
+    # without JavaScript; post it as the browser script does. The action re-renders the same URL.
+    code,result,url=call_action(learner.opener,'/so-tu-vung?q=Paging&filter=hidden&page=2','src/actions/routes.ts','saveVocabulary',dict(senseId=seen[0],notes='Updated private note'))
+    assert result and result['status']=='success',result
+    assert 'Updated private note' in learner.req('/so-tu-vung?q=Paging&filter=all&page=1')[1],'Word form did not save'
 assert code==200 and 'page=2' in url and 'filter=hidden' in url
 print('PASS: A05 121+ private items, stable pages, filters/counts, owner isolation and post redirect context')
 
@@ -292,20 +303,20 @@ print('PASS: A07 history links in HTML, week navigation, invalid queries and own
 # A08: real anonymous opt-in -> trial -> registration carries only the consented journey.
 campaign=Client();route='/chien-dich/'+catalog['paths'][0]['slug']
 code,html,_=campaign.req(route+'?utm_source=newsletter&utm_medium=email&utm_campaign='+catalog['paths'][0]['slug'])
-assert code==200 and 'analytics/consent' in html
-campaign.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+# PHP posts the consent form to the analytics/consent command; Next.js renders it as a Server Action.
+assert code==200 and ('analytics/consent' in html if PHP else 'name="enabled"' in html)
+if PHP:campaign.csrf=csrf_token(html)
 campaign.api('analytics/consent',dict(enabled='yes',campaignSlug=catalog['paths'][0]['slug'],utm_source='newsletter',utm_medium='email',utm_campaign=catalog['paths'][0]['slug']))
 trial=next(l for l in catalog['lessons'] if json.loads(l['document']).get('preview') and l['subtype']!='placement')
 campaign.api('attempts/start',dict(lessonId=trial['id'],requestKey=secrets.token_hex(16)))
-_,html,_=campaign.req('/register');csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
 email='campaign-'+secrets.token_hex(6)+'@example.com'
-code,html,url=campaign.req('/register',dict(csrf=csrf,name='Campaign learner',email=email,password='Product-test-123!',password_confirm='Product-test-123!'))
+code,html,url,_=register(campaign.opener,'Campaign learner',email,'Product-test-123!')
 assert code==200 and url.endswith('/account')
 journey=json.loads(fixture('marketing-state',email));assert len(journey)==1 and journey[0]['guest_trial_at'] and journey[0]['signup_at'] and journey[0]['source']=='newsletter'
-campaign.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+if PHP:campaign.csrf=csrf_token(html)
 campaign.api('consent',dict(analytics=False));assert json.loads(fixture('marketing-state',email))==[]
 assert 'Hành trình chiến dịch' in admin.req('/admin/operations')[1]
-assert editor.req('/admin/operations')[0]==403
+assert_denied(editor.req('/admin/operations'),403,'Editor on /admin/operations')
 print('PASS: A08 HTTP campaign opt-in, guest trial, registration link, revoke and admin-only report')
 
 # A09: shared SSR metadata, permissions, validation, entity review snapshots and reset.
@@ -338,7 +349,9 @@ for kind,prefix in [('paths','lo-trinh'),('vocabulary','tu-vung'),('vocabulary_s
     assert re.search(r'<link rel="canonical" href="[^"]*'+re.escape(route)+'"',html)
     editor.api('admin/entity',dict(data,seo_title='Unpublished SEO '+kind))
     html=learner.req(route)[1];assert 'Unpublished SEO '+kind not in html and '<title>'+data['seo_title'] in html
-assert 'admin/seo' in admin.req('/admin/settings')[1]
+settings_page=admin.req('/admin/settings')[1]
+if PHP:assert 'admin/seo' in settings_page
+else:find_form(settings_page,'name="path"','name="title"','name="description"')  # the page SEO form (a Server Action)
 print('PASS: A09 SSR title/meta/OG, safe text validation, private noindex, canonical preservation, publish isolation and clear override')
 
 # A10: validation contract and safe SSR error state.
@@ -346,10 +359,17 @@ error=learner.api('profile',dict(goal='invalid',selfLevel='invalid',minutes=99,t
 assert set(error['fieldErrors'])=={'goal','selfLevel','minutes','timezone','reviewLimit'}
 error=learner.api('vocabulary/save',dict(senseId=catalog['vocabulary'][0]['id'],notes='x'*2001),422)
 assert 'notes' in error['fieldErrors']
-code,html,_=admin.req('/admin/settings',dict(csrf=admin.csrf,command='admin/seo',path='/',title='x'*161,description='Preserve this value'))
-assert code==422 and 'id="form-error-state"' in html and 'Preserve this value' in html
-state_json=re.search(r'<script type="application/json" id="form-error-state">(.*?)</script>',html,re.S)[1]
-assert 'title' in json.loads(state_json)['fields'] and 'csrf' not in json.loads(state_json)['values']
+if PHP:
+    code,html,_=admin.req('/admin/settings',dict(csrf=admin.csrf,command='admin/seo',path='/',title='x'*161,description='Preserve this value'))
+    assert code==422 and 'id="form-error-state"' in html and 'Preserve this value' in html
+    state_json=re.search(r'<script type="application/json" id="form-error-state">(.*?)</script>',html,re.S)[1]
+    assert 'title' in json.loads(state_json)['fields'] and 'csrf' not in json.loads(state_json)['values']
+else:
+    # The CMS form (JavaScript-submitted, see call_action) gets the same scoped state from its
+    # Server Action: field errors plus the non-secret input to keep (an action answers 200).
+    code,state,_=call_action(admin.opener,'/admin/settings','src/actions/routes.ts','savePageSeoAction',dict(path='/',title='x'*161,description='Preserve this value'))
+    assert code==200 and state['status']=='error' and 'title' in state['fieldErrors'],state
+    assert state['values']['description']=='Preserve this value' and not any('$ACTION' in k for k in state['values'])
 print('PASS: A10 named field errors, safe scoped SSR state and preserved non-secret input')
 
 # Preview/guest sessions cannot write real account review cards through the concept endpoint.
@@ -363,17 +383,19 @@ def finish_skipped(client, attempt):
 
 before=int(fixture('review-card-count',users['editor']['id']))
 _,html,_=editor.req('/admin/lesson-preview/'+str(restore_version))
-preview_state=json.loads(re.search(r'id="study-state"[^>]*>(.*?)</script>',html,re.S)[1])
-preview_state=finish_skipped(editor,preview_state['id'])
+if PHP:preview_id=json.loads(re.search(r'id="study-state"[^>]*>(.*?)</script>',html,re.S)[1])['id']
+else:preview_id=re.search(r'/hoc/luot/([a-f0-9]{32})',html)[1]  # the page redirects to its preview attempt in the player
+preview_state=finish_skipped(editor,preview_id)
 assert not preview_state['canSaveConcepts']
 editor.api('review/concept',dict(attemptId=preview_state['id'],exerciseId='hello'),422)
 assert int(fixture('review-card-count',users['editor']['id']))==before
-guest=Client();_,html,_=guest.req('/login');guest.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+guest=Client()
+if PHP:guest.csrf=csrf_token(guest.req('/login')[1])
 guest_id=secrets.token_hex(16);guest.api('attempts/start',dict(lessonId=lesson['id'],requestKey=guest_id))
 assert not finish_skipped(guest,guest_id)['canSaveConcepts']
-_,html,_=guest.req('/register');csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
-code,html,_=guest.req('/register',dict(csrf=csrf,name='Unclaimed trial',email='claim-'+secrets.token_hex(6)+'@example.com',password='Product-test-123!',password_confirm='Product-test-123!'))
-assert code==200;guest.csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+code,html,url,_=register(guest.opener,'Unclaimed trial','claim-'+secrets.token_hex(6)+'@example.com','Product-test-123!')
+assert code==200 and url.endswith('/account')
+if PHP:guest.csrf=csrf_token(html)
 assert not guest.api('attempts/'+guest_id)['canSaveConcepts']
 guest.api('review/concept',dict(attemptId=guest_id,exerciseId='hello'),422)
 assert guest.api('review/queue')==[]
