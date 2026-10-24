@@ -169,7 +169,14 @@ export async function startAttempt(
       },
       v.document,
     );
-    await recordEvent(`start:${key}`, "lesson_started", String(input.lessonId), uid, tx);
+    await recordEvent(
+      `start:${key}`,
+      "lesson_started",
+      String(input.lessonId),
+      uid,
+      tx,
+      actor.marketing,
+    );
     return key;
   });
 }

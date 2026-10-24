@@ -1,6 +1,12 @@
 import type { Role } from "@/auth/session";
 import { AppError } from "@/server/errors";
 
+/** Marketing consent and campaign journey of a guest, kept in a cookie by the server layer. */
+export interface MarketingSession {
+  consent: boolean;
+  journeyId: string | null;
+}
+
 /**
  * Who is acting. Built by the server layer from the session and the guest cookie, so domain
  * modules never read cookies or headers themselves.
@@ -10,6 +16,8 @@ export interface Actor {
   role: Role;
   /** sha256 of the guest cookie, when the visitor has one. */
   guestKey: string | null;
+  /** Guest marketing state; signed-in users keep consent in the database. */
+  marketing?: MarketingSession;
 }
 
 export const isStaff = (a: Actor) => a.role === "editor" || a.role === "admin";

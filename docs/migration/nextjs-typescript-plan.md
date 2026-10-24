@@ -511,3 +511,22 @@ Changes from the plan:
 | `progressHistory` (weekly stats) in Study | Phase 3 | It is part of the progress page and review pagination |
 | Catalog cache rotation (`catalog_revision`) | Dropped | Phase 4 actions call `updateTag('catalog')` |
 | Rate limits inside content functions (import, upload) | Applied by the caller (Phase 4 actions) | Domain functions stay free of request details |
+
+### Phase 3 (done on `migration/phase-3`)
+
+Built (domain modules; screens Phase 5, routes Phase 4, jobs run by the Phase 6 worker):
+- **Rewards** (`domain/motivation/rewards.ts`): ledger awards, quests (create, progress, set bonus), streaks with tickets and protected days, activity, badges, lesson and review XP, shop purchase, avatar, balance reconcile. The Phase 2 no-op hooks are now real, so finishing a lesson awards XP.
+- **Review** (`domain/review/review.ts`): schedule v1, queue with the local-day cap, rate (idempotent, revision-guarded), manage, word save/remove, concept cards, notebook.
+- **Account** (`domain/identity/account.ts`): profile with the delayed quest-timezone change, enrollment, reminders, streak preferences, password reset/change (sign-out everywhere), email verification and change, unsubscribe, account deletion with last-admin guard, erase job.
+- **Exports** (streamed private files, 24 h expiry, owner-only download), **marketing** (consent, journeys, funnel, cohorts, GA4 payload/send), **progress history**.
+- Fixes done: 14, 15, 22 (completed: email links use tokens minted at send time, nothing raw stored), 24; fix 10 partly (notebook search escapes LIKE wildcards).
+- Tests: 47 database tests incl. ports of `tests/motivation.php`, `timezone.php` (queue parts) and `marketing.php`.
+
+Bug found: Drizzle orders `ON DUPLICATE KEY UPDATE` assignments by column, so an expression reading a column reset in the same statement saw the new value. The review-card upsert now uses explicit SQL; the other upserts were checked.
+
+Changes from the plan:
+| Plan said | Now | Why |
+|---|---|---|
+| Better Auth email verification | App-owned tokens in `auth_verifications`, minted by the worker at send time | Better Auth's verify tokens can't be rebuilt from a row id, and fix 22 forbids raw tokens in jobs |
+| Guest marketing state in the session | `MarketingSession` passed in `Actor`; Phase 4 stores it in a cookie | Domain code never reads cookies |
+| Reminder `tick` and job runs in Phase 3 tests | Phase 6 | They belong to the worker |

@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "drizzle-orm";
-import { db, type Tx } from "@/db/client";
+import { db, type Db, type Tx } from "@/db/client";
 import { affectedRows } from "@/db/tx";
 import type { JobType } from "@/db/schema";
 
@@ -8,6 +8,8 @@ import type { JobType } from "@/db/schema";
 // never means delivered.
 
 export interface MailPayload {
+  /** Owner of the mail: the worker skips deleted users and erase removes their queued mail. */
+  userId: number;
   to: string;
   subject: string;
   template: string;
@@ -19,7 +21,7 @@ export async function enqueue(
   type: JobType,
   eventKey: string,
   payload: Record<string, unknown>,
-  tx?: Tx,
+  tx?: Tx | Db,
 ): Promise<boolean> {
   const result = await (tx ?? db()).execute(sql`
     INSERT IGNORE INTO mce_jobs (type, payload, event_key, available_at)
@@ -27,5 +29,5 @@ export async function enqueue(
   return affectedRows(result) > 0;
 }
 
-export const enqueueMail = (eventKey: string, mail: MailPayload, tx?: Tx) =>
+export const enqueueMail = (eventKey: string, mail: MailPayload, tx?: Tx | Db) =>
   enqueue("mail", eventKey, { ...mail }, tx);
