@@ -1,7 +1,7 @@
 import "server-only";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { forbidden as forbiddenPage, redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db/client";
 import { learningRoles, profiles, users } from "@/db/schema";
@@ -72,5 +72,13 @@ export async function requireAdmin(): Promise<CurrentUser> {
 export async function userOrLogin(): Promise<CurrentUser> {
   const user = await currentUser();
   if (!user) redirect("/login");
+  return user;
+}
+
+/** Page guard for staff screens: signed-out → /login, learners → a 403 page via forbidden(). */
+export async function staffOrLogin(admin = false): Promise<CurrentUser> {
+  const user = await userOrLogin();
+  const ok = user.role === "admin" || (!admin && user.role === "editor");
+  if (!ok) forbiddenPage();
   return user;
 }

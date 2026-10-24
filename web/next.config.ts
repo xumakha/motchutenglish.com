@@ -35,6 +35,8 @@ const nextConfig: NextConfig = {
   // Import templates are read from disk at runtime; make sure the standalone build ships them.
   outputFileTracingIncludes: { "/du-lieu/[file]": ["./templates/**"] },
   experimental: {
+    // forbidden() renders app/forbidden.tsx for staff-only pages.
+    authInterrupts: true,
     serverActions: {
       // Content imports are capped at 1 MB of payload; leave headroom for form encoding.
       bodySizeLimit: "2mb",
