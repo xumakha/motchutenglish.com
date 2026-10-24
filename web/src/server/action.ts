@@ -5,6 +5,7 @@ import type { FieldErrors } from "@/contracts/envelope";
 import { AppError, GENERIC_ERROR } from "./errors";
 import type { FormState } from "./form-state";
 import { requestId } from "./request";
+import { logError } from "@/server/log";
 
 export type { FormState } from "./form-state";
 
@@ -59,7 +60,7 @@ export function formAction<S extends z.ZodType>(
       if (error instanceof AppError)
         return { status: "error", message: error.message, fieldErrors: error.fieldErrors, values };
       const id = await requestId();
-      console.error(`Action failed ${id}`, error);
+      logError(`Action failed ${id}`, error);
       return { status: "error", message: GENERIC_ERROR, values, requestId: id };
     }
   };

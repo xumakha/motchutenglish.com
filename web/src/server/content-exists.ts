@@ -3,6 +3,7 @@ import { and, eq, isNotNull, ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import legacyCatalog from "../../public/assets/json/courses.json";
 import { articles, lessons, paths, units, versions, vocabulary, vocabularySets } from "@/db/schema";
+import { logError } from "@/server/log";
 
 // Existence checks for public content URLs, run in proxy.ts before the page renders so a missing
 // slug gets a real 404 status (a notFound() inside a streamed page can only add noindex). One
@@ -103,7 +104,7 @@ export async function contentExists(pathname: string): Promise<boolean> {
     try {
       return await check(m[1]!);
     } catch (error) {
-      console.error("Content existence check failed", error);
+      logError("Content existence check failed", error);
       return true; // never turn a database hiccup into a 404
     }
   }

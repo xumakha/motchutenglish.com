@@ -30,6 +30,7 @@ import { reconcileBalances, updateStreak } from "@/domain/motivation/rewards";
 import { env, mailConfigured } from "@/env";
 import { DeliveryUncertainError, sendMail, type OutgoingMail } from "./mail/mailer";
 import { reminderMail, resetPasswordMail, verifyEmailMail } from "./mail/templates";
+import { logError } from "@/server/log";
 
 // Port of application/libraries/Jobs.php. One worker at a time (GET_LOCK on a dedicated
 // connection that lives for the whole run). Retries back off exponentially and stop after 5
@@ -378,7 +379,7 @@ export async function run(limit = 50): Promise<RunResult> {
             await db().execute(
               sql`UPDATE mce_exports SET status = 'failed' WHERE id = ${str(payload.exportId)} AND status <> 'ready'`,
             );
-          console.error(`Job ${job.id} (${job.type}) failed: ${message}`, error);
+          logError(`Job ${job.id} (${job.type}) failed: ${message}`, error);
         }
       }
       return { processed, failed, recovery };
@@ -444,7 +445,7 @@ export async function tick(now = new Date()) {
       });
     } catch (error) {
       errors++;
-      console.error(`tick: learner ${userId} skipped`, error);
+      logError(`tick: learner ${userId} skipped`, error);
     }
   }
   return { learners: learners.length, remindersQueued: queued, errors };

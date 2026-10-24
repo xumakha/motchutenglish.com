@@ -10,6 +10,7 @@ import { AppError } from "./errors";
 import type { FormState } from "./form-state";
 import { requestId } from "./request";
 import { runRoute } from "./run-route";
+import { logError } from "@/server/log";
 
 // Server Action form of a contract route (port of Product::page's POST branch): the form posts
 // the route's fields; success shows the handler's message (or "Đã lưu thay đổi.") or follows its
@@ -84,7 +85,7 @@ export function routeAction(name: RouteName) {
         return { status: "error", message: error.message, fieldErrors, values };
       }
       const id = await requestId();
-      console.error(`Action ${name} failed ${id}`, error);
+      logError(`Action ${name} failed ${id}`, error);
       return {
         status: "error",
         message: "Chưa thể lưu thay đổi. Vui lòng thử lại.",

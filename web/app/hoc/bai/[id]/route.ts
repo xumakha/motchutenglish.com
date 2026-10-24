@@ -4,6 +4,7 @@ import { startLegacy } from "@/domain/legacy/lessons";
 import { currentActor } from "@/server/actor";
 import { AppError } from "@/server/errors";
 import { requestId } from "@/server/request";
+import { logError } from "@/server/log";
 
 // Port of Learning::start: POST /hoc/bai/{id} with request_key starts (or resumes) an immutable
 // snapshot of a published legacy lesson and 303s to /ket-qua/{key}. A plain HTML form posts here
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/hoc/bai/[id
     return seeOther(`/ket-qua/${attemptId}`);
   } catch (error) {
     if (error instanceof AppError) return errorPage(request, id, error.status);
-    console.error(`Start legacy lesson failed ${await requestId()}`, error);
+    logError(`Start legacy lesson failed ${await requestId()}`, error);
     return errorPage(request, id, 503);
   }
 }

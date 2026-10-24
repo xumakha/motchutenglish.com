@@ -12,6 +12,7 @@ import { currentActor } from "@/server/actor";
 import { AppError } from "@/server/errors";
 import type { FormState } from "@/server/form-state";
 import { requestId } from "@/server/request";
+import { logError } from "@/server/log";
 
 // Server Actions for the original single-question lessons (application/controllers/Learning.php).
 // They are not contract routes, so they live here rather than in src/actions/routes.ts.
@@ -34,7 +35,7 @@ async function run(
       if (error.status === 404) notFound();
       return { status: "error", message: error.message, values: safeValues(formData) };
     }
-    console.error(`Legacy action failed ${await requestId()}`, error);
+    logError(`Legacy action failed ${await requestId()}`, error);
     return { status: "error", message: fallback, values: safeValues(formData) };
   }
 }

@@ -23,6 +23,7 @@ import { ensureProfile } from "@/domain/identity/profile";
 import { exportForDownload, requestExport } from "@/domain/exports/exports";
 import { env } from "@/env";
 import { run, tick } from "@/worker/jobs";
+import { createUser } from "./fixtures";
 
 // Port of tests/account_http.py at the domain level: every email goes through the real worker and
 // the development mail sink (MAIL_DRIVER=log), and the links in it are used as a learner would.
@@ -149,6 +150,8 @@ describe("account emails through the worker", () => {
     await expect(
       exportForDownload({ userId: null, role: "guest", guestKey: "x" }, key),
     ).rejects.toMatchObject({ status: 401 });
+    const other = await createUser();
+    await expect(exportForDownload(other, key)).rejects.toMatchObject({ status: 404 });
   });
 
   it("account deletion is erased by the worker", async () => {

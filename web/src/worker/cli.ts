@@ -2,6 +2,7 @@ import "server-only";
 import { existsSync } from "node:fs";
 import { pool } from "@/db/client";
 import { env } from "@/env";
+import { logError } from "@/server/log";
 import { backup, restoreDrill } from "./backup";
 import { cleanup, reconcile, run, tick } from "./jobs";
 
@@ -50,7 +51,7 @@ main(process.argv.slice(2))
     process.exitCode = 0;
   })
   .catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : error);
+    logError("Worker command failed", error);
     process.exitCode = 1;
   })
   // Other pools (import progress telemetry) may still hold sockets; exit explicitly.

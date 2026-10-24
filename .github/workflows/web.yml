@@ -73,6 +73,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: End-to-end tests
         run: pnpm test:e2e
+      - name: Benchmark (A02, 50 concurrent graded submits; reported, not a staging claim)
+        run: |
+          PORT=3000 HOSTNAME=127.0.0.1 pnpm start > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/health >/dev/null && break; sleep 1; done
+          pnpm benchmark http://127.0.0.1:3000
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4

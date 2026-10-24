@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/db/client";
 import { redirects } from "@/db/schema";
+import { logError } from "@/server/log";
 
 // Slug-change redirects (mce_redirects), checked in proxy.ts before routing like the PHP router.
 // The table is small and changes only on publish, so it is held in memory for a minute instead of
@@ -27,7 +28,7 @@ export async function redirectFor(pathname: string): Promise<string | null> {
   try {
     return (await load()).get(pathname) ?? null;
   } catch (error) {
-    console.error("Redirect lookup failed", error);
+    logError("Redirect lookup failed", error);
     return null;
   }
 }
