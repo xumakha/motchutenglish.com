@@ -91,3 +91,11 @@ jobs:
           name: playwright-report
           path: playwright-report
           if-no-files-found: ignore
+
+  container:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fresh compose install and operations smoke test
+        run: bash tests/ops/container_smoke.sh

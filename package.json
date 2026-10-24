@@ -22,7 +22,7 @@
     "seed": "tsx --conditions=react-server scripts/seed.ts",
     "docs:api": "tsx scripts/api-docs.ts",
     "worker": "tsx --import ./scripts/worker-hooks.mjs src/worker/cli.ts",
-    "build:worker": "esbuild src/worker/cli.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/worker.mjs --alias:server-only=./scripts/empty.mjs --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\" --log-level=warning",
+    "build:worker": "esbuild worker=src/worker/cli.ts db=scripts/db.ts admin=scripts/admin.ts seed=scripts/seed.ts --bundle --platform=node --target=node24 --format=esm --outdir=dist --out-extension:.js=.mjs --alias:server-only=./scripts/empty.mjs --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);const __dirname=import.meta.dirname;const __filename=import.meta.filename;\" --log-level=warning",
     "benchmark": "tsx --import ./scripts/worker-hooks.mjs scripts/benchmark.ts"
   },
   "dependencies": {

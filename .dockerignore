@@ -1,0 +1,14 @@
+.git
+.claude
+.next
+node_modules
+dist
+writable
+test-results
+playwright-report
+legacy
+docs
+application
+*.tsbuildinfo
+.env*
+!.env.example

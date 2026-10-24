@@ -125,7 +125,7 @@ async function check() {
   const [tables] = (await db().execute(
     sql`SELECT COUNT(*) AS n FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()`,
   )) as unknown as [{ n: number }[]];
-  pass(Number(tables[0]!.n) >= 61, `${tables[0]!.n} tables present (expected 61 incl. migrations)`);
+  pass(Number(tables[0]!.n) >= 63, `${tables[0]!.n} tables present (expected 63 incl. migrations)`);
   for (const [ok, message] of results) console.log(`${ok ? "PASS" : "FAIL"}: ${message}`);
   if (results.some(([ok]) => !ok)) process.exitCode = 1;
 }
