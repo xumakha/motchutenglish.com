@@ -22,7 +22,7 @@ async function slugRedirect(request: NextRequest): Promise<NextResponse | null> 
   const target = await redirectFor(request.nextUrl.pathname);
   if (!target) return null;
   const url = request.nextUrl.clone();
-  url.pathname = `/${target}`;
+  url.pathname = target;
   return NextResponse.redirect(url, 301);
 }
 

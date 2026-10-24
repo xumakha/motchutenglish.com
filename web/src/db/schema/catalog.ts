@@ -15,8 +15,9 @@ import { users } from "./auth";
 
 export type ContentStatus = "draft" | "in_review" | "published" | "archived";
 
-/** Lesson document (schemaVersion 1). Typed precisely by the assessment module in Phase 2. */
-export type LessonDocument = Record<string, unknown>;
+import type { LessonDocument } from "@/domain/assessment/types";
+
+export type { LessonDocument };
 
 export const media = mysqlTable("mce_media", {
   id: id(),
@@ -32,6 +33,26 @@ export const media = mysqlTable("mce_media", {
     .references(() => users.id),
   createdAt: createdAt(),
 });
+
+/**
+ * Which published lesson versions use which media (fix 11). Filled when a version is published,
+ * so /media/{id} checks one indexed table instead of decoding every lesson document.
+ */
+export const mediaRefs = mysqlTable(
+  "mce_media_refs",
+  {
+    mediaId: ref("media_id")
+      .notNull()
+      .references(() => media.id),
+    versionId: ref("version_id")
+      .notNull()
+      .references((): AnyMySqlColumn => versions.id),
+  },
+  (t) => [
+    primaryKey({ columns: [t.mediaId, t.versionId] }),
+    index("media_refs_version").on(t.versionId),
+  ],
+);
 
 export const paths = mysqlTable(
   "mce_paths",

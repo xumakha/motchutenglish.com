@@ -14,6 +14,9 @@ export function createDbPool(uri = env().DATABASE_URL, connectionLimit = 10): Po
     connectionLimit,
     timezone: "Z",
     dateStrings: ["DATE"],
+    // Always hand JSON to the column parser as text. Depending on the server, mysql2 otherwise
+    // pre-parses some JSON columns, and a stored JSON string ("greeting") would be parsed twice.
+    jsonStrings: true,
     charset: "utf8mb4_unicode_ci",
     supportBigNumbers: true,
   });

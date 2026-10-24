@@ -54,6 +54,10 @@ jobs:
         run: pnpm test:db
       - name: Admin CLI health check
         run: pnpm admin check
+      - name: Seed sample catalog (validates every sample lesson)
+        run: |
+          pnpm admin create ci-admin@example.test "CI" --local
+          pnpm seed --publish-reviewed-samples
       - name: Build
         run: pnpm build
       - name: Install Playwright browser

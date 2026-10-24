@@ -19,10 +19,13 @@ async function load(): Promise<Map<string, string>> {
   return map;
 }
 
-/** Target path for an old path ("/bai-hoc/old-slug"), or null. Database errors never block a page. */
+/**
+ * Target for an old path, or null. Both sides are stored with a leading slash ("/bai-hoc/cu" →
+ * "/bai-hoc/moi"), as the PHP app wrote them. Database errors never block a page.
+ */
 export async function redirectFor(pathname: string): Promise<string | null> {
   try {
-    return (await load()).get(pathname.replace(/^\/+/, "")) ?? null;
+    return (await load()).get(pathname) ?? null;
   } catch (error) {
     console.error("Redirect lookup failed", error);
     return null;
