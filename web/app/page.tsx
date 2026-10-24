@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SiteShell } from "@/components/site/site-shell";
@@ -38,15 +39,15 @@ async function Hero() {
             đúng lúc. Không giới hạn lượt sai, không tim, không năng lượng.
           </p>
           <div className="design-actions">
-            <a className="button" href="/lo-trinh">
+            <Link className="button" href="/lo-trinh">
               Chọn điểm bắt đầu →
-            </a>
-            <a
+            </Link>
+            <Link
               className="button secondary"
               href={sample[0] ? `/bai-hoc/${sample[0].slug}` : "/courses/beginner/hello"}
             >
               Học thử, không cần đăng ký
-            </a>
+            </Link>
           </div>
         </div>
         <div className="design-mascot">
@@ -73,7 +74,7 @@ async function Paths() {
     <>
       <div className="design-path-grid">
         {paths.map((p) => (
-          <a key={p.id} className="design-path-card" href={`/lo-trinh/${p.slug}`}>
+          <Link key={p.id} className="design-path-card" href={`/lo-trinh/${p.slug}`}>
             <div className="design-path-top">
               <span>{p.level}</span>
               <h3>{p.title}</h3>
@@ -85,13 +86,13 @@ async function Paths() {
                 <strong>Khám phá →</strong>
               </div>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
       {!paths.length ? (
         <p>
           Lộ trình mới đang được biên tập. Bạn có thể{" "}
-          <a href="/courses">học thử nội dung hiện có</a>.
+          <Link href="/courses">học thử nội dung hiện có</Link>.
         </p>
       ) : null}
     </>
@@ -102,7 +103,7 @@ async function Samples() {
   return (
     <div className="design-samples">
       {(await samples()).map((l) => (
-        <a key={l.id} className="panel design-sample" href={`/bai-hoc/${l.slug}`}>
+        <Link key={l.id} className="panel design-sample" href={`/bai-hoc/${l.slug}`}>
           <span className="design-sample-time">{l.document.minutes}′</span>
           <div>
             <p>{l.pathTitle}</p>
@@ -111,7 +112,7 @@ async function Samples() {
               {l.document.exercises.length} câu · {l.document.objectives}
             </p>
           </div>
-        </a>
+        </Link>
       ))}
     </div>
   );
@@ -144,9 +145,9 @@ export default function Home() {
         <div className="design-section-inner">
           <div className="design-section-heading">
             <h2>Lộ trình đang có</h2>
-            <a className="text-link" href="/lo-trinh">
+            <Link className="text-link" href="/lo-trinh">
               Xem tất cả →
-            </a>
+            </Link>
           </div>
           <Suspense>
             <Paths />

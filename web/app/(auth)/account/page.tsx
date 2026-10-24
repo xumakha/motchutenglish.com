@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { userOrLogin } from "@/auth/session";
@@ -25,13 +26,13 @@ async function AccountDetails() {
         <p className="muted">
           Bài học mới được đồng bộ cùng tài khoản. Các bài học thử cũ vẫn lưu trên trình duyệt.
         </p>
-        <a className="button" href="/hoc">
+        <Link className="button" href="/hoc">
           Đến trang học →
-        </a>
+        </Link>
       </section>
       <p>
-        <a href="/quen-mat-khau">Quên mật khẩu?</a> -{" "}
-        <a href="/tai-khoan">Cài đặt và quyền riêng tư</a>
+        <Link href="/quen-mat-khau">Quên mật khẩu?</Link> -{" "}
+        <Link href="/tai-khoan">Cài đặt và quyền riêng tư</Link>
       </p>
     </>
   );

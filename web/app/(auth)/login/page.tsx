@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthForm } from "../auth-form";
@@ -24,8 +25,8 @@ export default function LoginPage() {
         </RedirectIfSignedIn>
       </Suspense>
       <p>
-        <a href="/quen-mat-khau">Quên mật khẩu?</a> -{" "}
-        <a href="/tai-khoan">Cài đặt và quyền riêng tư</a>
+        <Link href="/quen-mat-khau">Quên mật khẩu?</Link> -{" "}
+        <Link href="/tai-khoan">Cài đặt và quyền riêng tư</Link>
       </p>
     </SiteShell>
   );

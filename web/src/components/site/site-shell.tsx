@@ -1,3 +1,5 @@
+import type { Route } from "next";
+import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { currentUser } from "@/auth/session";
 import { db } from "@/db/client";
@@ -9,22 +11,22 @@ import { HeaderOffset, MenuButton, NoMotion, SkipLink } from "./header-behaviour
 // The page frame from layouts/header.php + footer.php. Each page passes its root segment so the
 // wrapper carries the same `page-<root>` class the PHP <body> had (the CSS keys off it).
 
-const GUEST_LINKS: [string, string][] = [
-  ["lo-trinh", "Lộ trình"],
-  ["tu-vung", "Từ vựng"],
-  ["kien-thuc", "Kiến thức"],
-  ["kiem-tra-dau-vao", "Kiểm tra gợi ý"],
+const GUEST_LINKS: [Route, string][] = [
+  ["/lo-trinh", "Lộ trình"],
+  ["/tu-vung", "Từ vựng"],
+  ["/kien-thuc", "Kiến thức"],
+  ["/kiem-tra-dau-vao", "Kiểm tra gợi ý"],
 ];
-const USER_LINKS: [string, string][] = [
-  ["hoc", "Hôm nay"],
-  ["lo-trinh", "Lộ trình"],
-  ["on-tap", "Ôn tập"],
-  ["tai-khoan", "Tài khoản"],
+const USER_LINKS: [Route, string][] = [
+  ["/hoc", "Hôm nay"],
+  ["/lo-trinh", "Lộ trình"],
+  ["/on-tap", "Ôn tập"],
+  ["/tai-khoan", "Tài khoản"],
 ];
 
 function BrandMark({ site }: { site?: SiteSettings }) {
   return (
-    <a className="brand" href="/">
+    <Link className="brand" href="/">
       {/* eslint-disable-next-line @next/next/no-img-element -- the logo may be an uploaded /media file */}
       <img
         className="brand-logo"
@@ -42,7 +44,7 @@ function BrandMark({ site }: { site?: SiteSettings }) {
           </>
         )}
       </span>
-    </a>
+    </Link>
   );
 }
 
@@ -50,11 +52,11 @@ async function Brand() {
   return <BrandMark site={await currentSiteSettings()} />;
 }
 
-function Links({ links, page }: { links: [string, string][]; page: string }) {
+function Links({ links, page }: { links: [Route, string][]; page: string }) {
   return links.map(([path, label]) => (
-    <a key={path} className={page === path ? "active" : ""} href={`/${path}`}>
+    <Link key={path} className={`/${page}` === path ? "active" : ""} href={path}>
       {label}
-    </a>
+    </Link>
   ));
 }
 
@@ -74,17 +76,17 @@ function GuestNav({ page }: { page: string }) {
       <nav className="nav" id="navigation" aria-label="Điều hướng chính">
         <Links links={GUEST_LINKS} page={page} />
         <div className="mobile-auth">
-          <a href="/login">Đăng nhập</a>
-          <a href="/register">Tạo tài khoản</a>
+          <Link href="/login">Đăng nhập</Link>
+          <Link href="/register">Tạo tài khoản</Link>
         </div>
       </nav>
       <div className="auth-nav">
-        <a className="text-link" href="/login">
+        <Link className="text-link" href="/login">
           Đăng nhập
-        </a>
-        <a className="button header-cta" href="/lo-trinh">
+        </Link>
+        <Link className="button header-cta" href="/lo-trinh">
           Học thử
-        </a>
+        </Link>
       </div>
     </>
   );
@@ -99,20 +101,20 @@ async function Nav({ page }: { page: string }) {
       <nav className="nav" id="navigation" aria-label="Điều hướng chính">
         <Links links={USER_LINKS} page={page} />
         <div className="mobile-auth">
-          {staff ? <a href="/admin/lessons">Quản trị</a> : null}
+          {staff ? <Link href="/admin/lessons">Quản trị</Link> : null}
           <LogoutForm />
         </div>
       </nav>
       <div className="auth-nav">
-        <a className="text-link" href="/account">
+        <Link className="text-link" href="/account">
           Tài khoản
-        </a>
+        </Link>
         <LogoutForm className="text-link" />
       </div>
       {staff ? (
-        <a className="text-link" href="/admin/lessons">
+        <Link className="text-link" href="/admin/lessons">
           Quản trị
-        </a>
+        </Link>
       ) : null}
     </>
   );
@@ -130,15 +132,15 @@ async function MotionPreference() {
 }
 
 function FooterBody({ site }: { site?: SiteSettings }) {
-  const links: [string, string][] = [
-    ["lo-trinh", "Lộ trình"],
-    ["tu-vung", "Từ vựng"],
-    ["kien-thuc", "Kiến thức"],
-    ["gioi-thieu", "Giới thiệu"],
-    ["lien-he", "Liên hệ"],
-    ["courses", "Bài học cũ"],
-    ["dieu-khoan", "Điều khoản"],
-    ["bao-mat", "Quyền riêng tư"],
+  const links: [Route, string][] = [
+    ["/lo-trinh", "Lộ trình"],
+    ["/tu-vung", "Từ vựng"],
+    ["/kien-thuc", "Kiến thức"],
+    ["/gioi-thieu", "Giới thiệu"],
+    ["/lien-he", "Liên hệ"],
+    ["/courses", "Bài học cũ"],
+    ["/dieu-khoan", "Điều khoản"],
+    ["/bao-mat", "Quyền riêng tư"],
   ];
   return (
     <footer className="site-footer">
@@ -159,9 +161,9 @@ function FooterBody({ site }: { site?: SiteSettings }) {
         </div>
         <nav aria-label="Chân trang">
           {links.map(([path, label]) => (
-            <a key={path} href={`/${path}`}>
+            <Link key={path} href={path}>
               {label}
-            </a>
+            </Link>
           ))}
         </nav>
         {site?.socialUrl ? (
