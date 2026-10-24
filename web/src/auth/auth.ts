@@ -66,6 +66,7 @@ function createAuth() {
           .limit(1);
         if (!row) return;
         await enqueueMail(`reset:${row.id}`, {
+          userId: Number(user.id),
           to: user.email,
           subject: "Đặt lại mật khẩu Một chút English",
           template: "reset-password",
@@ -73,8 +74,8 @@ function createAuth() {
         });
       },
     },
-    // Email verification and email change are configured in Phase 3 (identity) with the mail
-    // templates and worker.
+    // Email verification, email change and unsubscribe links use the app's own send-time tokens
+    // (domain/identity/account.ts), not Better Auth's emailVerification flow.
     plugins: [nextCookies()],
   });
 }

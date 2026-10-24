@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { db, pool } from "@/db/client";
-import { items, progress } from "@/db/schema";
+import { items, progress, rewardLedger } from "@/db/schema";
 import type { Actor } from "@/domain/actor";
 import {
   claimGuestAttempt,
@@ -186,6 +186,12 @@ describe("playing an attempt", () => {
     const [row] = await db().select().from(progress).where(eq(progress.userId, user.userId!));
     expect(row?.firstScore).toBe(100);
     expect(row?.passedAt).toBeInstanceOf(Date);
+    // First completion: 20 XP, passing an objective lesson: +5 (Phase 3 rewards).
+    const xp = await db()
+      .select({ amount: rewardLedger.amount, key: rewardLedger.eventKey })
+      .from(rewardLedger)
+      .where(and(eq(rewardLedger.userId, user.userId!), eq(rewardLedger.currency, "xp")));
+    expect(xp.map((r) => r.amount).sort((a, b) => a - b)).toEqual([5, 20]);
     // Finishing again is a no-op; anything else is refused.
     expect(await act(user, id, "finish")).toEqual({ finished: true });
     expect(await status(() => act(user, id, "navigate", { position: 1 }))).toBe(409);
