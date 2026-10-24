@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { savedResult, messageResult, redirectResult } from "./envelope";
+import { isTimezone } from "@/domain/timezone";
 import { confirmYes, email, flag, hexKey, newPassword, positiveId, text } from "./fields";
 
 /**
@@ -241,10 +242,7 @@ export const routes = {
         .int()
         .refine((m) => [5, 10, 15, 20].includes(m))
         .default(10),
-      timezone: z
-        .string()
-        .refine((tz) => Intl.supportedValuesOf("timeZone").includes(tz))
-        .default("Asia/Ho_Chi_Minh"),
+      timezone: z.string().refine(isTimezone).default("Asia/Ho_Chi_Minh"),
       reviewLimit: z.coerce.number().int().min(1).max(100).default(20),
       gamification: flag,
       animations: flag,
@@ -518,7 +516,20 @@ export const routes = {
     method: "POST",
     auth: "staff",
     transport: "action",
-    input: z.object({ setId: positiveId, ids: z.array(positiveId).max(500) }),
+    input: z.object({
+      setId: positiveId,
+      // Forms send "3,1,2" (or nothing to clear the set); JSON sends [3, 1, 2]. An empty list is
+      // allowed, as in PHP.
+      ids: z.preprocess(
+        (v) =>
+          v === undefined
+            ? []
+            : typeof v === "string"
+              ? v.split(",").filter((x) => x.trim() !== "")
+              : v,
+        z.array(positiveId).max(1000),
+      ),
+    }),
     output: savedResult,
   },
   "admin.draftSave": {

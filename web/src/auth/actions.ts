@@ -1,6 +1,6 @@
 "use server";
 
-import { APIError } from "better-auth/api";
+import { isAPIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -90,7 +90,7 @@ export const login = formAction(loginSchema, async ({ email, password }) => {
       headers: await headers(),
     });
   } catch (error) {
-    if (!(error instanceof APIError)) throw error;
+    if (!isAPIError(error)) throw error;
     throw await rejected();
   }
   await failures.clear(accountKey);
@@ -110,7 +110,7 @@ export const register = formAction(registerSchema, async ({ name, email, passwor
     });
     userId = Number(result.user.id);
   } catch (error) {
-    if (error instanceof APIError && error.body?.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL")
+    if (isAPIError(error) && error.body?.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL")
       throw invalid("Email này đã được đăng ký. Vui lòng đăng nhập.", {
         email: "Email này đã được đăng ký.",
       });

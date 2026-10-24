@@ -547,3 +547,23 @@ Changes from the plan:
 |---|---|---|
 | `/api/v1` only for player routes; forms only via actions | Every route on `/api/v1` as well | Matches PHP (all commands were API-reachable) and lets the PHP HTTP suites run unchanged in Phase 7 |
 | `tests/product_http.py` passes at the Phase 4 gate | Phase 7 | It depends on PHP fixture CLIs and the PHP cookie name; the TS fixture CLI is a Phase 7 task |
+
+### Phase 5 (done on `migration/phase-5`)
+
+Built:
+- **Every screen** from the PHP views, same markup and classes, inside one `SiteShell` (header, nav, footer, skip link, motion preference). Home is pixel-identical at 360 and 1440 px.
+- Public + identity (19 screens), learner area (`/hoc`, `/bat-dau`, `/tai-khoan`, `/on-tap`, `/so-tu-vung`, `/tien-do`, `/reward-shop`), admin CMS (14 sections + lesson preview), legacy screens (`/courses`, `/listening`, `/toeic`, `/placement`, `/dashboard`, `/ket-qua`, legacy `/admin`).
+- **Lesson player** (`src/components/player`, port of `product.js`): all exercise types, keyboard order input, audio controls, fix 3 offline outbox replayed in order with the current revision, 409 adopts the newer attempt with a reload button.
+- **Real 404s**: `proxy.ts` checks content existence before rendering (`server/content-exists.ts`) and rewrites missing items to a 404 page.
+- Shared fixes found while porting: timezone validation via `Intl` (ICU names `Asia/Saigon`), campaign landing sets the guest marketing cookie, `admin.setItems` accepts an empty list, login/register use `isAPIError`.
+- **Better Auth patch** (`web/patches/`): serial IDs read `insertId` instead of `LAST_INSERT_ID()`, which raced across pooled connections (20-way concurrent sign-up test).
+- Tests: 121 e2e across 4 widths (each test gets its own client IP), 351 unit, 53 DB.
+
+Changes from the plan:
+| Plan said | Now | Why |
+|---|---|---|
+| CSS Modules + `next/font` | PHP CSS kept as global CSS, fonts from `public/` | Same CSS = same pixels; restyling is out of scope |
+| `notFound()` in pages | Proxy pre-check + rewrite | `notFound()` after streaming starts keeps HTTP 200 |
+| Flash messages at page top | Inside the form | Server Actions return state to the form; text is unchanged |
+| `/api/auth` route | None; actions call `auth.api` | No OAuth or client SDK needed |
+| — | Admin 403/404 and `/ket-qua` return 200 with noindex | Private pages; revisit in Phase 7 |

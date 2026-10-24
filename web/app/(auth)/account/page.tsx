@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { userOrLogin } from "@/auth/session";
-import { PageHeading } from "../heading";
+import { PageHeading } from "@/components/site/page-heading";
+import { SiteShell } from "@/components/site/site-shell";
 
 export const metadata: Metadata = {
   title: "Tài khoản",
@@ -16,7 +17,7 @@ async function AccountDetails() {
       <PageHeading
         eyebrow="TÀI KHOẢN CỦA BẠN"
         title={`Chào ${user.name}!`}
-        lead="Chào mừng bạn đến với Một chút English."
+        description="Chào mừng bạn đến với Một chút English."
       />
       <section className="panel narrow">
         <h2>Thông tin tài khoản</h2>
@@ -25,14 +26,13 @@ async function AccountDetails() {
         <p className="muted">
           Bài học mới được đồng bộ cùng tài khoản. Các bài học thử cũ vẫn lưu trên trình duyệt.
         </p>
-        <a href="/hoc">Đến trang học →</a>
+        <Link className="button" href="/hoc">
+          Đến trang học →
+        </Link>
       </section>
       <p>
-        <a href="/quen-mat-khau">Quên mật khẩu?</a> -{" "}
-        <a href="/tai-khoan">Cài đặt và quyền riêng tư</a>
-      </p>
-      <p>
-        <Link href="/login">Đăng nhập tài khoản khác</Link>
+        <Link href="/quen-mat-khau">Quên mật khẩu?</Link> -{" "}
+        <Link href="/tai-khoan">Cài đặt và quyền riêng tư</Link>
       </p>
     </>
   );
@@ -40,8 +40,10 @@ async function AccountDetails() {
 
 export default function AccountPage() {
   return (
-    <Suspense>
-      <AccountDetails />
-    </Suspense>
+    <SiteShell page="account">
+      <Suspense>
+        <AccountDetails />
+      </Suspense>
+    </SiteShell>
   );
 }

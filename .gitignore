@@ -14,3 +14,6 @@ out/
 
 /application/config/database.php
 /writable/
+
+# Claude Code agent worktrees
+/.claude/worktrees/
