@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   int,
+  mediumtext,
   mysqlTable,
   primaryKey,
   text,
@@ -53,6 +54,19 @@ export const mediaRefs = mysqlTable(
     index("media_refs_version").on(t.versionId),
   ],
 );
+
+/**
+ * Search text of each published lesson version (fix 10). Filled when a version is published, so
+ * /tim-kiem queries one FULLTEXT index (`search_text`, added by hand in 0002_search.sql because
+ * Drizzle has no FULLTEXT builder) instead of decoding every lesson document per request.
+ */
+export const searchDocuments = mysqlTable("mce_search", {
+  versionId: ref("version_id")
+    .primaryKey()
+    .references((): AnyMySqlColumn => versions.id),
+  title: varchar("title", { length: 200 }).notNull(),
+  body: mediumtext("body").notNull(),
+});
 
 export const paths = mysqlTable(
   "mce_paths",

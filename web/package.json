@@ -20,6 +20,7 @@
     "admin": "tsx --conditions=react-server scripts/admin.ts",
     "test:db": "vitest run --project db",
     "seed": "tsx --conditions=react-server scripts/seed.ts",
+    "docs:api": "tsx scripts/api-docs.ts",
     "worker": "tsx --import ./scripts/worker-hooks.mjs src/worker/cli.ts",
     "build:worker": "esbuild src/worker/cli.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/worker.mjs --alias:server-only=./scripts/empty.mjs --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\" --log-level=warning",
     "benchmark": "tsx --import ./scripts/worker-hooks.mjs scripts/benchmark.ts"
