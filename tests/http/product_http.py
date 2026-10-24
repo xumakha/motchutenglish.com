@@ -1,25 +1,24 @@
 import hashlib
 import http.cookiejar, json, re, secrets, urllib.request, urllib.parse, io, wave
 from concurrent.futures import ThreadPoolExecutor
-from http_target import BASE, NEXT, PHP, ROOT, api_headers, assert_denied, settle_cache, call_action, csrf_token, find_form, fixture as target_fixture, login, open_request, register, seed, worker
+from http_target import BASE, ROOT, api_headers, assert_denied, settle_cache, call_action, find_form, fixture as target_fixture, login, open_request, register, seed, worker
 def fixture(*args):return target_fixture('product',*args)
 class Client:
-    def __init__(self):self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()));self.csrf=''
+    def __init__(self):self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
     def req(self,path,data=None,json_data=False):
         payload=(json.dumps(data).encode() if json_data else urllib.parse.urlencode(data).encode()) if data is not None else None
-        code,body,url,_=open_request(self.opener,path,payload,api_headers(self.csrf) if json_data else {})
+        code,body,url,_=open_request(self.opener,path,payload,api_headers() if json_data else {})
         assert 'Fatal error' not in body and 'Warning:' not in body,(path,body)
         return code,body,url
     def login(self,email):
         status,body,url,_=login(self.opener,email,'Product-test-123!');assert status==200 and url.endswith('/account')
-        if PHP:self.csrf=csrf_token(body)
     def api(self,route,data=None,status=200):
         code,body,_=self.req('/api/v1/'+route,data,data is not None);assert code==status,(route,code,body);settle_cache(route,code);j=json.loads(body);return j.get('data',j.get('error'))
     def upload(self,filename,content,expected=200):
         boundary='mce'+secrets.token_hex(12);parts=[]
         for key,value in dict(alt='Test-generated asset',source='Generated inside isolated test suite',license='Test fixture owned by this project').items():parts.append(('--'+boundary+'\r\nContent-Disposition: form-data; name="'+key+'"\r\n\r\n'+value+'\r\n').encode())
         parts.append(('--'+boundary+'\r\nContent-Disposition: form-data; name="file"; filename="'+filename+'"\r\nContent-Type: application/octet-stream\r\n\r\n').encode()+content+b'\r\n');parts.append(('--'+boundary+'--\r\n').encode())
-        headers={'Content-Type':'multipart/form-data; boundary='+boundary,**({'X-CSRF-Token':self.csrf} if PHP else {})}
+        headers={'Content-Type':'multipart/form-data; boundary='+boundary}
         code,body,_,_=open_request(self.opener,'/api/v1/admin/upload',b''.join(parts),headers)
         assert code==expected,(code,body);j=json.loads(body);return j.get('data',j.get('error'))
 users=json.loads(fixture('setup'))
@@ -53,8 +52,8 @@ for b in state['blocks']:mutate('view',block=b['id'])
 mutate('navigate',position=2);assert learner.api('attempts/'+key)['position']==2
 mutate('navigate',position=0)
 answers={'hello':'greeting','name':True,'am':{'verb':' am. '},'order':['my','name','is','linh']}
-# PHP shows match sides as {id: text}; Next.js as ordered [{id|key, text}] lists (plan §3, decision 5).
-def by_id(side,key):return side if isinstance(side,dict) else {x[key]:x['text'] for x in side}
+# Match sides are ordered [{id|key, text}] lists (plan §3, decision 5).
+def by_id(side,key):return {x[key]:x['text'] for x in side}
 for item in list(state['items']):
     e=item['exercise'];eid=e['id'];response=answers.get(eid)
     if e['type']=='match':response={left:next(k for k,v in by_id(e['payload']['right'],'key').items() if v=={'hello':'Xin chào','thanks':'Cảm ơn'}[left]) for left in by_id(e['payload']['left'],'id')}
@@ -136,8 +135,8 @@ admin.api('admin/workflow',dict(versionId=vid,action='archive'));assert other.ap
 with other.opener.open(BASE+'/media/'+str(aid)) as media:assert media.status==200 and media.headers['Content-Type'].startswith('audio/') and media.read().startswith(b'RIFF')
 # CSV dry-run/commit preserves ownership and creates drafts only.
 csv='schemaVersion,externalId,slug,lemma,ipa,part_of_speech,topic,meaning,example,translation,level\n1,csv-one,csv-private-example,example,,noun,tests,vi du,An example.,Mot vi du.,A1\n'
-# Fix 13: a CSV batch names its namespace (PHP fixed it to csv-vocabulary).
-csv_preview=editor.api('admin/import-preview',dict(raw=csv,**({'namespace':'csv-http-test'} if NEXT else {})));assert not csv_preview['errors']
+# Fix 13: a CSV batch names its namespace.
+csv_preview=editor.api('admin/import-preview',dict(raw=csv,namespace='csv-http-test'));assert not csv_preview['errors']
 editor.api('admin/import-commit',dict(importId=csv_preview['id']));editor.api('admin/import-commit',dict(importId=csv_preview['id']))
 # Large commits really enter the DB queue; no network email/analytics is enabled in this test environment.
 rows=[dict(externalId='bulk-'+str(n),slug='bulk-example-'+str(n),lemma='example '+str(n),ipa='',part_of_speech='noun',topic='tests',meaning='sample',example='An example.',translation='Vi du.',level='A1') for n in range(101)]
@@ -151,7 +150,7 @@ print('PASS: versioned learning, all product pages, optimistic conflicts, idempo
 
 # Every metadata import template passes the same validator as CMS and commits once.
 for kind in ['paths','units','articles','vocabulary_sets']:
-    # Next.js ships the import templates with the app (web/templates).
+    # The import templates ship with the app (templates/).
     batch=json.loads((ROOT/'templates'/(kind+'.json')).read_text(encoding='utf-8'))
     batch['namespace']='template-'+kind.replace('_','-')
     if kind=='units':batch[kind][0]['path_id']=catalog['paths'][0]['id']
@@ -164,10 +163,9 @@ set_data=dict(kind='vocabulary_sets',id=set_id,slug='integration-set',title='Int
 admin.api('admin/entity',set_data,409)
 editor.api('admin/entity',dict(set_data,status='in_review'))
 state=lambda kind,id:json.loads(fixture('cms-state',kind,id))
-# The page offers the exact-draft editor: PHP posts the admin/draft-save command; Next.js renders a
-# Server Action form carrying the draft id and its stale-edit hash.
+# The page offers the exact-draft editor: a Server Action form carrying the draft id and its
+# stale-edit hash.
 def draft_form(html,draft_id):
-    if PHP:return 'admin/draft-save' in html
     return 'name="draftId" value="'+str(draft_id)+'"' in html and 'name="expected"' in html
 draft=state('vocabulary_sets',set_id)['draft']['id']
 editor.api('admin/entity-workflow',dict(draftId=draft,action='publish'),403)
@@ -283,14 +281,11 @@ for page in range(1,6):
     ids=list(dict.fromkeys(re.findall(r'name="cardId" value="([0-9]+)"',html)))
     assert len(ids)<=30 and not set(ids)&set(cards_seen);cards_seen+=ids
 assert len(cards_seen)>121
-if PHP:
-    code,html,url=learner.req('/so-tu-vung?q=Paging&filter=hidden&page=2',dict(csrf=learner.csrf,command='vocabulary/save',senseId=seen[0],notes='Updated private note'))
-else:
-    # The word form's action reports to the page flash from the client, so React cannot submit it
-    # without JavaScript; post it as the browser script does. The action re-renders the same URL.
-    code,result,url=call_action(learner.opener,'/so-tu-vung?q=Paging&filter=hidden&page=2','src/actions/routes.ts','saveVocabulary',dict(senseId=seen[0],notes='Updated private note'))
-    assert result and result['status']=='success',result
-    assert 'Updated private note' in learner.req('/so-tu-vung?q=Paging&filter=all&page=1')[1],'Word form did not save'
+# The word form's action reports to the page flash from the client, so React cannot submit it
+# without JavaScript; post it as the browser script does. The action re-renders the same URL.
+code,result,url=call_action(learner.opener,'/so-tu-vung?q=Paging&filter=hidden&page=2','src/actions/routes.ts','saveVocabulary',dict(senseId=seen[0],notes='Updated private note'))
+assert result and result['status']=='success',result
+assert 'Updated private note' in learner.req('/so-tu-vung?q=Paging&filter=all&page=1')[1],'Word form did not save'
 assert code==200 and 'page=2' in url and 'filter=hidden' in url
 print('PASS: A05 121+ private items, stable pages, filters/counts, owner isolation and post redirect context')
 
@@ -303,9 +298,8 @@ print('PASS: A07 history links in HTML, week navigation, invalid queries and own
 # A08: real anonymous opt-in -> trial -> registration carries only the consented journey.
 campaign=Client();route='/chien-dich/'+catalog['paths'][0]['slug']
 code,html,_=campaign.req(route+'?utm_source=newsletter&utm_medium=email&utm_campaign='+catalog['paths'][0]['slug'])
-# PHP posts the consent form to the analytics/consent command; Next.js renders it as a Server Action.
-assert code==200 and ('analytics/consent' in html if PHP else 'name="enabled"' in html)
-if PHP:campaign.csrf=csrf_token(html)
+# The consent form is a Server Action.
+assert code==200 and 'name="enabled"' in html
 campaign.api('analytics/consent',dict(enabled='yes',campaignSlug=catalog['paths'][0]['slug'],utm_source='newsletter',utm_medium='email',utm_campaign=catalog['paths'][0]['slug']))
 trial=next(l for l in catalog['lessons'] if json.loads(l['document']).get('preview') and l['subtype']!='placement')
 campaign.api('attempts/start',dict(lessonId=trial['id'],requestKey=secrets.token_hex(16)))
@@ -313,7 +307,6 @@ email='campaign-'+secrets.token_hex(6)+'@example.com'
 code,html,url,_=register(campaign.opener,'Campaign learner',email,'Product-test-123!')
 assert code==200 and url.endswith('/account')
 journey=json.loads(fixture('marketing-state',email));assert len(journey)==1 and journey[0]['guest_trial_at'] and journey[0]['signup_at'] and journey[0]['source']=='newsletter'
-if PHP:campaign.csrf=csrf_token(html)
 campaign.api('consent',dict(analytics=False));assert json.loads(fixture('marketing-state',email))==[]
 assert 'Hành trình chiến dịch' in admin.req('/admin/operations')[1]
 assert_denied(editor.req('/admin/operations'),403,'Editor on /admin/operations')
@@ -350,8 +343,7 @@ for kind,prefix in [('paths','lo-trinh'),('vocabulary','tu-vung'),('vocabulary_s
     editor.api('admin/entity',dict(data,seo_title='Unpublished SEO '+kind))
     html=learner.req(route)[1];assert 'Unpublished SEO '+kind not in html and '<title>'+data['seo_title'] in html
 settings_page=admin.req('/admin/settings')[1]
-if PHP:assert 'admin/seo' in settings_page
-else:find_form(settings_page,'name="path"','name="title"','name="description"')  # the page SEO form (a Server Action)
+find_form(settings_page,'name="path"','name="title"','name="description"')  # the page SEO form (a Server Action)
 print('PASS: A09 SSR title/meta/OG, safe text validation, private noindex, canonical preservation, publish isolation and clear override')
 
 # A10: validation contract and safe SSR error state.
@@ -359,17 +351,11 @@ error=learner.api('profile',dict(goal='invalid',selfLevel='invalid',minutes=99,t
 assert set(error['fieldErrors'])=={'goal','selfLevel','minutes','timezone','reviewLimit'}
 error=learner.api('vocabulary/save',dict(senseId=catalog['vocabulary'][0]['id'],notes='x'*2001),422)
 assert 'notes' in error['fieldErrors']
-if PHP:
-    code,html,_=admin.req('/admin/settings',dict(csrf=admin.csrf,command='admin/seo',path='/',title='x'*161,description='Preserve this value'))
-    assert code==422 and 'id="form-error-state"' in html and 'Preserve this value' in html
-    state_json=re.search(r'<script type="application/json" id="form-error-state">(.*?)</script>',html,re.S)[1]
-    assert 'title' in json.loads(state_json)['fields'] and 'csrf' not in json.loads(state_json)['values']
-else:
-    # The CMS form (JavaScript-submitted, see call_action) gets the same scoped state from its
-    # Server Action: field errors plus the non-secret input to keep (an action answers 200).
-    code,state,_=call_action(admin.opener,'/admin/settings','src/actions/routes.ts','savePageSeoAction',dict(path='/',title='x'*161,description='Preserve this value'))
-    assert code==200 and state['status']=='error' and 'title' in state['fieldErrors'],state
-    assert state['values']['description']=='Preserve this value' and not any('$ACTION' in k for k in state['values'])
+# The CMS form (JavaScript-submitted, see call_action) gets a scoped state from its Server Action:
+# field errors plus the non-secret input to keep (an action answers 200).
+code,state,_=call_action(admin.opener,'/admin/settings','src/actions/routes.ts','savePageSeoAction',dict(path='/',title='x'*161,description='Preserve this value'))
+assert code==200 and state['status']=='error' and 'title' in state['fieldErrors'],state
+assert state['values']['description']=='Preserve this value' and not any('$ACTION' in k for k in state['values'])
 print('PASS: A10 named field errors, safe scoped SSR state and preserved non-secret input')
 
 # Preview/guest sessions cannot write real account review cards through the concept endpoint.
@@ -383,19 +369,16 @@ def finish_skipped(client, attempt):
 
 before=int(fixture('review-card-count',users['editor']['id']))
 _,html,_=editor.req('/admin/lesson-preview/'+str(restore_version))
-if PHP:preview_id=json.loads(re.search(r'id="study-state"[^>]*>(.*?)</script>',html,re.S)[1])['id']
-else:preview_id=re.search(r'/hoc/luot/([a-f0-9]{32})',html)[1]  # the page redirects to its preview attempt in the player
+preview_id=re.search(r'/hoc/luot/([a-f0-9]{32})',html)[1]  # the page redirects to its preview attempt in the player
 preview_state=finish_skipped(editor,preview_id)
 assert not preview_state['canSaveConcepts']
 editor.api('review/concept',dict(attemptId=preview_state['id'],exerciseId='hello'),422)
 assert int(fixture('review-card-count',users['editor']['id']))==before
 guest=Client()
-if PHP:guest.csrf=csrf_token(guest.req('/login')[1])
 guest_id=secrets.token_hex(16);guest.api('attempts/start',dict(lessonId=lesson['id'],requestKey=guest_id))
 assert not finish_skipped(guest,guest_id)['canSaveConcepts']
 code,html,url,_=register(guest.opener,'Unclaimed trial','claim-'+secrets.token_hex(6)+'@example.com','Product-test-123!')
 assert code==200 and url.endswith('/account')
-if PHP:guest.csrf=csrf_token(html)
 assert not guest.api('attempts/'+guest_id)['canSaveConcepts']
 guest.api('review/concept',dict(attemptId=guest_id,exerciseId='hello'),422)
 assert guest.api('review/queue')==[]

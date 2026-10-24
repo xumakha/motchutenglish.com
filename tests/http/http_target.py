@@ -1,13 +1,8 @@
-"""Which app the black-box HTTP suites talk to, and how to reach its fixtures.
+"""How the black-box HTTP suites reach the Next.js app and its fixtures.
 
-HTTP_TARGET=php (default): the PHP app on 127.0.0.1:8089 with the PHP fixture CLIs (tests/run_auth.py).
-HTTP_TARGET=next: the Next.js app in web/ with the TypeScript fixture CLI web/scripts/fixture.ts
-(tests/run_next.py). HTTP_BASE overrides the URL.
-
-The suites keep one set of checks. Where the two apps differ by design (Better Auth instead of the
-PHP session + CSRF token, Server Action forms instead of plain POST forms, the §1.4 fixes in
-docs/migration/nextjs-typescript-plan.md), the helpers below hide the transport and the suites
-branch on NEXT with a comment naming the reason.
+The app runs on 127.0.0.1:3201 (HTTP_BASE overrides the URL); fixtures, the job worker and seeds
+run through the TypeScript CLIs in scripts/ and src/worker/ (tests/http/run_next.py). The helpers
+below hide the transport: Better Auth sessions, Server Action forms and the Origin check.
 """
 import html as _html
 import json
@@ -16,54 +11,38 @@ import re
 import subprocess
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TARGET = os.environ.get('HTTP_TARGET', 'next')
-NEXT = TARGET == 'next'
-PHP = not NEXT
-BASE = os.environ.get('HTTP_BASE', 'http://127.0.0.1:3201' if NEXT else 'http://127.0.0.1:8089')
-WEB = ROOT
-_TSX = [str(WEB / 'node_modules/.bin/tsx')]
+BASE = os.environ.get('HTTP_BASE', 'http://127.0.0.1:3201')
+_TSX = [str(ROOT / 'node_modules/.bin/tsx')]
 
 
 def fixture(suite, *args):
     """Run one fixture operation and return its stdout. suite: product | learning | timezone."""
-    if NEXT:
-        command = [*_TSX, '--import', './scripts/worker-hooks.mjs', 'scripts/fixture.ts', suite, *map(str, args)]
-        return subprocess.check_output(command, cwd=WEB, text=True, encoding='utf-8')
-    return subprocess.check_output(['php', f'tests/{suite}_fixture.php', *map(str, args)], cwd=ROOT, text=True, encoding='utf-8')
+    command = [*_TSX, '--import', './scripts/worker-hooks.mjs', 'scripts/fixture.ts', suite, *map(str, args)]
+    return subprocess.check_output(command, cwd=ROOT, text=True, encoding='utf-8')
 
 
 def worker(*args):
     """Run the job worker once: run [limit] | tick | cleanup | reconcile."""
-    if NEXT:
-        command = [*_TSX, '--import', './scripts/worker-hooks.mjs', 'src/worker/cli.ts', *map(str, args)]
-        subprocess.run(command, cwd=WEB, check=True, capture_output=True)
-    else:
-        subprocess.run(['php', 'database/worker.php', *map(str, args)], cwd=ROOT, check=True, capture_output=True)
+    command = [*_TSX, '--import', './scripts/worker-hooks.mjs', 'src/worker/cli.ts', *map(str, args)]
+    subprocess.run(command, cwd=ROOT, check=True, capture_output=True)
 
 
 def seed(kind):
     """Load sample content: 'product' (published samples) or 'learning' (legacy sample draft)."""
-    if NEXT:
-        flag = '--publish-reviewed-samples' if kind == 'product' else '--legacy-sample'
-        subprocess.run([*_TSX, '--conditions=react-server', 'scripts/seed.ts', flag], cwd=WEB, check=True, capture_output=True)
-    else:
-        script = 'database/seed-product.php' if kind == 'product' else 'database/seed-learning.php'
-        args = ['--publish-reviewed-samples'] if kind == 'product' else []
-        subprocess.run(['php', script, *args], cwd=ROOT, check=True, capture_output=True)
+    flag = '--publish-reviewed-samples' if kind == 'product' else '--legacy-sample'
+    subprocess.run([*_TSX, '--conditions=react-server', 'scripts/seed.ts', flag], cwd=ROOT, check=True, capture_output=True)
 
 
 # ---- Requests -------------------------------------------------------------------------------
 
 def client_ip(opener):
     """A stable fake client address per visitor. Next.js rate limits trust the rightmost
-    X-Forwarded-For entry (it runs behind a proxy), so each simulated visitor gets its own; PHP
-    ignores forwarded headers."""
+    X-Forwarded-For entry (it runs behind a proxy), so each simulated visitor gets its own."""
     if not hasattr(opener, 'mce_ip'):
         opener.mce_ip = '10.%d.%d.%d' % tuple(b % 254 + 1 for b in os.urandom(3))
     return opener.mce_ip
@@ -71,15 +50,15 @@ def client_ip(opener):
 
 def text(raw):
     """Response body as text. React separates adjacent text nodes with <!-- --> markers in HTML;
-    drop them so checks match the visible text ("Đã ôn 0/1"), as with the PHP views."""
+    drop them so checks match the visible text ("Đã ôn 0/1")."""
     body = raw.decode('utf-8') if isinstance(raw, bytes) else raw
-    return body.replace('<!-- -->', '') if NEXT else body
+    return body.replace('<!-- -->', '')
 
 
 def open_request(opener, path, data=None, headers=None, method=None, origin=BASE):
     """(status, body text, final url, headers); HTTP errors are returned, not raised.
-    `origin` goes on unsafe requests (Next.js's proxy.ts rejects cross-origin writes; PHP ignores
-    it). Pass None to omit it, or another origin to simulate a cross-site post."""
+    `origin` goes on unsafe requests (proxy.ts rejects cross-origin writes). Pass None to omit it,
+    or another origin to simulate a cross-site post."""
     request = urllib.request.Request(BASE + path, data, dict(headers or {}), method=method)
     request.add_header('X-Forwarded-For', client_ip(opener))
     if origin and (data is not None or (method or 'GET') not in ('GET', 'HEAD')):
@@ -96,18 +75,17 @@ def settle_cache(route, code):
     (next/dist/server/route-modules/app-route: pendingWaitUntil), so a page read sent the same
     instant can still see the old catalog. The CMS forms are Server Actions (updateTag), which
     are read-your-own-writes; only direct /api/v1 admin writes are eventually consistent."""
-    if NEXT and code < 400 and route.startswith('admin/'):
+    if code < 400 and route.startswith('admin/'):
         time.sleep(0.2)
 
 
-def api_headers(csrf=''):
-    """JSON API headers: PHP wants its CSRF token, Next.js relies on the Origin check."""
-    return {'Content-Type': 'application/json', **({'X-CSRF-Token': csrf} if PHP else {})}
+def api_headers():
+    """JSON API headers (no token: proxy.ts relies on the Origin check)."""
+    return {'Content-Type': 'application/json'}
 
 
 # ---- Forms ----------------------------------------------------------------------------------
-# PHP forms carry a csrf hidden field. Next.js forms are Server Actions; without JavaScript the
-# browser posts them as multipart/form-data with React's hidden $ACTION_* fields to the page URL,
+# The forms are Server Actions; without JavaScript the browser posts them as multipart/form-data with React's hidden $ACTION_* fields to the page URL,
 # and Next.js runs the action and renders the page with its result (progressive enhancement).
 # submit_form replays exactly what a browser without JavaScript sends.
 
@@ -150,18 +128,13 @@ def multipart(fields):
     return b''.join(parts), 'multipart/form-data; boundary=' + boundary
 
 
-def submit_form(opener, path, fields, *needles, page=None, csrf=None, origin=BASE):
+def submit_form(opener, path, fields, *needles, page=None, origin=BASE):
     """Post a page's form like a browser without JavaScript. Returns (status, body, url, headers).
 
-    PHP: urlencoded fields plus the csrf token. Next.js: the Server Action form on `path` (or the
-    already fetched `page`) whose markup contains every needle, with its hidden fields; the given
-    fields replace hidden fields of the same name.
+    Posts the Server Action form on `path` (or the already fetched `page`) whose markup contains
+    every needle, with its hidden fields; the given fields replace hidden fields of the same name.
     """
     fields = list(fields.items()) if isinstance(fields, dict) else list(fields)
-    if PHP:
-        if csrf is not None:
-            fields = [('csrf', csrf)] + fields
-        return open_request(opener, path, urllib.parse.urlencode(fields).encode(), origin=origin)
     if page is None:
         page = open_request(opener, path)[1]
     _, hidden, _ = find_form(page, *needles)
@@ -188,7 +161,7 @@ def form_state(body):
 
 
 def call_action(opener, path, module, export, fields, prev=None):
-    """Call a useActionState Server Action the way the browser's JavaScript does (Next.js only).
+    """Call a useActionState Server Action the way the browser's JavaScript does.
 
     Needed for forms whose action is wrapped on the client (the learner forms report to the page
     flash), which React cannot submit without JavaScript. The id comes from the build's
@@ -196,7 +169,7 @@ def call_action(opener, path, module, export, fields, prev=None):
     FormData fields as `_1_<name>` before the root `0` that references them as "$K1".
     Returns (status, action result, page url).
     """
-    manifest = json.loads((WEB / '.next/server/server-reference-manifest.json').read_text(encoding='utf-8'))['node']
+    manifest = json.loads((ROOT / '.next/server/server-reference-manifest.json').read_text(encoding='utf-8'))['node']
     action_id = next(k for k, v in manifest.items() if v['filename'] == module and v['exportedName'] == export)
     items = list(fields.items()) if isinstance(fields, dict) else list(fields)
     root = json.dumps([prev or {'status': 'idle'}, '$K1'])
@@ -225,12 +198,10 @@ def form_message(body):
 
 
 def assert_rejected(result, status, message=None, label=''):
-    """A form post was refused. PHP answers with the HTTP status. A Server Action cannot set the
-    status, so Next.js answers 200 and renders the error summary; check its message instead."""
+    """A form post was refused. `status` names the refusal for the reader (422 invalid, 403
+    forbidden, 409 conflict, 429 rate limited), but a Server Action cannot set the HTTP status: it
+    answers 200 and renders the error summary, so check its message instead."""
     code, body = result[0], result[1]
-    if PHP:
-        assert code == status, (label, code)
-        return
     error = form_error(body)
     assert code == 200 and error, (label, code, 'no form error shown')
     if message is not None:
@@ -243,40 +214,27 @@ _INTERRUPTED = '<meta name="robots" content="noindex"/>'
 
 
 def assert_denied(result, status, label=''):
-    """A page refused the visitor (403 staff-only / 404 not the owner). On Next.js, proxy.ts
+    """A page refused the visitor (403 staff-only / 404 not the owner). proxy.ts
     decides the status before rendering (server/private-access.ts); callers check that the
     protected data is absent."""
     code = result[0]
     assert code == status, (label, code)
 
 
-def csrf_token(body):
-    match = re.search(r'name="csrf" value="([a-f0-9]+)"', body)
-    assert match, 'Missing CSRF token'
-    return match[1]
-
-
 # ---- Accounts -------------------------------------------------------------------------------
 
-def login(opener, email, password, page=None, csrf=None):
+def login(opener, email, password, page=None):
     """Sign in through the real login form. Returns (status, body, url, headers)."""
     fields = dict(email=email, password=password)
-    if PHP:
-        page = page or open_request(opener, '/login')[1]
-        return submit_form(opener, '/login', fields, csrf=csrf or csrf_token(page))
     return submit_form(opener, '/login', fields, 'name="email"', 'name="password"', page=page)
 
 
-def register(opener, name, email, password, confirm=None, page=None, csrf=None):
+def register(opener, name, email, password, confirm=None, page=None):
     """Create an account through the real registration form. Returns (status, body, url, headers)."""
     fields = dict(name=name, email=email, password=password, password_confirm=password if confirm is None else confirm)
-    if PHP:
-        page = page or open_request(opener, '/register')[1]
-        return submit_form(opener, '/register', fields, csrf=csrf or csrf_token(page))
     return submit_form(opener, '/register', fields, 'name="password_confirm"', page=page)
 
 
-def logout(opener, csrf=None, origin=BASE):
-    """POST /logout: a plain form post in both apps (Next.js checks the origin, not a token)."""
-    data = urllib.parse.urlencode({'csrf': csrf} if PHP else {}).encode()
-    return open_request(opener, '/logout', data, origin=origin)
+def logout(opener, origin=BASE):
+    """POST /logout: a plain form post (proxy.ts checks the origin, not a token)."""
+    return open_request(opener, '/logout', b'', origin=origin)

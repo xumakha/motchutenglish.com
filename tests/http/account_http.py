@@ -1,19 +1,18 @@
 """Run on the same isolated DB, with MAIL_DRIVER=log and APP_ENV=test."""
 import json,secrets,http.cookiejar,urllib.request,urllib.parse
-from http_target import PHP, NEXT, api_headers, assert_rejected, csrf_token, fixture as target_fixture, login, open_request, worker as target_worker
+from http_target import api_headers, assert_rejected, fixture as target_fixture, login, open_request, worker as target_worker
 def fixture(*args):return target_fixture('product',*args)
 def worker():target_worker('run','50')
 class Client:
-    def __init__(self):self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()));self.csrf=''
+    def __init__(self):self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
     def req(self,path,data=None,api=False):
         payload=(json.dumps(data).encode() if api else urllib.parse.urlencode(data).encode()) if data is not None else None
-        code,body,_,_=open_request(self.opener,path,payload,api_headers(self.csrf) if api else {})
+        code,body,_,_=open_request(self.opener,path,payload,api_headers() if api else {})
         assert 'Fatal error' not in body and 'Warning:' not in body,(path,body);return code,body
     def login(self,email,password='Product-test-123!',expected=200):
         result=login(self.opener,email,password)
         if expected!=200:return assert_rejected(result,expected,label=email)
         code,body,url,_=result;assert code==200 and url.endswith('/account'),(code,url)
-        if PHP:self.csrf=csrf_token(body)
     def api(self,route,data=None,expected=200):
         code,body=self.req('/api/v1/'+route,data,data is not None);assert code==expected,(route,code,body);return json.loads(body)
 fixture('authclear');users=json.loads(fixture('setup'));email=users['learner']['email'];uid=users['learner']['id']
@@ -42,8 +41,8 @@ a.api('exports/request',dict(kind='personal',requestKey=export_key));a.api('expo
 code,exported=a.req('/du-lieu/export-file/'+export_key);assert code==200,(code,exported)
 export_doc=json.loads(exported);assert export_doc['kind']=='personal' and export_doc['user'][0]['email']==new_email
 assert 'password_hash' not in exported and 'presented_order' not in exported
-# Next.js keeps password hashes in Better Auth's auth_accounts; the export must not include them.
-if NEXT:assert '"password"' not in exported and 'auth_accounts' not in exported
+# Password hashes live in Better Auth's auth_accounts; the export must not include them.
+assert '"password"' not in exported and 'auth_accounts' not in exported
 anonymous=Client();assert anonymous.req('/du-lieu/export-file/'+export_key)[0] in [401,403]
 
 # Create private learner data before controlled deletion.

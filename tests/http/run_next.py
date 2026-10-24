@@ -1,21 +1,20 @@
-"""Run the black-box HTTP suites against the Next.js app in web/ (PHP: tests/run_auth.py).
+"""Run the black-box HTTP suites against the Next.js app.
 
-    python3 tests/run_next.py
+    python3 tests/http/run_next.py
 
 Creates an isolated database (mce_next_http_<hex>) on the server named by DATABASE_URL (from the
-environment or web/.env.local; the user needs CREATE DATABASE), migrates and seeds it, builds and
-starts the app (`pnpm build`, `pnpm start` on NEXT_HTTP_PORT, default 3201) and runs the suites
-with HTTP_TARGET=next, so they use the TypeScript fixture CLI (web/scripts/fixture.ts) and worker.
+environment or .env.local; the user needs CREATE DATABASE), migrates and seeds it, builds and
+starts the app (`pnpm build`, `pnpm start` on NEXT_HTTP_PORT, default 3201) and runs the suites,
+which use the TypeScript fixture CLI (scripts/fixture.ts) and worker.
 Writes docs/artifacts/next-http-report.json. The database is dropped after a green run and kept
 after a failure (KEEP_TEST_DB=1 always keeps it).
 
-    NEXT_HTTP_SKIP_BUILD=1   reuse the existing web/.next build (it must come from this checkout)
+    NEXT_HTTP_SKIP_BUILD=1   reuse the existing .next build (it must come from this checkout)
 """
 import atexit, datetime, json, os, secrets, shutil, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
-web = root
 results = []
 
 
@@ -45,7 +44,7 @@ atexit.register(write_report)
 
 def env_local():
     values = {}
-    file = web / '.env.local'
+    file = root / '.env.local'
     if file.exists():
         for line in file.read_text(encoding='utf-8').splitlines():
             if '=' in line and not line.lstrip().startswith('#'):
@@ -57,13 +56,13 @@ def env_local():
 local = env_local()
 source_url = os.environ.get('DATABASE_URL') or local.get('DATABASE_URL')
 if not source_url:
-    sys.exit('DATABASE_URL is not set (environment or web/.env.local)')
+    sys.exit('DATABASE_URL is not set (environment or .env.local)')
 name = 'mce_next_http_' + secrets.token_hex(6)
 parts = urllib.parse.urlsplit(source_url)
 database_url = urllib.parse.urlunsplit(parts._replace(path='/' + name))
 port = int(os.environ.get('NEXT_HTTP_PORT', '3201'))
 base = f'http://127.0.0.1:{port}'
-writable = web / 'writable' / 'http-tests' / name
+writable = root / 'writable' / 'http-tests' / name
 writable.mkdir(parents=True, exist_ok=True)
 
 env = dict(
@@ -76,7 +75,7 @@ env = dict(
     WRITABLE_DIR=str(writable),
     MAIL_DRIVER='disabled',
     GA4_MEASUREMENT_ID='', GA4_API_SECRET='',
-    HTTP_TARGET='next', HTTP_BASE=base,
+    HTTP_BASE=base,
     NEXT_TELEMETRY_DISABLED='1',
     PYTHONDONTWRITEBYTECODE='1',
 )
@@ -100,7 +99,7 @@ def start_server(server_env, log_name):
     if not port_free():
         raise RuntimeError(f'Port {port} is already in use; set NEXT_HTTP_PORT')
     log = (writable / log_name).open('w')
-    server = subprocess.Popen(pnpm('start'), cwd=web, env=dict(server_env, PORT=str(port), HOSTNAME='127.0.0.1'),
+    server = subprocess.Popen(pnpm('start'), cwd=root, env=dict(server_env, PORT=str(port), HOSTNAME='127.0.0.1'),
                               stdout=log, stderr=log, start_new_session=True)
     deadline = time.time() + 60
     while time.time() < deadline:
@@ -130,17 +129,17 @@ def suite(file, suite_env):
 
 
 def fixture(*args, suite_env=env):
-    tsx = str(web / 'node_modules/.bin/tsx')
-    step('fixture ' + ' '.join(args), [tsx, '--import', './scripts/worker-hooks.mjs', 'scripts/fixture.ts', *args], suite_env, cwd=web)
+    tsx = str(root / 'node_modules/.bin/tsx')
+    step('fixture ' + ' '.join(args), [tsx, '--import', './scripts/worker-hooks.mjs', 'scripts/fixture.ts', *args], suite_env, cwd=root)
 
 
 ok = False
 try:
-    step('db:reset', pnpm('db:reset'), env, cwd=web)
-    step('admin create', pnpm('admin', 'create', f'seed-admin-{secrets.token_hex(4)}@example.test', 'HTTP seed', '--local'), env, cwd=web)
-    step('seed', pnpm('seed', '--publish-reviewed-samples'), env, cwd=web)
+    step('db:reset', pnpm('db:reset'), env, cwd=root)
+    step('admin create', pnpm('admin', 'create', f'seed-admin-{secrets.token_hex(4)}@example.test', 'HTTP seed', '--local'), env, cwd=root)
+    step('seed', pnpm('seed', '--publish-reviewed-samples'), env, cwd=root)
     if os.environ.get('NEXT_HTTP_SKIP_BUILD') != '1':
-        step('build', pnpm('build'), env, cwd=web)
+        step('build', pnpm('build'), env, cwd=root)
 
     server, log = start_server(env, 'server.log')
     try:
@@ -167,6 +166,6 @@ finally:
         print(f'Isolated test database retained: {name} (files: {writable})')
     else:
         drop = "import mysql from 'mysql2/promise';const u=new URL(process.env.DATABASE_URL);const n=u.pathname.slice(1);u.pathname='/';const c=await mysql.createConnection({uri:u.toString()});await c.query('DROP DATABASE IF EXISTS `'+n+'`');await c.end();"
-        subprocess.run(['node', '--input-type=module', '-e', drop], cwd=web, env=env, check=False)
+        subprocess.run(['node', '--input-type=module', '-e', drop], cwd=root, env=env, check=False)
         shutil.rmtree(writable, ignore_errors=True)
         print(f'All Next.js HTTP suites passed; dropped {name}')
