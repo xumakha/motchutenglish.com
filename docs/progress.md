@@ -1,5 +1,7 @@
 # Tiến độ — 22/10/2026
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Tiến độ hiện nay: [progress log trong kế hoạch chuyển đổi](migration/nextjs-typescript-plan.md#12-progress-log).
+
 Đã cập nhật đến A14, A02 local và renderer flashcard trong lesson. Chưa hoàn tất toàn bộ spec hoặc nghiệm thu ra mắt. Đối chiếu chi tiết tại [traceability](spec-traceability.md) và [audit cùng các phần cập nhật](spec-audit-2026-10-21.md).
 
 ## Checklist hiện tại
