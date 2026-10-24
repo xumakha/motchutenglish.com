@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { CampaignConsentForm } from "@/components/public/client";
+import { CampaignConsentForm, RecordLanding } from "@/components/public/client";
 import { PageHeading } from "@/components/site/page-heading";
 import { SiteShell } from "@/components/site/site-shell";
-import { labels, landing, noMarketing } from "@/domain/analytics/marketing";
+import { labels, noMarketing } from "@/domain/analytics/marketing";
 import { currentActor } from "@/server/actor";
 import { publicLessons, publicPaths } from "@/site/catalog";
 import { userAnalyticsConsent } from "@/site/queries/public";
@@ -15,6 +15,13 @@ import { pageMetadata } from "@/site/seo";
 // is recorded only with consent (MarketingAnalytics::landing checks it).
 
 type Props = PageProps<"/chien-dich/[slug]">;
+
+const utmOnly = (query: Record<string, string | string[] | undefined>) =>
+  Object.fromEntries(
+    Object.entries(query).filter(
+      (e): e is [string, string] => e[0].startsWith("utm_") && typeof e[1] === "string",
+    ),
+  );
 
 async function findCampaign(slug: string) {
   const path = (await publicPaths()).find((p) => p.slug === slug);
@@ -37,13 +44,12 @@ async function Content({ params, searchParams }: Props) {
   const { path, first } = found;
   const actor = await currentActor();
   const session = actor.marketing ?? noMarketing;
-  // A page cannot write cookies, so a consenting guest's journey id is only reused here; the
-  // consent form (a Server Action) is what starts a guest journey and stores it.
-  if (actor.userId !== null || session.journeyId) await landing(actor.userId, slug, query, session);
   const tracking =
     actor.userId !== null ? await userAnalyticsConsent(actor.userId) : session.consent;
   return (
     <>
+      {/* Pages cannot set cookies; this records the landing (with consent) from a Server Action. */}
+      <RecordLanding slug={slug} query={utmOnly(query)} />
       <PageHeading title={path.title} description="Mỗi bước nhỏ đều được ghi nhận." />
       <section className="panel">
         <p>{path.description}</p>

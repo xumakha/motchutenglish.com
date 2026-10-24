@@ -7,6 +7,7 @@ import {
   saveCampaignConsent,
   saveVocabulary,
 } from "@/actions/routes";
+import { recordCampaignLanding } from "@/actions/marketing";
 import { ActionStatus } from "@/components/route-form";
 import { idleState, type FormState } from "@/server/form-state";
 
@@ -250,4 +251,15 @@ export function EmailTokenResult({ purpose }: { purpose: "verify" | "unsubscribe
       {message}
     </p>
   );
+}
+
+/** Records the campaign landing once after the page loads (see recordCampaignLanding). */
+export function RecordLanding({ slug, query }: { slug: string; query: Record<string, string> }) {
+  const sent = useRef(false);
+  useEffect(() => {
+    if (sent.current) return;
+    sent.current = true;
+    void recordCampaignLanding(slug, query);
+  }, [slug, query]);
+  return null;
 }
