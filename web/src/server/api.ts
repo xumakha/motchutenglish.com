@@ -97,7 +97,9 @@ const json = (body: unknown, status: number, id: string) =>
 export async function applyApiEffects(effects: HandlerEffects | undefined) {
   if (!effects) return;
   if (effects.marketing) await saveMarketing(effects.marketing);
-  if (effects.catalog) revalidateTag("catalog", "max");
+  // Route handlers cannot call updateTag. Expire at once so the next read sees the change, as
+  // Server Actions do (and as the PHP API did); "max" would serve the old catalog once more.
+  if (effects.catalog) revalidateTag("catalog", { expire: 0 });
   if (effects.signOut)
     await auth()
       .api.signOut({ headers: await headers() })

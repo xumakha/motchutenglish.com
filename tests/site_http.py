@@ -2,12 +2,13 @@
 import json, urllib.request, urllib.error
 from pathlib import Path
 from html.parser import HTMLParser
-BASE='http://127.0.0.1:8089'
+from http_target import BASE, NEXT
 class Resources(HTMLParser):
     def __init__(self): super().__init__(); self.urls=[]
     def handle_starttag(self,tag,attrs):
         if tag=='link' and dict(attrs).get('rel')=='canonical':return
-        self.urls.extend(value for key,value in attrs if key in ('href','src','action'))
+        # Next.js Server Action forms render action="" (post back to the same page URL).
+        self.urls.extend(value for key,value in attrs if key in ('href','src','action') and not (NEXT and key=='action' and value==''))
 data=json.loads(Path('assets/json/courses.json').read_text(encoding='utf-8'))
 paths=['/','/courses','/listening','/toeic','/placement','/dashboard','/login','/register']
 for course in data['courses']:

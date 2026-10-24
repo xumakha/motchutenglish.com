@@ -9,9 +9,11 @@ import { newPassword } from "@/contracts/fields";
 import { db } from "@/db/client";
 import { profiles, users } from "@/db/schema";
 import { withTx } from "@/db/tx";
+import { claimGuestJourney, noMarketing } from "@/domain/analytics/marketing";
 import { recordEvent } from "@/domain/events";
 import { ensureProfile } from "@/domain/identity/profile";
 import { formAction } from "@/server/action";
+import { currentActor } from "@/server/actor";
 import { AppError, invalid } from "@/server/errors";
 import { consume, failures, limitKey } from "@/server/rate-limit";
 import { clientIp } from "@/server/request";
@@ -99,6 +101,7 @@ export const login = formAction(loginSchema, async ({ email, password }) => {
 
 export const register = formAction(registerSchema, async ({ name, email, password }) => {
   await redirectIfSignedIn();
+  const marketing = (await currentActor()).marketing ?? noMarketing;
   const { allowed } = await consume(limitKey("register", await clientIp()), REGISTER_PER_IP);
   if (!allowed) throw new AppError(429, TOO_MANY);
 
@@ -117,9 +120,10 @@ export const register = formAction(registerSchema, async ({ name, email, passwor
     throw error;
   }
 
-  await withTx(async (tx) => {
-    await ensureProfile(tx, userId);
-    await recordEvent(`signup:${userId}`, "signup_completed", "account", userId, tx);
-  });
+  await withTx((tx) => ensureProfile(tx, userId));
+  // A consenting guest's campaign journey moves to the new account before the signup event, so
+  // the funnel records the signup on it (PHP: MarketingAnalytics::claimGuest in Auth.php).
+  await claimGuestJourney(userId, marketing);
+  await withTx((tx) => recordEvent(`signup:${userId}`, "signup_completed", "account", userId, tx));
   redirect("/account");
 });

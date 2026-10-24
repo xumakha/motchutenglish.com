@@ -5,7 +5,9 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { db, pool } from "@/db/client";
 import {
   articles,
+  learningLessons,
   learningRoles,
+  learningSeedKeys,
   lessons,
   paths,
   shop,
@@ -25,6 +27,7 @@ import { audioOk, audit } from "@/domain/content/shared";
 // Sample catalog (port of database/seed-product.php), loaded from database/product-seed.json.
 //   pnpm seed                               drafts only, for editors to review
 //   pnpm seed --publish-reviewed-samples    publish samples an operator has reviewed
+//   pnpm seed --legacy-sample               one draft legacy lesson for /admin (database/seed-learning.php)
 // Listening samples without licensed audio always stay drafts. Safe to run repeatedly.
 
 interface Seed {
@@ -75,6 +78,42 @@ const SHOP: [string, string, number, string][] = [
   ["sun", "Huy hiệu nắng nhỏ", 100, "avatar-sun"],
 ];
 
+/**
+ * Port of database/seed-learning.php: one sample draft in the legacy lesson system, created once
+ * (keyed by learning_seed_keys) and never overwritten. An admin reviews and publishes it in /admin.
+ */
+async function seedLegacySample(ownerId: number) {
+  await withTx(async (tx) => {
+    // Lock one existing row so concurrent seed commands also stay idempotent.
+    await tx.select().from(learningRoles).where(eq(learningRoles.userId, ownerId)).for("update");
+    const [seeded] = await tx
+      .select()
+      .from(learningSeedKeys)
+      .where(eq(learningSeedKeys.seedKey, "sample-greetings-v1"));
+    if (seeded) return;
+    const [lesson] = await tx
+      .insert(learningLessons)
+      .values({
+        title: "Bài mẫu: Chào hỏi cơ bản",
+        body: "Hello! - Xin chào!\nMy name is Linh. - Tôi tên là Linh.\nNice to meet you. - Rất vui được gặp bạn.\n\nĐây là nội dung mẫu để trải nghiệm luồng học, chưa phải khóa học đầy đủ.",
+        question: "Bạn nói gì khi gặp một người lần đầu?",
+        choices: { one: "Nice to meet you.", two: "Good night." },
+        answerId: "one",
+        explanation:
+          "Nice to meet you dùng để chào khi gặp một người lần đầu. Good night thường dùng để chúc ngủ ngon.",
+        status: "draft",
+        createdBy: ownerId,
+      })
+      .$returningId();
+    await tx
+      .insert(learningSeedKeys)
+      .values({ seedKey: "sample-greetings-v1", lessonId: lesson!.id });
+  });
+  console.log(
+    "Sample draft ready. Review and publish in /admin. Re-running does not overwrite content.",
+  );
+}
+
 async function main() {
   const publish = process.argv.includes("--publish-reviewed-samples");
   const [owner] = await db()
@@ -85,6 +124,7 @@ async function main() {
     .orderBy(asc(users.id))
     .limit(1);
   if (!owner) throw new Error("Create an admin first: pnpm admin create EMAIL NAME --local");
+  if (process.argv.includes("--legacy-sample")) return seedLegacySample(owner.id);
   const actor: Actor = { userId: owner.id, role: "admin", guestKey: null };
   const seed: Seed = JSON.parse(
     readFileSync(resolve(process.cwd(), "../database/product-seed.json"), "utf8"),

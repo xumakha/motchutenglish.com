@@ -12,6 +12,8 @@ pnpm build
 pnpm test:e2e     # Playwright at 360/390/768/1440 px (runs `pnpm start`, so build first)
 ```
 
+The PHP black-box HTTP suites (`tests/*_http.py`) also run against this app: `python3 tests/run_next.py` (from the repo root) creates its own `mce_next_http_*` database, seeds it, builds, starts the app on port 3201 (`NEXT_HTTP_PORT`) and runs them with the TypeScript fixture CLI `scripts/fixture.ts`. `tests/http_target.py` explains how the suites switch between the two apps.
+
 `src/contracts/` holds the zod contract for every `/api/v1` route and form action the PHP app accepts. A unit test fails if `application/controllers/Product.php` and the contracts drift apart.
 
 ## Worker and operations
