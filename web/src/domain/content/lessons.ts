@@ -8,6 +8,7 @@ import { requireStaff, type Actor } from "../actor";
 import type { Exercise, LessonDocument } from "../assessment/types";
 import { validateDocument } from "../assessment/validate";
 import { isObject, safeEqual, sha256, text } from "../php";
+import { indexVersion } from "./search";
 import { addRedirect, audioOk, audit, documentMediaIds, phpInt, rawDocument, slug } from "./shared";
 
 // Lesson versions and their workflow (Content::saveVersion, Content::workflow, paths, lessons).
@@ -153,6 +154,8 @@ export async function lessonWorkflow(actor: Actor, versionId: number, action: Wo
         .update(lessons)
         .set({ currentVersion: versionId, archived: false })
         .where(eq(lessons.id, v.lessonId));
+      // Fix 10: store the version's text for the search index.
+      await indexVersion(tx, versionId, v.title, doc);
       // Fix 11: remember which media this published version plays.
       const mediaIds = documentMediaIds(doc);
       if (mediaIds.length)

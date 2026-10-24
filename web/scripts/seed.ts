@@ -19,6 +19,7 @@ import type { Actor } from "@/domain/actor";
 import type { LessonDocument } from "@/domain/assessment/types";
 import { validateDocument } from "@/domain/assessment/validate";
 import { addToTopicSet } from "@/domain/content/entities";
+import { indexVersion } from "@/domain/content/search";
 import { audioOk, audit } from "@/domain/content/shared";
 
 // Sample catalog (port of database/seed-product.php), loaded from database/product-seed.json.
@@ -173,11 +174,13 @@ async function main() {
             publishedAt: ready ? new Date() : null,
           })
           .$returningId();
-        if (ready)
+        if (ready) {
           await tx
             .update(lessons)
             .set({ currentVersion: version!.id })
             .where(eq(lessons.id, lesson!.id));
+          await indexVersion(tx, version!.id, l.title, l.document);
+        }
       }
 
       for (const v of seed.vocabulary) {

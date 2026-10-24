@@ -1,7 +1,8 @@
 import "./load-env";
 import { drizzle } from "drizzle-orm/mysql2";
 import { migrate } from "drizzle-orm/mysql2/migrator";
-import { createConnection } from "mysql2/promise";
+import { createConnection, type Connection, type RowDataPacket } from "mysql2/promise";
+import { searchText } from "../src/domain/content/search-text";
 
 // Database lifecycle for local development and tests.
 //   pnpm db:migrate   apply pending migrations from ./drizzle
@@ -20,9 +21,30 @@ async function migrateDatabase() {
   try {
     await connection.query("SET time_zone = '+00:00'");
     await migrate(drizzle({ client: connection }), { migrationsFolder: "./drizzle" });
+    await indexUnsearchedVersions(connection);
   } finally {
     await connection.end();
   }
+}
+
+/**
+ * Fix 10: publishing fills mce_search; versions published before that table existed (or written by
+ * an import of PHP data) get their row here. Idempotent: only versions without a row are read.
+ */
+async function indexUnsearchedVersions(connection: Connection) {
+  const [rows] = await connection.query<RowDataPacket[]>(
+    `SELECT v.id, v.title, v.document FROM mce_versions v
+     LEFT JOIN mce_search s ON s.version_id = v.id
+     WHERE v.status = 'published' AND s.version_id IS NULL`,
+  );
+  for (const row of rows) {
+    const doc = typeof row.document === "string" ? JSON.parse(row.document) : row.document;
+    await connection.query(
+      "INSERT IGNORE INTO mce_search (version_id, title, body) VALUES (?, ?, ?)",
+      [row.id, row.title, searchText(doc)],
+    );
+  }
+  if (rows.length) console.log(`search: indexed ${rows.length} published versions`);
 }
 
 async function resetDatabase() {
