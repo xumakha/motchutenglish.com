@@ -16,15 +16,18 @@ export function MenuButton() {
   }, [open]);
 
   useEffect(() => {
-    const nav = document.getElementById("navigation");
+    // Look the nav up on every event: the signed-in nav streams in after this effect runs and
+    // replaces the guest placeholder, so an element captured here could already be detached.
+    const navigation = () => document.getElementById("navigation");
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && nav?.classList.contains("open")) {
+      if (e.key === "Escape" && navigation()?.classList.contains("open")) {
         e.preventDefault();
         setOpen(false);
         button.current?.focus();
       }
     };
     const onFocus = (e: FocusEvent) => {
+      const nav = navigation();
       if (
         nav?.classList.contains("open") &&
         !nav.contains(e.target as Node) &&

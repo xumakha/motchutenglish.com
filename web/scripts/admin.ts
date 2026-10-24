@@ -1,7 +1,7 @@
 import "./load-env";
 import { randomBytes } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { eq, sql } from "drizzle-orm";
 import { auth } from "@/auth/auth";
 import { db, pool } from "@/db/client";
@@ -72,7 +72,7 @@ async function createAdmin(emailArg: string, name: string, local: boolean) {
   });
 
   if (!local) return console.log("Administrator created.");
-  const dir = join(process.cwd(), env().WRITABLE_DIR);
+  const dir = resolve(process.cwd(), env().WRITABLE_DIR);
   await mkdir(dir, { recursive: true, mode: 0o700 });
   const file = join(dir, `local-admin-${randomBytes(4).toString("hex")}.txt`);
   await writeFile(

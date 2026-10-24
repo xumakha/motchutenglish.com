@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-10-24T12:15:52.691371+00:00",
+  "target": "next",
+  "environment": "isolated local database; external mail/analytics disabled",
+  "checks": [
+    {
+      "check": "db:reset",
+      "status": "passed",
+      "seconds": 5.834
+    },
+    {
+      "check": "admin create",
+      "status": "passed",
+      "seconds": 0.845
+    },
+    {
+      "check": "seed",
+      "status": "passed",
+      "seconds": 0.663
+    },
+    {
+      "check": "build",
+      "status": "passed",
+      "seconds": 3.599
+    },
+    {
+      "check": "timezone_http.py",
+      "status": "passed",
+      "seconds": 1.543
+    },
+    {
+      "check": "product_http.py",
+      "status": "passed",
+      "seconds": 53.267
+    },
+    {
+      "check": "learning_http.py",
+      "status": "passed",
+      "seconds": 3.927
+    },
+    {
+      "check": "fixture product authclear",
+      "status": "passed",
+      "seconds": 0.573
+    },
+    {
+      "check": "auth_http.py",
+      "status": "passed",
+      "seconds": 1.472
+    },
+    {
+      "check": "site_http.py",
+      "status": "passed",
+      "seconds": 0.351
+    },
+    {
+      "check": "account_http.py",
+      "status": "passed",
+      "seconds": 10.686
+    }
+  ],
+  "all_passed": true
+}

@@ -20,6 +20,7 @@ import { enqueue } from "../jobs/enqueue";
 import { field, hexKey, isObject, phpTrim, randomHex, text } from "../php";
 import { addToTopicSet, entityRow, insertRow, type Kind } from "./entities";
 import { audioOk, audit, slug } from "./shared";
+import { logError } from "@/server/log";
 
 // Batch imports (Content::importPreview, Content::importCommit, ImportStatus). A preview validates
 // every record and stores per-field errors; a commit inserts all records in one transaction or
@@ -57,7 +58,7 @@ export async function writeProgress(
       .values({ importId, processed, total, phase, updatedAt: new Date() })
       .onDuplicateKeyUpdate({ set: { processed, total, phase, updatedAt: new Date() } });
   } catch (error) {
-    console.error("Import progress telemetry unavailable", error);
+    logError("Import progress telemetry unavailable", error);
   }
 }
 

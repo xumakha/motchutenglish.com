@@ -1,9 +1,21 @@
 name: Next.js app
 on:
   push:
-    paths: ["web/**", "application/controllers/Product.php", ".github/workflows/web.yml"]
+    paths:
+      - "web/**"
+      - "application/controllers/Product.php"
+      - "tests/*_http.py"
+      - "tests/http_target.py"
+      - "tests/run_next.py"
+      - ".github/workflows/web.yml"
   pull_request:
-    paths: ["web/**", "application/controllers/Product.php", ".github/workflows/web.yml"]
+    paths:
+      - "web/**"
+      - "application/controllers/Product.php"
+      - "tests/*_http.py"
+      - "tests/http_target.py"
+      - "tests/run_next.py"
+      - ".github/workflows/web.yml"
 permissions:
   contents: read
 jobs:
@@ -73,6 +85,25 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: End-to-end tests
         run: pnpm test:e2e
+      - name: Benchmark (A02, 50 concurrent graded submits; reported, not a staging claim)
+        run: |
+          PORT=3000 HOSTNAME=127.0.0.1 pnpm start > /tmp/next.log 2>&1 &
+          # pnpm start runs node as a child process; stop that server when this step ends.
+          trap 'pkill -f .next/standalone/server.js || true' EXIT
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/health >/dev/null && break; sleep 1; done
+          pnpm benchmark http://127.0.0.1:3000
+      - name: PHP black-box HTTP suites against Next.js (own database, build and server)
+        working-directory: .
+        run: python3 tests/run_next.py
+      - name: Upload HTTP suite logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-http-logs
+          path: |
+            web/writable/http-tests/*/*.log
+            docs/artifacts/next-http-report.json
+          if-no-files-found: ignore
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4

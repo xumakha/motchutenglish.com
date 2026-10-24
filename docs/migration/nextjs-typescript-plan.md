@@ -5,6 +5,7 @@ Status: **draft for review** · Branch: `plan/nextjs-typescript-migration` · Da
 Goal: replace the PHP application completely with a Next.js + TypeScript app. Copy every user flow, including the legacy ones, fix every known bug, and use idiomatic Next.js tools where they fit. No code is written by this document; it is the plan.
 
 Owner direction (2026-10-23):
+
 - Copy the exact user flows to Next.js, **including the original/legacy flows**.
 - **Fix all bugs** found in the review (§1.4) during the port.
 - The tech stack may change to **match Next.js patterns**. Parity means the same user-visible behaviour, not the same internals.
@@ -15,24 +16,24 @@ Owner direction (2026-10-23):
 
 ## 0. Summary
 
-| Item | Decision |
-|---|---|
-| Framework | Next.js **16.4.x** (App Router, Node runtime only), React 19 |
-| Language | TypeScript **5.9.x**, `strict: true` (TS 7 not adopted until Next tooling confirms support) |
-| Runtime | Node **24 LTS** in production (Next 16 needs ≥ 20.9) |
-| Database | **MariaDB**. Same domain model, but **Drizzle owns the schema** (a fresh baseline migration replaces `schema.sql`/`product.sql`/PHP migrations). Content is reloaded from `product-seed.json` |
-| DB access | **Drizzle ORM + mysql2**, raw SQL where locking/idempotency needs it |
-| Validation | **zod 4**, shared by forms, Server Actions and route handlers |
-| Auth | **Better Auth** (email + password, DB sessions, email verification, password reset, rate limit) with its Drizzle adapter. App rules (roles, last-admin guard, account erase, guest claim) stay in our code |
-| Mutations | **Server Actions** for all forms; **Route Handlers** only for `/api/v1` (player, polling), media, downloads, sitemap/robots |
-| Caching | **Cache Components** (`"use cache"` + `cacheTag`) for public catalog pages; personal pages stay dynamic |
-| Dates | **Luxon** for wall-clock/timezone math (streaks, quests, review cap) |
-| Mail | **Nodemailer** + **React Email** templates, wrapped so any failure after DATA counts as "delivery uncertain" |
-| Jobs | Separate Node worker process (`run`, `tick`, `cleanup`, `reconcile`), same queue design; `after()` for small post-response work |
-| Styling | Same look. Global design tokens + **CSS Modules** per component; fonts via **`next/font/local`**; images via `next/image` |
-| Tests | Vitest (unit), black-box HTTP suites adapted to the new auth/redirect details, Playwright (browser, replaces CDP scripts) |
-| Strategy | **Parallel rebuild, then one cutover.** No users, so no coexistence phase and no data migration |
-| Effort | **~15–18 person-weeks** for one experienced full-stack developer (see §11) |
+| Item       | Decision                                                                                                                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework  | Next.js **16.4.x** (App Router, Node runtime only), React 19                                                                                                                                               |
+| Language   | TypeScript **5.9.x**, `strict: true` (TS 7 not adopted until Next tooling confirms support)                                                                                                                |
+| Runtime    | Node **24 LTS** in production (Next 16 needs ≥ 20.9)                                                                                                                                                       |
+| Database   | **MariaDB**. Same domain model, but **Drizzle owns the schema** (a fresh baseline migration replaces `schema.sql`/`product.sql`/PHP migrations). Content is reloaded from `product-seed.json`              |
+| DB access  | **Drizzle ORM + mysql2**, raw SQL where locking/idempotency needs it                                                                                                                                       |
+| Validation | **zod 4**, shared by forms, Server Actions and route handlers                                                                                                                                              |
+| Auth       | **Better Auth** (email + password, DB sessions, email verification, password reset, rate limit) with its Drizzle adapter. App rules (roles, last-admin guard, account erase, guest claim) stay in our code |
+| Mutations  | **Server Actions** for all forms; **Route Handlers** only for `/api/v1` (player, polling), media, downloads, sitemap/robots                                                                                |
+| Caching    | **Cache Components** (`"use cache"` + `cacheTag`) for public catalog pages; personal pages stay dynamic                                                                                                    |
+| Dates      | **Luxon** for wall-clock/timezone math (streaks, quests, review cap)                                                                                                                                       |
+| Mail       | **Nodemailer** + **React Email** templates, wrapped so any failure after DATA counts as "delivery uncertain"                                                                                               |
+| Jobs       | Separate Node worker process (`run`, `tick`, `cleanup`, `reconcile`), same queue design; `after()` for small post-response work                                                                            |
+| Styling    | Same look. Global design tokens + **CSS Modules** per component; fonts via **`next/font/local`**; images via `next/image`                                                                                  |
+| Tests      | Vitest (unit), black-box HTTP suites adapted to the new auth/redirect details, Playwright (browser, replaces CDP scripts)                                                                                  |
+| Strategy   | **Parallel rebuild, then one cutover.** No users, so no coexistence phase and no data migration                                                                                                            |
+| Effort     | **~15–18 person-weeks** for one experienced full-stack developer (see §11)                                                                                                                                 |
 
 Hosting confirmed (2026-10-23): production supports Node and MariaDB, so the `docs/specification.md` §3 concern does not block this plan.
 
@@ -65,6 +66,7 @@ These are the contracts. Each one gets a test before or during the port.
 Since the owner allows the stack to follow Next.js patterns and there are no users, the **auth and HTTP internals below are now reference, not hard contracts**. Better Auth replaces the session cookie, CSRF token, bcrypt cost and limiter internals; Next.js defaults replace 301→308 trailing-slash redirects and blanket `no-store`. What must stay: the same flows, the same security outcomes (session revoked on password/email change and delete, generic reset responses, login throttling, CSRF protection, constant-time checks), and **every learning, review, reward, job and content rule exactly as listed**.
 
 **Request and HTTP**
+
 - Response headers on every request: `Cache-Control: no-store, private`, `X-Content-Type-Options`, `Referrer-Policy`, the CSP (`script-src 'self'`; inline styles allowed), `X-Request-ID` (16 hex chars), and HSTS when secure.
 - Redirects: `/index.php` and `?page=x` → 301; trailing slash → 301; the `mce_redirects` table is checked before the routes and again before the 404; three asset aliases.
 - API envelope: `{data, requestId}` on success. On failure: `{error:{code:"HTTP_n", message, fieldErrors, requestId, currentAttempt?}}`. `currentAttempt` is included on `attempts/{id}/*` 409s.
@@ -72,6 +74,7 @@ Since the owner allows the stack to follow Next.js patterns and there are no use
 - Error mapping in transactions: MySQL 1062/1205/1213 → 409 and 1451/1452 → 422. Deadlocks (1205/1213) retry up to 3× with 10–50 ms jitter. Every connection uses READ COMMITTED and `time_zone='+00:00'`.
 
 **Auth and identity**
+
 - Passwords: bcrypt `$2y$`, cost 12, rehashed on login. Length is limited to 72 **bytes**, with a minimum of 8 **characters** on register and reset. Login checks a fixed dummy hash when the email is unknown, so timing doesn't leak which accounts exist.
 - Session cookie: `mce_session`, HttpOnly, SameSite=Lax, browser-session lifetime, ~24 min idle expiry (PHP GC default). The session ID rotates on sign-in, and the CSRF token rotates at the same time.
 - Revocation: every request compares `session.user.session_version` with `mce_profiles.session_version`; a deleted profile ends the session. A missing profile row counts as valid.
@@ -83,6 +86,7 @@ Since the owner allows the stack to follow Next.js patterns and there are no use
 - Roles: `learning_roles` ENUM editor/admin; no row means learner; logged out means guest. An admin cannot change their own role. The last active admin cannot be deleted.
 
 **Learning engine**
+
 - The lesson document schema (schemaVersion 1, blocks, 11 exercise types, blueprint) with all limits, as listed in the review.
 - Grading normalisation: NFC; whitespace policy `collapse|trim|preserve`; optional removal of trailing `.!?`; case-insensitive by default. No accent or apostrophe folding.
 - Per-type grading rules, partial credit for fill/match, skip (score 0, max kept), and audio_error (unavailable).
@@ -92,6 +96,7 @@ Since the owner allows the stack to follow Next.js patterns and there are no use
 - Presented order: shuffled choice/token IDs, and opaque right-side IDs for match.
 
 **Review, rewards, streaks**
+
 - Review intervals (algorithm v1): again → +10 min; hard `max(1,ceil(p*1.2))`; good `p=0?1:max(1,p*2)`; easy `p=0?3:max(3,p*3)`; cap 180 days; due = UTC now + N×24 h.
 - Daily review cap uses wall-clock local midnights in `quest_timezone` (23/25 h days on DST).
 - Ledger: `INSERT IGNORE` with `v2:`-prefixed `event_key`s. Balances are always computed as SUM(ledger) inside the profile lock, and `mce_balances` is only a projection. The reward amounts table (20/30/5/5/2/5/5, caps 2/day and 10/day) is in the review notes.
@@ -100,6 +105,7 @@ Since the owner allows the stack to follow Next.js patterns and there are no use
 - Purchases and review rates are idempotent by `request_key`. The same key with a different body gets 409.
 
 **Jobs, mail, exports, analytics**
+
 - One worker at a time via `GET_LOCK('mce_worker',0)` on a dedicated connection.
 - Backoff `min(3600, 30*2^min(7,tries))`, failing after 5 tries. Recovery after a crash: imports, exports and deletes are requeued; mail, reminders and analytics are marked **failed, "delivery uncertain"** and never resent automatically. Admin retry refuses "uncertain" jobs.
 - SMTP: STARTTLS/TLS only, peer verification, 15 s timeouts, CR/LF injection guards. A missing 250 after DATA counts as "uncertain".
@@ -107,6 +113,7 @@ Since the owner allows the stack to follow Next.js patterns and there are no use
 - GA4 Measurement Protocol only with consent and both env vars set. Events older than 72 h are rejected.
 
 **Content and media**
+
 - Workflow: draft → in_review → published, plus return, archive and restore (rollback). Publishing is admin-only. Editing a published entity creates a proposal. Entity drafts detect stale edits via the sha256 of the stored document. A slug change writes a 301 and collapses redirect chains.
 - Import: JSON or CSV, ≤ 1 MB and ≤ 1,000 records. Preview errors carry dot-paths. Commits of ≤ 100 records run inline, larger ones are queued. Commits are atomic, and progress is written through a second connection.
 - Media: upload ≤ 10 MB; both the detected MIME type and the extension must be on the allowlist (jpg, png, webp, mp3, ogg, wav); `alt`, `source` and `license` are required. `/media/{id}` visibility rules as in the review.
@@ -115,32 +122,32 @@ Since the owner allows the stack to follow Next.js patterns and there are no use
 
 Owner decision: **fix all of them during the port.** Each fix gets a test that fails on the PHP behaviour and passes on the new one, and the fix is listed in the changelog so parity diffs are expected, not surprises.
 
-| # | Issue | Fix |
-|---|---|---|
-| 1 | Lesson preview does not shuffle match right-IDs, which leaks answers. Each preview GET also creates a new attempt | Shuffle in preview too; reuse one preview attempt per staff user and version |
-| 2 | Heartbeat bumps `revision`, so a second tab gets a 409 on its next action | Heartbeat updates time only, not `revision` |
-| 3 | Offline outbox keeps only the last action with a frozen revision; actions sent while busy are dropped | Ordered outbox queue; replay on reconnect and on page load; queue instead of drop while busy |
-| 4 | `retry` has no lock, no revision check and no finished check | Lock the attempt; reject retry after finish |
-| 5 | Lesson drafts have no stale-edit check (entity drafts do) | Same `expected` hash check as entity drafts |
-| 6 | `view` stores an unvalidated `position` | Validate against block/exercise count |
-| 7 | Guest claim reopens a finished attempt | Keep it finished; rescore on the server and record progress for the new user |
-| 8 | Login limiter counts successful logins (shared Wi-Fi gets locked out) | Count failures only, keyed by IP + email (Better Auth rate limit + custom rule) |
-| 9 | Rate-limit rows accumulate (cleanup deletes after 7 days only) | Expire by window in the limiter store; nightly purge |
-| 10 | Search uses `LIKE '%q%'` without escaping `%`/`_`, and scans every lesson document | Escape wildcards; MariaDB FULLTEXT index on a search table filled on publish |
-| 11 | `/media/{id}` decodes every published lesson on each request; no Range support, so audio seeking breaks | `media_refs` table filled on publish; HTTP Range + ETag |
-| 12 | Placement suggestion picks the last matching rule, not the highest threshold | Pick the highest `minPercent` that is met |
-| 13 | CSV import namespace is fixed to `csv-vocabulary`, so externalIds collide across batches | Namespace becomes a required CSV import field |
-| 14 | `correct` quest counts exercises across all lessons, not the user's path | Count within the user's enrolled path |
-| 15 | Re-adding a review card does not refresh its snapshot and un-removes `hidden=2` | Refresh the snapshot; keep removed cards removed unless the user re-adds explicitly |
-| 16 | `cleanup` expires *pending* jobs older than 7 days | Only expire failed jobs; alert on pending jobs older than 1 hour |
-| 17 | Docs and code disagree (`blockId` vs `block`, `ignorePunctuation` vs `ignoreTerminalPunctuation`, `reportId` vs `id`, …) | Code is the truth; zod schemas generate the API docs |
-| 18 | Duplicated `true_false` validation | Remove duplicate |
-| 19 | `/hoc` route shadows `Learning::index('hoc')` (dead code) | Legacy lesson list moves to its own route (see §4) |
-| 20 | Every page is `no-store`, so nothing is CDN-cacheable | Cache Components for public pages; `private, no-store` only for personal/admin pages and API |
-| 21 | `Identity::base()` throws 503 on every page in production if `APP_URL` isn't https | Validate env with zod at boot; fail the deploy, not the request |
-| 22 | Mail jobs keep the raw reset token in the payload until done | Store the token ID; build the link at send time |
-| 23 | Import jobs impersonate the actor by faking a session | Pass the actor ID explicitly to the domain function |
-| 24 | Analytics events older than 72 h are retried 5 times before failing | Fail immediately as "too old" |
+| #   | Issue                                                                                                                    | Fix                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| 1   | Lesson preview does not shuffle match right-IDs, which leaks answers. Each preview GET also creates a new attempt        | Shuffle in preview too; reuse one preview attempt per staff user and version                 |
+| 2   | Heartbeat bumps `revision`, so a second tab gets a 409 on its next action                                                | Heartbeat updates time only, not `revision`                                                  |
+| 3   | Offline outbox keeps only the last action with a frozen revision; actions sent while busy are dropped                    | Ordered outbox queue; replay on reconnect and on page load; queue instead of drop while busy |
+| 4   | `retry` has no lock, no revision check and no finished check                                                             | Lock the attempt; reject retry after finish                                                  |
+| 5   | Lesson drafts have no stale-edit check (entity drafts do)                                                                | Same `expected` hash check as entity drafts                                                  |
+| 6   | `view` stores an unvalidated `position`                                                                                  | Validate against block/exercise count                                                        |
+| 7   | Guest claim reopens a finished attempt                                                                                   | Keep it finished; rescore on the server and record progress for the new user                 |
+| 8   | Login limiter counts successful logins (shared Wi-Fi gets locked out)                                                    | Count failures only, keyed by IP + email (Better Auth rate limit + custom rule)              |
+| 9   | Rate-limit rows accumulate (cleanup deletes after 7 days only)                                                           | Expire by window in the limiter store; nightly purge                                         |
+| 10  | Search uses `LIKE '%q%'` without escaping `%`/`_`, and scans every lesson document                                       | Escape wildcards; MariaDB FULLTEXT index on a search table filled on publish                 |
+| 11  | `/media/{id}` decodes every published lesson on each request; no Range support, so audio seeking breaks                  | `media_refs` table filled on publish; HTTP Range + ETag                                      |
+| 12  | Placement suggestion picks the last matching rule, not the highest threshold                                             | Pick the highest `minPercent` that is met                                                    |
+| 13  | CSV import namespace is fixed to `csv-vocabulary`, so externalIds collide across batches                                 | Namespace becomes a required CSV import field                                                |
+| 14  | `correct` quest counts exercises across all lessons, not the user's path                                                 | Count within the user's enrolled path                                                        |
+| 15  | Re-adding a review card does not refresh its snapshot and un-removes `hidden=2`                                          | Refresh the snapshot; keep removed cards removed unless the user re-adds explicitly          |
+| 16  | `cleanup` expires _pending_ jobs older than 7 days                                                                       | Only expire failed jobs; alert on pending jobs older than 1 hour                             |
+| 17  | Docs and code disagree (`blockId` vs `block`, `ignorePunctuation` vs `ignoreTerminalPunctuation`, `reportId` vs `id`, …) | Code is the truth; zod schemas generate the API docs                                         |
+| 18  | Duplicated `true_false` validation                                                                                       | Remove duplicate                                                                             |
+| 19  | `/hoc` route shadows `Learning::index('hoc')` (dead code)                                                                | Legacy lesson list moves to its own route (see §4)                                           |
+| 20  | Every page is `no-store`, so nothing is CDN-cacheable                                                                    | Cache Components for public pages; `private, no-store` only for personal/admin pages and API |
+| 21  | `Identity::base()` throws 503 on every page in production if `APP_URL` isn't https                                       | Validate env with zod at boot; fail the deploy, not the request                              |
+| 22  | Mail jobs keep the raw reset token in the payload until done                                                             | Store the token ID; build the link at send time                                              |
+| 23  | Import jobs impersonate the actor by faking a session                                                                    | Pass the actor ID explicitly to the domain function                                          |
+| 24  | Analytics events older than 72 h are retried 5 times before failing                                                      | Fail immediately as "too old"                                                                |
 
 ---
 
@@ -179,6 +186,7 @@ web/                         # new Next.js app (moves to repo root at cutover)
 ```
 
 Rules:
+
 - **Domain modules are framework-free.** They take a `tx` plus plain inputs and return plain data. Pages, Server Actions, route handlers and the worker all call the same functions.
 - **Reads in Server Components, writes in Server Actions.** Pages read straight from domain modules (no HTTP hop). Forms call Server Actions with `useActionState` for field errors and keep working without JS.
 - **`/api/v1/*` stays** for the client lesson player, review rating and polling, with the same paths and envelope, so `product.js` behaviour ports one to one.
@@ -207,6 +215,7 @@ Rules:
    - App profile data stays in `mce_profiles`, linked 1:1 to the auth user.
 
    `drizzle-kit generate` produces the baseline migration, and `scripts/seed.ts` loads `product-seed.json`. The PHP migration runner and `mce_migrations` are retired.
+
 2. **Drizzle over Prisma.** The app depends on `SELECT … FOR UPDATE`, `INSERT IGNORE` with row-count gating, `ON DUPLICATE KEY UPDATE`, `GET_LOCK`, and per-transaction isolation. Drizzle allows raw SQL inside typed transactions; Prisma makes these awkward.
 3. **mysql2 settings:** `timezone: 'Z'`; `dateStrings: ['DATE']` so `local_date` never shifts; READ COMMITTED per transaction; JSON columns typed with `$type<T>()` and parsed (MariaDB returns JSON as text).
 4. **Better Auth** (email + password) with the Drizzle MySQL adapter.
@@ -235,6 +244,7 @@ Rules:
 ### Legacy flows (kept, per owner)
 
 Port as-is in behaviour, under an `app/(legacy)` route group:
+
 - **Static pages** `/courses`, `/courses/[c]`, `/courses/[c]/[l]`, `/listening`, `/listening/[id]`, `/toeic`, `/placement`, `/dashboard`. They render from `courses.json`, imported at build time (fully static, `generateStaticParams`). The browser-side progress (`mce-progress` in localStorage), text-to-speech and client quiz from `app.js` become a client component.
 - **Legacy DB lessons:** the `learning_lessons`/`learning_attempts` tables stay. The old admin CRUD at `/admin` and `/admin/preview/[id]`, start at `/hoc/bai/[id]` (POST via Server Action) and results at `/ket-qua/[id]` keep their rules (+20 XP on first completion, +5 on pass, idempotent per lesson; editor creates, admin publishes).
 - The legacy lesson list that `/hoc` used to shadow (fix 19) becomes visible as a "Bài học cũ" section on `/hoc`.
@@ -245,31 +255,31 @@ Port as-is in behaviour, under an `app/(legacy)` route group:
 
 Every row needs a Next.js owner and a parity test. "P" means page, "R" means route handler, "A" means server action.
 
-| Current | Next.js | Auth |
-|---|---|---|
-| `/` | P `app/(public)/page.tsx` | public |
-| `/lo-trinh`, `/lo-trinh/[slug]`, `/bai-hoc/[slug]` | P | public |
-| `/tu-vung`, `/tu-vung/[slug]`, `/tu-vung/chu-de/[slug]` | P | public |
-| `/kien-thuc`, `/kien-thuc/[slug]`, `/chien-dich/[slug]` | P | public |
-| `/tim-kiem`, `/kiem-tra-dau-vao`, `/gioi-thieu`, `/lien-he`, `/dieu-khoan`, `/bao-mat` | P | public |
-| `/quen-mat-khau`, `/dat-lai-mat-khau`, `/xac-minh-email`, `/huy-nhac-hoc` | P + A | public |
-| `/login`, `/register`, `/account`, `/logout` (POST only, GET → 405) | P + A calling Better Auth; same URLs and redirects as today | mixed |
-| `/hoc`, `/bat-dau`, `/on-tap`, `/so-tu-vung`, `/tien-do`, `/tai-khoan`, `/reward-shop` | P + A | user |
-| `/hoc/luot/[id]` | P (server-rendered state) + client player | guest or owner |
-| `/admin/{paths,units,lessons,questions,vocabulary,vocabulary-sets,articles,media,imports,reports}` | P + A | staff |
-| `/admin/{users,settings,audit,operations}` | P + A | admin |
-| `/admin/lesson-preview/[id]` | P | staff |
-| `/api/v1/*` (≈45 actions, 8 GETs) | R `api/v1/[...route]` | per action |
-| `/media/[id]` | R (+ Range) | rules |
-| `/du-lieu/export`, `/du-lieu/content-export`, `/du-lieu/template-*`, `/du-lieu/export-file/[key]` | R | user / staff |
-| `/sitemap.xml`, `/robots.txt` | `sitemap.ts`, `robots.ts` | public |
-| `/theme.css`, `/health` | R | public |
-| Legacy `/courses…`, `/listening…`, `/toeic`, `/placement`, `/dashboard` | P (static) + client component, `app/(legacy)` | public |
-| Legacy `/admin`, `/admin/preview/[n]` | P + A, `app/(legacy)` | staff (publish: admin) |
-| Legacy `/hoc/bai/[n]` (POST), `/ket-qua/[id]` | A + P, `app/(legacy)` | user / owner |
-| `/api/auth/*` | R (Better Auth) | public |
+| Current                                                                                            | Next.js                                                     | Auth                   |
+| -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------- |
+| `/`                                                                                                | P `app/(public)/page.tsx`                                   | public                 |
+| `/lo-trinh`, `/lo-trinh/[slug]`, `/bai-hoc/[slug]`                                                 | P                                                           | public                 |
+| `/tu-vung`, `/tu-vung/[slug]`, `/tu-vung/chu-de/[slug]`                                            | P                                                           | public                 |
+| `/kien-thuc`, `/kien-thuc/[slug]`, `/chien-dich/[slug]`                                            | P                                                           | public                 |
+| `/tim-kiem`, `/kiem-tra-dau-vao`, `/gioi-thieu`, `/lien-he`, `/dieu-khoan`, `/bao-mat`             | P                                                           | public                 |
+| `/quen-mat-khau`, `/dat-lai-mat-khau`, `/xac-minh-email`, `/huy-nhac-hoc`                          | P + A                                                       | public                 |
+| `/login`, `/register`, `/account`, `/logout` (POST only, GET → 405)                                | P + A calling Better Auth; same URLs and redirects as today | mixed                  |
+| `/hoc`, `/bat-dau`, `/on-tap`, `/so-tu-vung`, `/tien-do`, `/tai-khoan`, `/reward-shop`             | P + A                                                       | user                   |
+| `/hoc/luot/[id]`                                                                                   | P (server-rendered state) + client player                   | guest or owner         |
+| `/admin/{paths,units,lessons,questions,vocabulary,vocabulary-sets,articles,media,imports,reports}` | P + A                                                       | staff                  |
+| `/admin/{users,settings,audit,operations}`                                                         | P + A                                                       | admin                  |
+| `/admin/lesson-preview/[id]`                                                                       | P                                                           | staff                  |
+| `/api/v1/*` (≈45 actions, 8 GETs)                                                                  | R `api/v1/[...route]`                                       | per action             |
+| `/media/[id]`                                                                                      | R (+ Range)                                                 | rules                  |
+| `/du-lieu/export`, `/du-lieu/content-export`, `/du-lieu/template-*`, `/du-lieu/export-file/[key]`  | R                                                           | user / staff           |
+| `/sitemap.xml`, `/robots.txt`                                                                      | `sitemap.ts`, `robots.ts`                                   | public                 |
+| `/theme.css`, `/health`                                                                            | R                                                           | public                 |
+| Legacy `/courses…`, `/listening…`, `/toeic`, `/placement`, `/dashboard`                            | P (static) + client component, `app/(legacy)`               | public                 |
+| Legacy `/admin`, `/admin/preview/[n]`                                                              | P + A, `app/(legacy)`                                       | staff (publish: admin) |
+| Legacy `/hoc/bai/[n]` (POST), `/ket-qua/[id]`                                                      | A + P, `app/(legacy)`                                       | user / owner           |
+| `/api/auth/*`                                                                                      | R (Better Auth)                                             | public                 |
 
-The full API action list (start, view/draft/submit/skip/navigate/heartbeat/finish/audio_error, retry, guest/claim, profile, enrollments, vocabulary, review/*, shop/purchase, avatar, reports, password/*, email/*, account/delete, exports/request, reminders, consent, analytics/consent, streak/preferences, admin/*) gets built straight from `Product::execute`. Phase 4 checks it line by line against that source.
+The full API action list (start, view/draft/submit/skip/navigate/heartbeat/finish/audio_error, retry, guest/claim, profile, enrollments, vocabulary, review/_, shop/purchase, avatar, reports, password/_, email/_, account/delete, exports/request, reminders, consent, analytics/consent, streak/preferences, admin/_) gets built straight from `Product::execute`. Phase 4 checks it line by line against that source.
 
 ---
 
@@ -383,15 +393,15 @@ Gate: staging deploy (HTTPS, SMTP, cron) passes the full suite and the §27–29
 
 ## 6. Testing strategy
 
-| Layer | Tool | Source |
-|---|---|---|
-| Unit | Vitest | ports of `product_unit.php`, `learning.php`, `motivation.php`, `timezone.php`, `marketing.php`, `progress_history.php`, `imports.php`, `jobs_recovery.php` |
-| Golden parity | Vitest + PHP snapshot script | grading, redaction, schedule and streak outputs from PHP vs TS on the same inputs (snapshots taken once from PHP before it is removed) |
-| Bug fixes | Vitest / Playwright | one regression test per §1.4 item, written to fail on PHP behaviour |
-| HTTP black-box | existing Python suites | `site_http` unchanged; `auth_http`, `product_http`, `account_http`, `learning_http`, `timezone_http` adapted to Better Auth, Server Actions and the TS fixture CLI |
-| Browser | `redesign_browser.mjs` unchanged; `browser.mjs` → Playwright | 4 viewports, keyboard flows, offline/reconnect |
-| Concurrency | targeted Vitest + HTTP | double purchase, double rate, two-tab attempt edits, worker lock |
-| Performance | `performance.py` | A02 p95 |
+| Layer          | Tool                                                         | Source                                                                                                                                                             |
+| -------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Unit           | Vitest                                                       | ports of `product_unit.php`, `learning.php`, `motivation.php`, `timezone.php`, `marketing.php`, `progress_history.php`, `imports.php`, `jobs_recovery.php`         |
+| Golden parity  | Vitest + PHP snapshot script                                 | grading, redaction, schedule and streak outputs from PHP vs TS on the same inputs (snapshots taken once from PHP before it is removed)                             |
+| Bug fixes      | Vitest / Playwright                                          | one regression test per §1.4 item, written to fail on PHP behaviour                                                                                                |
+| HTTP black-box | existing Python suites                                       | `site_http` unchanged; `auth_http`, `product_http`, `account_http`, `learning_http`, `timezone_http` adapted to Better Auth, Server Actions and the TS fixture CLI |
+| Browser        | `redesign_browser.mjs` unchanged; `browser.mjs` → Playwright | 4 viewports, keyboard flows, offline/reconnect                                                                                                                     |
+| Concurrency    | targeted Vitest + HTTP                                       | double purchase, double rate, two-tab attempt edits, worker lock                                                                                                   |
+| Performance    | `performance.py`                                             | A02 p95                                                                                                                                                            |
 
 Rule: **the PHP app stays runnable until cutover**, so every parity question can be answered by running both.
 
@@ -399,32 +409,32 @@ Rule: **the PHP app stays runnable until cutover**, so every parity question can
 
 ## 7. Risks
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Better Auth doesn't fit a rule (guest claim, revocation timing, Vietnamese messages) | Auth rework | Spike in week 1 of Phase 1 covering register, login throttling, reset, email change, revoke-all; fall back to a small custom session layer if it fails |
-| Server Actions change form behaviour (no-JS, field-error echo, flash) | UX regressions | Shared `action()` wrapper; Playwright tests with JS disabled on key forms |
-| Subtle grading differences (Unicode, case, whitespace) | Wrong scores | Golden-file harness over all seed exercises plus fuzzed strings |
-| Timezone/DST drift in streaks and quests | Lost streaks, double rewards | Luxon wall-clock helpers; port the DST tests first; injectable clock |
-| Idempotency or lock order changes | Double rewards, negative balances | Keep `INSERT IGNORE` + affectedRows gating and lock order; concurrency tests |
-| Worker exclusion broken by the connection pool | Duplicate mail | Dedicated connection for `GET_LOCK`; recovery test |
-| SMTP "uncertain" handling lost | Duplicate emails | After-DATA classifier wrapper around Nodemailer, proven with a fake SMTP server test |
-| Fixing 24 bugs hides real parity regressions | Missed bugs | Every fix has its own test and changelog entry; golden diffs list expected differences explicitly |
-| Collation differs between servers | Email uniqueness/case bugs | Explicit `utf8mb4_unicode_ci` on every table in the Drizzle schema |
-| Scope creep (redesign, new features) | Timeline slips | Strict parity rule; new work goes in a "post-cutover" list |
-| Next.js 16 API churn | Rework | Pin exact versions; read bundled docs; no experimental flags at first |
+| Risk                                                                                 | Impact                            | Mitigation                                                                                                                                             |
+| ------------------------------------------------------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Better Auth doesn't fit a rule (guest claim, revocation timing, Vietnamese messages) | Auth rework                       | Spike in week 1 of Phase 1 covering register, login throttling, reset, email change, revoke-all; fall back to a small custom session layer if it fails |
+| Server Actions change form behaviour (no-JS, field-error echo, flash)                | UX regressions                    | Shared `action()` wrapper; Playwright tests with JS disabled on key forms                                                                              |
+| Subtle grading differences (Unicode, case, whitespace)                               | Wrong scores                      | Golden-file harness over all seed exercises plus fuzzed strings                                                                                        |
+| Timezone/DST drift in streaks and quests                                             | Lost streaks, double rewards      | Luxon wall-clock helpers; port the DST tests first; injectable clock                                                                                   |
+| Idempotency or lock order changes                                                    | Double rewards, negative balances | Keep `INSERT IGNORE` + affectedRows gating and lock order; concurrency tests                                                                           |
+| Worker exclusion broken by the connection pool                                       | Duplicate mail                    | Dedicated connection for `GET_LOCK`; recovery test                                                                                                     |
+| SMTP "uncertain" handling lost                                                       | Duplicate emails                  | After-DATA classifier wrapper around Nodemailer, proven with a fake SMTP server test                                                                   |
+| Fixing 24 bugs hides real parity regressions                                         | Missed bugs                       | Every fix has its own test and changelog entry; golden diffs list expected differences explicitly                                                      |
+| Collation differs between servers                                                    | Email uniqueness/case bugs        | Explicit `utf8mb4_unicode_ci` on every table in the Drizzle schema                                                                                     |
+| Scope creep (redesign, new features)                                                 | Timeline slips                    | Strict parity rule; new work goes in a "post-cutover" list                                                                                             |
+| Next.js 16 API churn                                                                 | Rework                            | Pin exact versions; read bundled docs; no experimental flags at first                                                                                  |
 
 ---
 
 ## 8. Decisions needed from the owner
 
-| # | Question | Recommendation |
-|---|---|---|
-| D1 | Will production hosting run Node? | **Yes** (2026-10-23) |
-| D2 | Production database? | **MariaDB** (2026-10-23); exact version to confirm in Phase 0 |
-| D3 | Keep the legacy flows? | **Keep and port all of them** (2026-10-23) |
-| D4 | Fix or preserve the bugs in §1.4? | **Fix all** (2026-10-23) |
-| D5 | Exact PHP internals or Next.js patterns? | **Next.js patterns** (2026-10-23): Better Auth, Server Actions, Cache Components, CSS Modules, 308 redirects |
-| D6 | Any live users? | **No** (2026-10-23): no data or session migration; DB rebuilt from seed |
+| #   | Question                                 | Recommendation                                                                                               |
+| --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| D1  | Will production hosting run Node?        | **Yes** (2026-10-23)                                                                                         |
+| D2  | Production database?                     | **MariaDB** (2026-10-23); exact version to confirm in Phase 0                                                |
+| D3  | Keep the legacy flows?                   | **Keep and port all of them** (2026-10-23)                                                                   |
+| D4  | Fix or preserve the bugs in §1.4?        | **Fix all** (2026-10-23)                                                                                     |
+| D5  | Exact PHP internals or Next.js patterns? | **Next.js patterns** (2026-10-23): Better Auth, Server Actions, Cache Components, CSS Modules, 308 redirects |
+| D6  | Any live users?                          | **No** (2026-10-23): no data or session migration; DB rebuilt from seed                                      |
 
 All decisions are answered. Remaining small confirmations: exact MariaDB version, SMTP provider, and production domain for `APP_URL`.
 
@@ -440,18 +450,18 @@ Move media to object storage (the storage module stays an adapter); visual block
 
 ## 11. Effort estimate
 
-| Phase | Weeks |
-|---|---|
-| 0 Foundations | 1 |
-| 1 Data + platform core (Better Auth saves ~0.5) | 2 |
-| 2 Learning engine + legacy lessons + fixes | 3.5 |
-| 3 Review, motivation, identity, exports, analytics + fixes | 2 |
-| 4 API + Server Actions (overlaps 2–3) | 1.5 |
-| 5 UI incl. legacy pages and CSS Modules | 3.5 |
-| 6 Worker + ops | 1 |
-| 7 Parity + bug regression tests + perf + hardening | 2 |
-| 8 Cutover | 1 |
-| **Total** | **~17.5 (15–18 with overlap)** |
+| Phase                                                      | Weeks                          |
+| ---------------------------------------------------------- | ------------------------------ |
+| 0 Foundations                                              | 1                              |
+| 1 Data + platform core (Better Auth saves ~0.5)            | 2                              |
+| 2 Learning engine + legacy lessons + fixes                 | 3.5                            |
+| 3 Review, motivation, identity, exports, analytics + fixes | 2                              |
+| 4 API + Server Actions (overlaps 2–3)                      | 1.5                            |
+| 5 UI incl. legacy pages and CSS Modules                    | 3.5                            |
+| 6 Worker + ops                                             | 1                              |
+| 7 Parity + bug regression tests + perf + hardening         | 2                              |
+| 8 Cutover                                                  | 1                              |
+| **Total**                                                  | **~17.5 (15–18 with overlap)** |
 
 This assumes one experienced developer working full time. Keeping the legacy flows adds ~1.5 weeks and fixing all bugs adds ~1.5 weeks; Better Auth and the fresh schema save ~1 week.
 
@@ -460,11 +470,13 @@ This assumes one experienced developer working full time. Keeping the legacy flo
 ## 12. Progress log
 
 ### Phase 0 (done, PR #1)
+
 Scaffold in `web/`, tooling, CI, zod contracts for all 61 PHP API operations with a drift test against `Product.php`.
 
 ### Phase 1 (done on `migration/phase-1`)
 
 Built:
+
 - Drizzle schema for all tables (`web/src/db/schema/*`), baseline migration `web/drizzle/0000_baseline.sql`, `pnpm db:reset` / `db:migrate`. 60 app tables + the Drizzle migrations table; database created with `utf8mb4_unicode_ci`.
 - `db/client.ts` (UTC sessions, DATE as strings, MariaDB JSON parsing), `db/tx.ts` (READ COMMITTED, deadlock retry, error → 409/422 map).
 - `env.ts` validated at first use (fix 21).
@@ -476,15 +488,16 @@ Built:
 
 Changes from the plan (decided during Phase 1):
 
-| Plan said | Now | Why |
-|---|---|---|
-| Nonce-based CSP | Static CSP with `'unsafe-inline'` scripts | Next.js 16 docs: nonces force fully dynamic rendering and are incompatible with Cache Components' static shells. Switch to nonces later only if Cache Components is dropped |
-| `/api/auth/*` route (Better Auth handler) | Not mounted; Server Actions call `auth.api` | No extra public endpoints to rate-limit or protect |
-| CSRF token in forms and `X-CSRF-Token` | Origin / `Sec-Fetch-Site` check in `proxy.ts` for every POST/PUT/PATCH/DELETE | Next.js lets Server Actions without an `Origin` through with a warning; the proxy rejects them |
-| Seed script in Phase 1 | Moved to Phase 2 | It needs lesson validation and vocabulary-set logic from the content module |
-| `db/locks.ts` (`lockProfile`) in Phase 1 | Phase 2/3 with its first callers | Avoid untested helpers |
+| Plan said                                 | Now                                                                           | Why                                                                                                                                                                         |
+| ----------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nonce-based CSP                           | Static CSP with `'unsafe-inline'` scripts                                     | Next.js 16 docs: nonces force fully dynamic rendering and are incompatible with Cache Components' static shells. Switch to nonces later only if Cache Components is dropped |
+| `/api/auth/*` route (Better Auth handler) | Not mounted; Server Actions call `auth.api`                                   | No extra public endpoints to rate-limit or protect                                                                                                                          |
+| CSRF token in forms and `X-CSRF-Token`    | Origin / `Sec-Fetch-Site` check in `proxy.ts` for every POST/PUT/PATCH/DELETE | Next.js lets Server Actions without an `Origin` through with a warning; the proxy rejects them                                                                              |
+| Seed script in Phase 1                    | Moved to Phase 2                                                              | It needs lesson validation and vocabulary-set logic from the content module                                                                                                 |
+| `db/locks.ts` (`lockProfile`) in Phase 1  | Phase 2/3 with its first callers                                              | Avoid untested helpers                                                                                                                                                      |
 
 Operations notes for Phase 8:
+
 - Run behind a reverse proxy that **appends** the client IP to `X-Forwarded-For`; the limiter trusts the rightmost entry.
 - Multi-instance deploys need a shared `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`.
 - Start with `pnpm start` (standalone `server.js`), not `next start`.
@@ -494,6 +507,7 @@ Not yet covered from the Phase 1 gate: `tests/site_http.py` checks the legacy pu
 ### Phase 2 (done on `migration/phase-2`)
 
 Built (domain modules only; screens are Phase 5, HTTP routes Phase 4):
+
 - **Assessment** (`web/src/domain/assessment`): validation, normalisation, grading, solutions, public view. A golden file produced by running the PHP class (`web/tests/golden/assessment.php`) is replayed in CI: 99 sample exercises, 614 answer cases, 84 normalisation cases and 34 broken-document cases match PHP exactly.
 - **Study** (`domain/study/attempts.ts`): start, preview, read, the eight player actions, retry, finish with progress, guest claim, public attempt (arrays instead of key-ordered objects).
 - **Content** (`domain/content`): lesson versions and workflow, entity proposals and workflows, vocabulary-set membership, reorder, unit archive, reports, imports (JSON/CSV, atomic commit, worker hand-off), media upload and visibility.
@@ -504,17 +518,19 @@ Built (domain modules only; screens are Phase 5, HTTP routes Phase 4):
 Bugs found in earlier phases while doing this: redirect lookups ignored the leading slash PHP stores (fixed); mysql2 parsed some JSON columns twice (fixed with `jsonStrings`).
 
 Changes from the plan:
-| Plan said | Now | Why |
-|---|---|---|
-| Fix 10 (search) in Phase 2 | Phase 5, with the search page | The search table and query belong with the page that uses them |
-| Reward hooks in Study | No-op hooks (`domain/motivation/hooks.ts`) until Phase 3 | Lessons complete correctly; XP/quests/streaks arrive with the motivation module |
-| `progressHistory` (weekly stats) in Study | Phase 3 | It is part of the progress page and review pagination |
-| Catalog cache rotation (`catalog_revision`) | Dropped | Phase 4 actions call `updateTag('catalog')` |
-| Rate limits inside content functions (import, upload) | Applied by the caller (Phase 4 actions) | Domain functions stay free of request details |
+
+| Plan said                                             | Now                                                      | Why                                                                             |
+| ----------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Fix 10 (search) in Phase 2                            | Phase 5, with the search page                            | The search table and query belong with the page that uses them                  |
+| Reward hooks in Study                                 | No-op hooks (`domain/motivation/hooks.ts`) until Phase 3 | Lessons complete correctly; XP/quests/streaks arrive with the motivation module |
+| `progressHistory` (weekly stats) in Study             | Phase 3                                                  | It is part of the progress page and review pagination                           |
+| Catalog cache rotation (`catalog_revision`)           | Dropped                                                  | Phase 4 actions call `updateTag('catalog')`                                     |
+| Rate limits inside content functions (import, upload) | Applied by the caller (Phase 4 actions)                  | Domain functions stay free of request details                                   |
 
 ### Phase 3 (done on `migration/phase-3`)
 
 Built (domain modules; screens Phase 5, routes Phase 4, jobs run by the Phase 6 worker):
+
 - **Rewards** (`domain/motivation/rewards.ts`): ledger awards, quests (create, progress, set bonus), streaks with tickets and protected days, activity, badges, lesson and review XP, shop purchase, avatar, balance reconcile. The Phase 2 no-op hooks are now real, so finishing a lesson awards XP.
 - **Review** (`domain/review/review.ts`): schedule v1, queue with the local-day cap, rate (idempotent, revision-guarded), manage, word save/remove, concept cards, notebook.
 - **Account** (`domain/identity/account.ts`): profile with the delayed quest-timezone change, enrollment, reminders, streak preferences, password reset/change (sign-out everywhere), email verification and change, unsubscribe, account deletion with last-admin guard, erase job.
@@ -525,15 +541,17 @@ Built (domain modules; screens Phase 5, routes Phase 4, jobs run by the Phase 6 
 Bug found: Drizzle orders `ON DUPLICATE KEY UPDATE` assignments by column, so an expression reading a column reset in the same statement saw the new value. The review-card upsert now uses explicit SQL; the other upserts were checked.
 
 Changes from the plan:
-| Plan said | Now | Why |
-|---|---|---|
-| Better Auth email verification | App-owned tokens in `auth_verifications`, minted by the worker at send time | Better Auth's verify tokens can't be rebuilt from a row id, and fix 22 forbids raw tokens in jobs |
-| Guest marketing state in the session | `MarketingSession` passed in `Actor`; Phase 4 stores it in a cookie | Domain code never reads cookies |
-| Reminder `tick` and job runs in Phase 3 tests | Phase 6 | They belong to the worker |
+
+| Plan said                                     | Now                                                                         | Why                                                                                               |
+| --------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Better Auth email verification                | App-owned tokens in `auth_verifications`, minted by the worker at send time | Better Auth's verify tokens can't be rebuilt from a row id, and fix 22 forbids raw tokens in jobs |
+| Guest marketing state in the session          | `MarketingSession` passed in `Actor`; Phase 4 stores it in a cookie         | Domain code never reads cookies                                                                   |
+| Reminder `tick` and job runs in Phase 3 tests | Phase 6                                                                     | They belong to the worker                                                                         |
 
 ### Phase 4 (done on `migration/phase-4`)
 
 Built:
+
 - **One handler per contract route** (`web/src/server/handlers.ts`, type-checked against all 69 routes) and one runner (`run-route.ts`: auth level → rate limit → zod input → handler).
 - **`/api/v1/*`** (`app/api/v1/[...route]`): every route, same paths, envelope, error codes, 1 MB/depth-64 JSON rules, scalar-field rule and `currentAttempt` on attempt 409s.
 - **Server Actions** for every form route (`src/actions/routes.ts`, coverage-tested): flash message or redirect, `updateTag('catalog')` after content changes, `refresh()` for fresh page data, field errors echoed without secrets.
@@ -543,14 +561,16 @@ Built:
 - Tests: 7 HTTP API tests (envelope, origin rule, JSON rules, guest attempt with 409 payload, cross-visitor 404, auth levels, media Range/ETag/304/416, public files) and 5 action-wrapper tests.
 
 Changes from the plan:
-| Plan said | Now | Why |
-|---|---|---|
+
+| Plan said                                                | Now                              | Why                                                                                                 |
+| -------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `/api/v1` only for player routes; forms only via actions | Every route on `/api/v1` as well | Matches PHP (all commands were API-reachable) and lets the PHP HTTP suites run unchanged in Phase 7 |
-| `tests/product_http.py` passes at the Phase 4 gate | Phase 7 | It depends on PHP fixture CLIs and the PHP cookie name; the TS fixture CLI is a Phase 7 task |
+| `tests/product_http.py` passes at the Phase 4 gate       | Phase 7                          | It depends on PHP fixture CLIs and the PHP cookie name; the TS fixture CLI is a Phase 7 task        |
 
 ### Phase 5 (done on `migration/phase-5`)
 
 Built:
+
 - **Every screen** from the PHP views, same markup and classes, inside one `SiteShell` (header, nav, footer, skip link, motion preference). Home is pixel-identical at 360 and 1440 px.
 - Public + identity (19 screens), learner area (`/hoc`, `/bat-dau`, `/tai-khoan`, `/on-tap`, `/so-tu-vung`, `/tien-do`, `/reward-shop`), admin CMS (14 sections + lesson preview), legacy screens (`/courses`, `/listening`, `/toeic`, `/placement`, `/dashboard`, `/ket-qua`, legacy `/admin`).
 - **Lesson player** (`src/components/player`, port of `product.js`): all exercise types, keyboard order input, audio controls, fix 3 offline outbox replayed in order with the current revision, 409 adopts the newer attempt with a reload button.
@@ -560,17 +580,19 @@ Built:
 - Tests: 121 e2e across 4 widths (each test gets its own client IP), 351 unit, 53 DB.
 
 Changes from the plan:
-| Plan said | Now | Why |
-|---|---|---|
-| CSS Modules + `next/font` | PHP CSS kept as global CSS, fonts from `public/` | Same CSS = same pixels; restyling is out of scope |
-| `notFound()` in pages | Proxy pre-check + rewrite | `notFound()` after streaming starts keeps HTTP 200 |
-| Flash messages at page top | Inside the form | Server Actions return state to the form; text is unchanged |
-| `/api/auth` route | None; actions call `auth.api` | No OAuth or client SDK needed |
-| — | Admin 403/404 and `/ket-qua` return 200 with noindex | Private pages; revisit in Phase 7 |
+
+| Plan said                  | Now                                                  | Why                                                        |
+| -------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| CSS Modules + `next/font`  | PHP CSS kept as global CSS, fonts from `public/`     | Same CSS = same pixels; restyling is out of scope          |
+| `notFound()` in pages      | Proxy pre-check + rewrite                            | `notFound()` after streaming starts keeps HTTP 200         |
+| Flash messages at page top | Inside the form                                      | Server Actions return state to the form; text is unchanged |
+| `/api/auth` route          | None; actions call `auth.api`                        | No OAuth or client SDK needed                              |
+| —                          | Admin 403/404 and `/ket-qua` return 200 with noindex | Private pages; revisit in Phase 7                          |
 
 ### Phase 6 (done on `migration/phase-6`)
 
 Built:
+
 - **Worker** (`web/src/worker/jobs.ts`, CLI `pnpm worker run|tick|cleanup|reconcile|backup|restore-drill`): same rules as `Jobs.php`. One worker at a time (GET_LOCK on its own connection), backoff `min(3600, 30·2^tries)`, 5 tries, crash recovery (requeue import/export/delete; mail/reminder/analytics → failed "uncertain"; finished results acknowledged), imports run as their actor (fix 23).
 - **Mail** (`worker/mail`): `log` sink (private JSON files) and SMTP over STARTTLS/TLS with a verified peer and 15 s timeouts. Templates have HTML and text parts. Link tokens are minted at send time (fix 22); a definite failure releases the token so the retry sends a working link.
 - **Fixes**: 9 (cleanup purges limiter rows older than 1 day), 16 (only failed jobs expire; cleanup warns about pending jobs over 1 hour late), 24 (analytics older than 72 h fail at once).
@@ -579,11 +601,34 @@ Built:
 - CI: installs the MariaDB client and smoke-tests the bundled worker.
 
 Changes from the plan:
-| Plan said | Now | Why |
-|---|---|---|
-| React Email templates | Plain React components rendered with `react-dom/server` | `@react-email/components` is pulled from npm ("no longer supported") |
-| Nodemailer transport, classify by `err.command` | Nodemailer's `SMTPConnection`, "uncertain" once the server starts reading the body | Nodemailer labels every dropped connection `CONN`, whatever the stage |
-| `.eml` files in dev | JSON files, like the PHP sink | Same shape the PHP fixture reads; holds both parts |
-| Separate `backup.ts` / `restore-drill.ts` scripts | Subcommands of the worker CLI | One bundled file to ship |
-| Gate: `tests/account_http.py` against the TS CLI | Ported as a Vitest DB test | The Python suite needs the PHP fixture CLI and CSRF form; the TS fixture CLI is Phase 7 |
-| Alert on pending jobs over 1 hour | `cleanup` prints a warning and returns the count | No alerting system yet; hook it up at cutover |
+
+| Plan said                                         | Now                                                                                | Why                                                                                     |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| React Email templates                             | Plain React components rendered with `react-dom/server`                            | `@react-email/components` is pulled from npm ("no longer supported")                    |
+| Nodemailer transport, classify by `err.command`   | Nodemailer's `SMTPConnection`, "uncertain" once the server starts reading the body | Nodemailer labels every dropped connection `CONN`, whatever the stage                   |
+| `.eml` files in dev                               | JSON files, like the PHP sink                                                      | Same shape the PHP fixture reads; holds both parts                                      |
+| Separate `backup.ts` / `restore-drill.ts` scripts | Subcommands of the worker CLI                                                      | One bundled file to ship                                                                |
+| Gate: `tests/account_http.py` against the TS CLI  | Ported as a Vitest DB test                                                         | The Python suite needs the PHP fixture CLI and CSRF form; the TS fixture CLI is Phase 7 |
+| Alert on pending jobs over 1 hour                 | `cleanup` prints a warning and returns the count                                   | No alerting system yet; hook it up at cutover                                           |
+
+### Phase 7 (done on `migration/phase-7`, fix 20 open)
+
+Built:
+
+- **PHP black-box suites run against Next.js**: `tests/http_target.py` (`HTTP_TARGET=php|next`), TS fixture CLI `web/scripts/fixture.ts` (all 29 operations), runner `tests/run_next.py` (own database, build, server, all six suites). PHP still runs the same suites via `tests/run_auth.py`. CI runs both.
+- **Fix regression tests**: 23 of 24 fixes have a test that fails on the PHP behaviour (`docs/migration/fix-tests.md`). Completed now: fix 10 (FULLTEXT `mce_search` table filled on publish), 17 (`pnpm docs:api` generates `docs/api-v1.md` from the contracts, checked by a test), 19 (legacy lesson list at `/hoc/bai`).
+- **Performance A02**: `pnpm benchmark`, 50 concurrent signed-in graded submits. Local p95 166–182 ms over 3 rounds, 0 errors (target 800 ms; PHP FastCGI was 608–642 ms). Report in `docs/artifacts/a02-next-local.json`; CI runs it too.
+- **Security** (`docs/migration/security-checklist.md`): safe error logging (no SQL, parameters or quoted values), SRI on script files, Permissions-Policy and COOP headers, real 403/404 for refused private pages (proxy pre-check), export ownership test.
+- **Accessibility**: Playwright ports of the A10 and redesign checks (`tests/e2e/a11y.spec.ts`). The manual screen-reader audit stays open.
+- App bugs found by the suites and fixed: sign-up didn't attach a consenting guest's campaign journey; `/api/v1` edits served stale catalog once; `attempts/{id}/view` wrongly required `position`; 3 legacy asset aliases missing; the mobile menu kept a reference to the replaced placeholder nav, so Escape could stop working; the lesson player pulled keyboard focus back to the question heading when the server confirmed a move, so a keyboard user lost their place on the first answer.
+- Totals: 358 unit, 87 DB, 152 e2e, six HTTP suites.
+
+Changes from the plan:
+
+| Plan said           | Now                                                         | Why                                                                                                                                       |
+| ------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| CSP with nonces     | Static CSP + SRI, inline scripts allowed                    | Nonces force every page to render per request and break Cache Components' static shells; the app renders no user HTML (see the checklist) |
+| `tests/fixtures.ts` | `web/scripts/fixture.ts`                                    | Runs with the app's own modules and env loading                                                                                           |
+| —                   | `/api/v1` content edits visible a few ms after the response | Next.js expires cache tags after a route handler responds; CMS forms (Server Actions) are immediate                                       |
+
+Open (owner decision): **fix 20**. Public pages still send `private, no-store`, because the header shows the signed-in nav on every page. The data underneath is cached on the server. Making public HTML CDN-cacheable means rendering the signed-in nav in the browser on every page. There is no CDN in the target hosting, so this can wait until one is added.

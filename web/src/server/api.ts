@@ -11,6 +11,7 @@ import { AppError, GENERIC_ERROR } from "./errors";
 import type { HandlerEffects } from "./handlers";
 import { requestId } from "./request";
 import { runRoute } from "./run-route";
+import { logError } from "@/server/log";
 
 // /api/v1/* (port of Product::api). Same paths, JSON envelope and error codes as the PHP app.
 // Every contract route is reachable here; HTML forms use the same handlers via Server Actions.
@@ -96,7 +97,9 @@ const json = (body: unknown, status: number, id: string) =>
 export async function applyApiEffects(effects: HandlerEffects | undefined) {
   if (!effects) return;
   if (effects.marketing) await saveMarketing(effects.marketing);
-  if (effects.catalog) revalidateTag("catalog", "max");
+  // Route handlers cannot call updateTag. Expire at once so the next read sees the change, as
+  // Server Actions do (and as the PHP API did); "max" would serve the old catalog once more.
+  if (effects.catalog) revalidateTag("catalog", { expire: 0 });
   if (effects.signOut)
     await auth()
       .api.signOut({ headers: await headers() })
@@ -125,7 +128,7 @@ export async function handleApi(request: Request, segments: string[]): Promise<R
     return json({ data: result.data, requestId: id }, 200, id);
   } catch (error) {
     const status = error instanceof AppError ? error.status : 503;
-    if (!(error instanceof AppError)) console.error(`Product request ${id}`, error);
+    if (!(error instanceof AppError)) logError(`Product request ${id}`, error);
     let currentAttempt: unknown = null;
     const attempt = /^attempts\/([a-f0-9]{32})\//.exec(path);
     if (status === 409 && attempt)

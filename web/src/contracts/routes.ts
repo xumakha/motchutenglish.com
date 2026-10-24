@@ -140,7 +140,11 @@ export const routes = {
     method: "POST",
     auth: "guest-or-owner",
     transport: "api",
-    input: studyMutation({ block: z.string().min(1).max(80), position: z.number().int().min(0) }),
+    // position is optional, as in PHP: without it the attempt keeps its current position.
+    input: studyMutation({
+      block: z.string().min(1).max(80),
+      position: z.number().int().min(0).optional(),
+    }),
     output: anyData,
     rateLimit: limit("study", 500, 60),
     fixes: [6],

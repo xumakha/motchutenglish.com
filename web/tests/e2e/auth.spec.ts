@@ -81,6 +81,8 @@ test("15 failed logins lock that email out for 15 minutes; other emails still wo
   page,
   context,
 }) => {
+  // 17 sign-ins in a row, each hashing a password: allow for a loaded machine.
+  test.setTimeout(60_000);
   const email = uniqueEmail();
   await register(page, email);
   await expect(page).toHaveURL(/\/account$/);
@@ -90,11 +92,14 @@ test("15 failed logins lock that email out for 15 minutes; other emails still wo
   const submit = async (pw: string) => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Mật khẩu").fill(pw);
-    // Wait for the action round trip so the next fill is not wiped by React's form reset.
     await Promise.all([
       page.waitForResponse((r) => r.request().method() === "POST"),
       page.getByRole("button", { name: "Đăng nhập" }).click(),
     ]);
+    // React resets the form when the action's response has finished streaming, which can be
+    // well after the response headers under load. Wait for that reset (the password is never
+    // echoed back) so it cannot wipe the next fill and leave a required field empty.
+    await expect(page.getByLabel("Mật khẩu")).toHaveValue("");
   };
   for (let i = 0; i < 15; i++) {
     await submit(`sai-${i}`);

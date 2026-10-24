@@ -13,6 +13,7 @@ import {
   vocabularySetItems,
   vocabularySets,
 } from "@/db/schema";
+import { likeContains, searchVersionIds } from "@/domain/content/search";
 import { publicLessons } from "@/site/catalog";
 
 // Page queries for the public screens (the public branches of Product::page).
@@ -29,11 +30,6 @@ export function pageNumber(raw: string | string[] | undefined): number {
 export function strimwidth(s: string, width: number, marker = "…"): string {
   const chars = [...s];
   return chars.length <= width ? s : chars.slice(0, width - 1).join("") + marker;
-}
-
-/** Escape LIKE wildcards so `%` and `_` match literally (migration bug fix 10). */
-export function likeContains(q: string): string {
-  return `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
 
 // ---- Paths ----
@@ -151,13 +147,16 @@ export function searchQuery(raw: string | string[] | undefined): string {
   return typeof raw === "string" ? [...raw.trim()].slice(0, 100).join("") : "";
 }
 
-/** Lessons whose title or document contains the text, then words and articles (LIKE, escaped). */
+/**
+ * Lessons from the FULLTEXT search table (fix 10), in catalog order, then words and articles
+ * (LIKE with `%`/`_` escaped).
+ */
 export async function search(q: string): Promise<SearchMatch[]> {
   if (q === "") return [];
-  const needle = q.toLowerCase();
   const matches: SearchMatch[] = [];
-  for (const l of await publicLessons())
-    if (`${l.title} ${JSON.stringify(l.document)}`.toLowerCase().includes(needle))
+  const [lessonList, versionIds] = await Promise.all([publicLessons(), searchVersionIds(q)]);
+  for (const l of lessonList)
+    if (versionIds.has(l.versionId))
       matches.push({ type: "Bài học", title: l.title, url: `/bai-hoc/${l.slug}` });
   const pattern = likeContains(q);
   const [words, posts] = await Promise.all([

@@ -6,6 +6,7 @@ import { withTx } from "@/db/tx";
 import { currentActor } from "@/server/actor";
 import { AppError } from "@/server/errors";
 import { chunksToStream, fileResponse } from "@/server/files";
+import { logError } from "@/server/log";
 
 // /du-lieu/{file}: import templates (staff), a direct personal export and a direct content
 // export (staff). Background exports are downloaded from /du-lieu/export-file/{id}.
@@ -57,7 +58,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/du-lieu/[file]"
       },
     });
   } catch (error) {
-    if (!(error instanceof AppError)) console.error("Download failed", error);
+    if (!(error instanceof AppError)) logError("Download failed", error);
     return new Response("Không thể xuất dữ liệu.", {
       status: error instanceof AppError ? error.status : 503,
       headers: { ...PRIVATE, "Content-Type": "text/plain; charset=utf-8" },

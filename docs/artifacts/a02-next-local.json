@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-10-24T11:30:53.626Z",
+  "environment": "Local darwin 25.4.0, Node v26.12.1, next start (standalone); not staging",
+  "logicalCpus": 10,
+  "cpu": "Apple M4",
+  "concurrency": 50,
+  "operation": "authenticated server submit + grading + attempt read",
+  "p50_ms": 143.23,
+  "p95_ms": 165.82,
+  "max_ms": 168.25,
+  "errors": 0,
+  "error_rate": 0,
+  "seconds": 0.17,
+  "target_p95_ms": 800,
+  "target_met": true,
+  "securityPreflight": {
+    "privateAttemptUnauthenticated": 404,
+    "crossOrigin": 403
+  },
+  "results": [
+    {
+      "ms": 116.51,
+      "error": null
+    },
+    {
+      "ms": 116.82,
+      "error": null
+    },
+    {
+      "ms": 116.53,
+      "error": null
+    },
+    {
+      "ms": 116.7,
+      "error": null
+    },
+    {
+      "ms": 116.9,
+      "error": null
+    },
+    {
+      "ms": 117.73,
+      "error": null
+    },
+    {
+      "ms": 117.86,
+      "error": null
+    },
+    {
+      "ms": 117.91,
+      "error": null
+    },
+    {
+      "ms": 117.98,
+      "error": null
+    },
+    {
+      "ms": 118.07,
+      "error": null
+    },
+    {
+      "ms": 116.39,
+      "error": null
+    },
+    {
+      "ms": 117.25,
+      "error": null
+    },
+    {
+      "ms": 118.26,
+      "error": null
+    },
+    {
+      "ms": 118.78,
+      "error": null
+    },
+    {
+      "ms": 118.93,
+      "error": null
+    },
+    {
+      "ms": 121.37,
+      "error": null
+    },
+    {
+      "ms": 121.7,
+      "error": null
+    },
+    {
+      "ms": 124.26,
+      "error": null
+    },
+    {
+      "ms": 125.81,
+      "error": null
+    },
+    {
+      "ms": 127.46,
+      "error": null
+    },
+    {
+      "ms": 131.58,
+      "error": null
+    },
+    {
+      "ms": 133.56,
+      "error": null
+    },
+    {
+      "ms": 135.42,
+      "error": null
+    },
+    {
+      "ms": 137.76,
+      "error": null
+    },
+    {
+      "ms": 140.16,
+      "error": null
+    },
+    {
+      "ms": 143.23,
+      "error": null
+    },
+    {
+      "ms": 154.53,
+      "error": null
+    },
+    {
+      "ms": 154.86,
+      "error": null
+    },
+    {
+      "ms": 155.08,
+      "error": null
+    },
+    {
+      "ms": 155.53,
+      "error": null
+    },
+    {
+      "ms": 156.63,
+      "error": null
+    },
+    {
+      "ms": 156.78,
+      "error": null
+    },
+    {
+      "ms": 157.15,
+      "error": null
+    },
+    {
+      "ms": 157.49,
+      "error": null
+    },
+    {
+      "ms": 157.29,
+      "error": null
+    },
+    {
+      "ms": 157.54,
+      "error": null
+    },
+    {
+      "ms": 157.59,
+      "error": null
+    },
+    {
+      "ms": 157.64,
+      "error": null
+    },
+    {
+      "ms": 157.69,
+      "error": null
+    },
+    {
+      "ms": 157.82,
+      "error": null
+    },
+    {
+      "ms": 157.87,
+      "error": null
+    },
+    {
+      "ms": 158.16,
+      "error": null
+    },
+    {
+      "ms": 159.28,
+      "error": null
+    },
+    {
+      "ms": 160.6,
+      "error": null
+    },
+    {
+      "ms": 161.87,
+      "error": null
+    },
+    {
+      "ms": 163.23,
+      "error": null
+    },
+    {
+      "ms": 164.39,
+      "error": null
+    },
+    {
+      "ms": 165.82,
+      "error": null
+    },
+    {
+      "ms": 168.25,
+      "error": null
+    },
+    {
+      "ms": 166.82,
+      "error": null
+    }
+  ]
+}
