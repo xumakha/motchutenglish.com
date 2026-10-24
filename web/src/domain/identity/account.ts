@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, isNull, like, sql } from "drizzle-orm";
+import { and, eq, isNull, like, or, sql } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { auth } from "@/auth/auth";
 import { db, type Tx } from "@/db/client";
@@ -182,6 +182,25 @@ export async function mintEmailToken(
       .where(eq(authVerifications.id, verificationId));
     return { token, purpose };
   });
+}
+
+/**
+ * Worker side: the email was definitely not sent (a failure before SMTP DATA), so return the row
+ * to pending and let the retry mint a fresh token. The old token stops working.
+ */
+export async function releaseEmailToken(verificationId: number): Promise<void> {
+  await db()
+    .update(authVerifications)
+    .set({ identifier: pendingIdentifier() })
+    .where(
+      and(
+        eq(authVerifications.id, verificationId),
+        or(
+          like(authVerifications.identifier, "mce-verify:%"),
+          like(authVerifications.identifier, "mce-unsubscribe:%"),
+        ),
+      ),
+    );
 }
 
 /** Ask for a verification email, or to change the account email to `newEmail`. */
