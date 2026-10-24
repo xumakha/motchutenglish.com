@@ -123,6 +123,21 @@ function queries(kind: ExportKind, userId: number): [string, string, unknown[]][
   ];
 }
 
+/** The export as JSON text chunks, streamed row by row from the database. */
+export async function* exportChunks(kind: ExportKind, userId: number): AsyncGenerator<string> {
+  yield `{"schemaVersion":1,"kind":${JSON.stringify(kind)}`;
+  for (const [name, query, params] of queries(kind, userId)) {
+    yield `,${JSON.stringify(name)}:[`;
+    let first = true;
+    for await (const row of pool().query(query, params).stream()) {
+      yield (first ? "" : ",") + JSON.stringify(row);
+      first = false;
+    }
+    yield "]";
+  }
+  yield "}";
+}
+
 async function deleted(userId: number) {
   const [p] = await db()
     .select({ deletedAt: profiles.deletedAt })
@@ -162,17 +177,7 @@ export async function buildExport(exportId: string, userId: number): Promise<voi
     if (!out.write(s)) await once(out, "drain");
   };
   try {
-    await write(`{"schemaVersion":1,"kind":${JSON.stringify(e.kind)}`);
-    for (const [name, query, params] of queries(e.kind, userId)) {
-      await write(`,${JSON.stringify(name)}:[`);
-      let first = true;
-      for await (const row of pool().query(query, params).stream()) {
-        await write((first ? "" : ",") + JSON.stringify(row));
-        first = false;
-      }
-      await write("]");
-    }
-    await write("}");
+    for await (const chunk of exportChunks(e.kind, userId)) await write(chunk);
     out.end();
     await once(out, "finish");
   } catch (error) {
@@ -191,13 +196,23 @@ export async function buildExport(exportId: string, userId: number): Promise<voi
 }
 
 /** The file a learner may download: theirs, ready and not expired (content needs staff). */
-export async function exportForDownload(actor: Actor, fileKey: string) {
+export async function exportForDownload(actor: Actor, exportId: unknown) {
   const userId = requireUserId(actor);
-  const [e] = await db().select().from(exportsTable).where(eq(exportsTable.fileKey, fileKey));
-  if (!e || e.userId !== userId || e.status !== "ready" || e.expiresAt <= new Date())
-    throw new AppError(404, "Không tìm thấy tệp.");
+  const id = hexKey(exportId);
+  const [e] = await db()
+    .select()
+    .from(exportsTable)
+    .where(
+      and(
+        eq(exportsTable.id, id),
+        eq(exportsTable.userId, userId),
+        eq(exportsTable.status, "ready"),
+      ),
+    );
+  if (!e || !e.fileKey || e.expiresAt <= new Date())
+    throw new AppError(404, "Tệp chưa sẵn sàng hoặc đã hết hạn.");
   if (e.kind === "content") requireStaff(actor);
-  return { path: exportPath(fileKey), kind: e.kind };
+  return { path: exportPath(e.fileKey), kind: e.kind };
 }
 
 export async function deleteExportsFor(userId: number) {

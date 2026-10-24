@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "namespace": "example-units",
+  "units": [
+    {
+      "externalId": "unit-example",
+      "path_id": 1,
+      "title": "Chương mới",
+      "objectives": "Mục tiêu chương",
+      "sort_order": 1
+    }
+  ]
+}

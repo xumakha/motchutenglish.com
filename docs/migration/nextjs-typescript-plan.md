@@ -530,3 +530,20 @@ Changes from the plan:
 | Better Auth email verification | App-owned tokens in `auth_verifications`, minted by the worker at send time | Better Auth's verify tokens can't be rebuilt from a row id, and fix 22 forbids raw tokens in jobs |
 | Guest marketing state in the session | `MarketingSession` passed in `Actor`; Phase 4 stores it in a cookie | Domain code never reads cookies |
 | Reminder `tick` and job runs in Phase 3 tests | Phase 6 | They belong to the worker |
+
+### Phase 4 (done on `migration/phase-4`)
+
+Built:
+- **One handler per contract route** (`web/src/server/handlers.ts`, type-checked against all 69 routes) and one runner (`run-route.ts`: auth level → rate limit → zod input → handler).
+- **`/api/v1/*`** (`app/api/v1/[...route]`): every route, same paths, envelope, error codes, 1 MB/depth-64 JSON rules, scalar-field rule and `currentAttempt` on attempt 409s.
+- **Server Actions** for every form route (`src/actions/routes.ts`, coverage-tested): flash message or redirect, `updateTag('catalog')` after content changes, `refresh()` for fresh page data, field errors echoed without secrets.
+- **Actor from the request** (`server/actor.ts`): session, guest cookie (sha256 stored), guest marketing cookie.
+- **File routes**: `/media/{id}` with Range + ETag (fix 11 complete), `/du-lieu/*` templates and direct exports, `/du-lieu/export-file/{id}`, `/theme.css`, `robots.txt`, `sitemap.xml`. Import templates now ship with the app (`web/templates`).
+- Admin site commands ported (`domain/admin/site.ts`): page SEO, settings, roles, reward corrections, job retry.
+- Tests: 7 HTTP API tests (envelope, origin rule, JSON rules, guest attempt with 409 payload, cross-visitor 404, auth levels, media Range/ETag/304/416, public files) and 5 action-wrapper tests.
+
+Changes from the plan:
+| Plan said | Now | Why |
+|---|---|---|
+| `/api/v1` only for player routes; forms only via actions | Every route on `/api/v1` as well | Matches PHP (all commands were API-reachable) and lets the PHP HTTP suites run unchanged in Phase 7 |
+| `tests/product_http.py` passes at the Phase 4 gate | Phase 7 | It depends on PHP fixture CLIs and the PHP cookie name; the TS fixture CLI is a Phase 7 task |

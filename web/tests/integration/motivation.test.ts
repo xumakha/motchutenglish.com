@@ -510,12 +510,12 @@ describe("exports", () => {
     await buildExport(key, user.userId!);
     const [e] = await db().select().from(exportsTable).where(eq(exportsTable.id, key));
     expect(e?.status).toBe("ready");
-    const file = await exportForDownload(user, e!.fileKey!);
+    const file = await exportForDownload(user, key);
     const data = JSON.parse(await readFile(file.path, "utf8"));
     expect(data).toMatchObject({ schemaVersion: 1, kind: "personal" });
     expect(data.user[0].id).toBe(user.userId);
     expect(Object.keys(data)).toContain("journeys");
-    expect(await status(async () => exportForDownload(await learner(), e!.fileKey!))).toBe(404);
+    expect(await status(async () => exportForDownload(await learner(), key))).toBe(404);
   });
 });
 
