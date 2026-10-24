@@ -7,7 +7,7 @@ import type { Exercise, Payload } from "./types";
 import { validateDocument } from "./validate";
 
 // Replays tests/golden/assessment.json, produced by running the PHP Assessment class
-// (tests/golden/assessment.php). Any difference from the PHP grader fails here.
+// (tests/golden/assessment.php at tag php-final). Any difference from the PHP grader fails here.
 
 type Outcome =
   { ok: unknown } | { error: { status: number; message: string; fields: Record<string, string> } };

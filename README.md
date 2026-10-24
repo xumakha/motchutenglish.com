@@ -8,7 +8,7 @@ The PHP app it replaced is at git tag `php-final`. How the move happened: [`docs
 
 Needs Node 24+, pnpm, and a MariaDB (10.11 in CI) user that can create databases.
 
-Create `.env.local`:
+Copy `.env.example` to `.env.local` and fill in at least:
 
 ```sh
 APP_URL=http://localhost:3000
@@ -17,7 +17,7 @@ BETTER_AUTH_SECRET=at-least-32-random-characters
 MAIL_DRIVER=log
 ```
 
-`src/env.ts` lists every variable and its default. A bad value stops the app at boot.
+`.env.example` describes every variable; `src/env.ts` validates them and sets the defaults. A bad value stops the app at boot.
 
 ```sh
 pnpm install

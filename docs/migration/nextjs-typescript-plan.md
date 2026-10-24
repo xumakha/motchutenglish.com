@@ -552,7 +552,7 @@ Changes from the plan:
 
 Built:
 
-- **One handler per contract route** (`web/src/server/handlers.ts`, type-checked against all 69 routes) and one runner (`run-route.ts`: auth level → rate limit → zod input → handler).
+- **One handler per contract route** (`web/src/server/handlers.ts`, type-checked against all 58 routes; an earlier version of this log said 69) and one runner (`run-route.ts`: auth level → rate limit → zod input → handler).
 - **`/api/v1/*`** (`app/api/v1/[...route]`): every route, same paths, envelope, error codes, 1 MB/depth-64 JSON rules, scalar-field rule and `currentAttempt` on attempt 409s.
 - **Server Actions** for every form route (`src/actions/routes.ts`, coverage-tested): flash message or redirect, `updateTag('catalog')` after content changes, `refresh()` for fresh page data, field errors echoed without secrets.
 - **Actor from the request** (`server/actor.ts`): session, guest cookie (sha256 stored), guest marketing cookie.

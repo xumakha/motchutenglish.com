@@ -2,8 +2,8 @@ import "server-only";
 import { db } from "@/db/client";
 import { settings } from "@/db/schema";
 
-// Site settings (mce_settings). Read once per call site; Phase 5 caches them with
-// cacheTag('settings') once the admin settings action can invalidate the tag.
+// Site settings (mce_settings), read uncached. Pages use the cached copy in
+// src/site/settings.ts (tag "catalog", refreshed by every admin change).
 
 export type SettingName =
   | "site_name"
