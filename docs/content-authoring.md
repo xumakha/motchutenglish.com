@@ -1,8 +1,8 @@
 # Biên tập nội dung
 
-Đăng nhập editor/admin, vào `/admin/paths`, tạo lộ trình và chương; `/admin/lessons` tạo bài với document theo `database/templates/lesson.json`. `/admin/questions` lọc keyword/type/level/tag/status; sửa trong draft document. IDs là định danh, không dùng chữ đáp án như `correct` cho lựa chọn placement.
+Đăng nhập editor/admin, vào `/admin/paths`, tạo lộ trình và chương; `/admin/lessons` tạo bài với document theo `templates/lesson.json` (tải trong CMS qua `/du-lieu/template-lesson`). `/admin/questions` lọc keyword/type/level/tag/status; sửa trong draft document. IDs là định danh, không dùng chữ đáp án như `correct` cho lựa chọn placement.
 
-Document có schemaVersion, objectives, estimatedMinutes, level, blocks và exercises. Mẫu đầy đủ các dạng ở `all-exercises.json`. Nội dung text được escape; player hỗ trợ bold/italic bằng text nodes, không chèn HTML từ editor. Exercise type: choice, true_false, fill, order, match, correction, listening_choice, listening_fill, closed, self, flashcard. Token/pair/option IDs độc lập chữ hiển thị. Fill ghi rõ caseSensitive/ignorePunctuation/acceptedAnswers; apostrophe được giữ phân biệt can't/cant. Self/flashcard điểm null.
+Document có schemaVersion, objectives, estimatedMinutes, level, blocks và exercises. Mẫu đầy đủ các dạng ở `templates/all-exercises.json`. Nội dung text được escape; player hỗ trợ bold/italic bằng text nodes, không chèn HTML từ editor. Exercise type: choice, true_false, fill, order, match, correction, listening_choice, listening_fill, closed, self, flashcard. Token/pair/option IDs độc lập chữ hiển thị. Fill ghi rõ `caseSensitive`/`ignoreTerminalPunctuation` (chỉ bỏ dấu câu ở cuối)/`acceptedAnswers`; apostrophe được giữ phân biệt can't/cant. Self/flashcard điểm null.
 
 Preview tại CMS dùng cùng player/grader, mode preview không tạo tiến độ/rewards. Lưu draft -> gửi review (editor) -> publish (admin). Published lesson sửa sẽ tạo version mới; học viên đang học vẫn dùng bản cũ. Archive chỉ ẩn catalog. Slug đổi khi publish tạo301, tránh vòng redirect. Checkpoint cần blueprint questionIds, placement đúng20 câu và rules trỏ đường dẫn đã có nội dung.
 
@@ -12,7 +12,7 @@ Import `/admin/imports`: JSON schemaVersion1 theo template lesson/import/paths/u
 
 Xuất catalog qua yêu cầu queue ở CMS, tệp riêng24h. Content export có metadata/versions/media references, không gồm users/password/token/notes. Đây không thay thế SQL+media backup. Report lưu version và vị trí; editor/admin xử lý open/in_progress/resolved/rejected kèm lý do và audit.
 
-Seed: `seed-product.php` idempotent, 2 lộ trình khả dụng x2chương, mỗi chương ít nhất3bài;15bài gồm4checkpoint, thêm placement20 và2 bản nháp nghe;90exercises,40senses/4sets,3bài kiến thức gốc. Không seed người học/thành tích. Mẫu nghe giữ draft đến khi chủ dự án tải audio hợp lệ và duyệt nội dung. Không quảng cáo hai lộ trình mở rộng chưa có bài.
+Seed: `pnpm seed` (nội dung từ `seed/product-seed.json`) chạy lại không ghi đè; mặc định tạo bản nháp, `--publish-reviewed-samples` xuất bản các mẫu đã duyệt. Nội dung mẫu: 2 lộ trình khả dụng x2chương, mỗi chương ít nhất3bài;15bài gồm4checkpoint, thêm placement20 và2 bản nháp nghe;90exercises,40senses/4sets,3bài kiến thức gốc. Không seed người học/thành tích. Mẫu nghe giữ draft đến khi chủ dự án tải audio hợp lệ và duyệt nội dung. Không quảng cáo hai lộ trình mở rộng chưa có bài.
 
 
 ## Flashcard trong lesson — cập nhật 22/10/2026

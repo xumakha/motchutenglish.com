@@ -1,5 +1,7 @@
 # A12 — bổ sung kiểm container/CI, 22/10/2026
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Triển khai hiện nay: [operations.md](operations.md).
+
 Đã chuẩn bị smoke test cho image đóng gói và bổ sung workflow. **Chưa build hoặc chạy container tại local, chưa chạy CI từ xa**: máy hiện không có Docker CLI trong PATH hoặc các vị trí Docker Desktop đã kiểm tra. A12 vẫn mở ở bước xác minh runtime container.
 
 ## Khoảng trống đã sửa trong pipeline

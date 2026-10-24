@@ -1,5 +1,7 @@
 # Một Chút English — Website hiện tại và tài liệu đầu vào redesign
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Các đường dẫn tới `application/`, `assets/`, `database/` bên dưới nay tương ứng với `app/` + `src/components` (màn hình), `public/assets` (CSS, JS, font), `src/db/schema` (dữ liệu), `seed/` và `templates/`; API xem [api.md](api.md).
+
 > Cập nhật: **22/10/2026**. Tài liệu mô tả code và hành vi hiện tại để phục vụ thiết kế lại giao diện. Đây không phải mô tả một sản phẩm đã hoàn thành toàn bộ spec. Phần đề xuất hoặc cần backend mới được ghi riêng.
 
 ## Mục lục

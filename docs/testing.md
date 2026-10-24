@@ -1,49 +1,62 @@
-# Kiểm thử và bằng chứng
+# Kiểm thử
 
-Bổ sung 21/10/2026: runner hiện chạy `tests/jobs_recovery.php` (ngắt/khởi động lại worker CLI thật) và `tests/timezone.php` + `tests/timezone_http.py`. Bộ múi giờ kiểm clock cố định trước/đúng ranh giới hiệu lực, snapshot bất biến, daily cap/DST 23–25 giờ, cron dùng ngày/giờ mới, suppression reminder ngày cũ và kết quả API/SSR thống nhất. Các phép thử chỉ dùng database riêng và mail sink local; không gửi SMTP thật.
+Chạy mọi lệnh từ thư mục gốc repo. CI (`.github/workflows/ci.yml`) chạy tất cả các bước dưới đây trên MariaDB 10.11 cho mỗi push và pull request.
 
-`python tests/run_auth.py` tạo DB riêng mce_auth_test_* và server local8089. Không xóa/seed database ứng dụng. Test fixture CLI từ chối DB không có prefix test. PHP extension ini và logs ở private writable. Các DB thử giữ lại để kiểm tra, không công khai credentials hoặc cookie.
+| Lớp           | Lệnh                             | Nằm ở                                     | Cần gì                                   |
+| ------------- | -------------------------------- | ----------------------------------------- | ---------------------------------------- |
+| Unit          | `pnpm test` (cũng trong `pnpm check`) | `src/**/*.test.ts`                   | Không cần DB                             |
+| Database      | `pnpm test:db`                   | `tests/integration/*.test.ts`             | `DATABASE_URL` trỏ tới DB đã migrate     |
+| Trình duyệt   | `pnpm test:e2e`                  | `tests/e2e/*.spec.ts`                     | Đã `pnpm build`, DB đã seed, Chromium    |
+| HTTP hộp đen  | `python3 tests/http/run_next.py` | `tests/http/*_http.py`                    | Python 3, user DB có quyền CREATE DATABASE |
+| Hiệu năng     | `pnpm benchmark [BASE_URL]`      | `scripts/benchmark.ts`                    | Bản build đang chạy, DB đã seed          |
 
-- product_unit.php: schema/type validation, grading/partial/null, Unicode NFC/space/punctuation/apostrophe, stable duplicate-text IDs, answer redaction, fixed-clock UTC review/DST/cap.
-- product_http.py: real MariaDB, 4roles, CSRF/IDOR, multiple question lesson, version snapshot, draft/revision409, retry/finish unique, notes XSS/private, review unique, concurrent purchase, import dry-run/atomic/CSV/queue, real WAV upload và reject SVG/PHP, missingaudio, archive/history.
-- motivation.php: clock cố định,7ngày thật/ticket, protect đồng thời2process, ngàymissed/backward timezone, quest snapshot, ledger reconciliation.
-- account_http.py: local mail sink qua worker, verification/reset once/session revoke, safe emailchange, reminder/unsubscribe, password change, queued export/ownership và queued erase.
-- learning_http.py/auth_http.py/auth_hash.php/site_http.py: regression cũ, password/session/CSRF/rate limit và26publicroutes/10assets.
-- browser.mjs: Chrome thật qua CDP, viewport360/390/768/1440, không tràn ngang, lesson chọn/nộp bằng bàn phím, guest finish -> đăng ký -> chỉ chuyển attempt khi xác nhận, exception check và screenshots.
-- performance.py:55 authenticatedsessions độc lập,5warmup+50concurrent grading requests, p95/error report. Đây là local CGI/PHP/XAMPP, không staging load hoặc đảm bảo SLA production.
-- restore.py: dump và restore DB mới, login và progress/score từ process mới; media backup/restore so SHA, không sửa DB gốc.
+## Chuẩn bị lần đầu
 
-Bật các biến BROWSER_TESTS/PERFORMANCE_TESTS/RESTORE_TESTS/THREADED_TESTS theo README. Chrome local test profile dùng no-sandbox/disable-gpu để tương thích môi trường kiểm thử, không áp dụng website production hay profile cá nhân. Không cần cài npm package.
+```sh
+pnpm db:reset                          # xóa và tạo lại DB trong DATABASE_URL, chạy migration
+pnpm seed --publish-reviewed-samples   # catalog mẫu mà e2e và benchmark cần
+pnpm build
+pnpm exec playwright install chromium
+```
 
-Báo cáo thực tế: docs/artifacts/browser-report.json, performance.json, restore-report.json và ảnh; xem thời gian/env trong từng artifact. CI PHP/MariaDB10.11 được chuẩn bị trong .github/workflows/php.yml nhưng chưa có kết quả remote. Staging chưa có host/domain, nên chưa nghiệm thu production, SMTP provider, GA4 ingestion, hạ tầng backup/alert hoặc accessibility với screen reader thật. Kiểm keyboard/responsive tự động không thay thế toàn bộ WCAG audit.
+`pnpm db:reset` từ chối chạy khi `APP_ENV=production`. Không trỏ `DATABASE_URL` vào DB thật khi chạy test.
 
+## Unit
 
-## Cài mới và công cụ vận hành (A12)
+- Chấm điểm: `src/domain/assessment/golden.test.ts` chạy lại `tests/golden/assessment.json` (kết quả của bản PHP). Mọi khác biệt với bộ chấm PHP đều làm test lỗi.
+- Hợp đồng route: `src/contracts/routes.test.ts` so với danh sách route của bản PHP (`tests/golden/php-routes.json`). `src/contracts/api-docs.test.ts` báo lỗi khi `docs/api-v1.md` cũ hơn code; sửa bằng `pnpm docs:api`.
+- Ngoài ra: quy tắc proxy, log không lộ dữ liệu, biến môi trường, timezone.
 
-`python tests/install_smoke.py` cần Python >=3.12, PHP đủ extensions, MySQL local có CREATE DATABASE và SQL clients (Windows tự tìm XAMPP; Linux dùng mariadb-dump/mariadb hoặc env MYSQLDUMP_BIN/MYSQL_BIN). Tạo database test riêng, thử setup/migrate/check/create-admin qua launcher Windows nếu có, admin stdin/duplicate, seed/worker, SQL backup+restore drill và media backup/restore trong fixture riêng. Không dùng media hoặc mật khẩu của account hiện tại. Lưu `docs/artifacts/a12-install-report.json`, giữ database test để kiểm tra và dọn credential/dump tạm do test tạo.
+## Database
 
-Bài này không build Docker. Job `container` trong `.github/workflows/php.yml` build image và thử chạy media backup bằng www-data. Chỉ coi container pass sau khi có kết quả CI/Docker thật; ở audit local 22/10/2026 chưa có Docker để chạy.
+Mỗi test tạo dữ liệu riêng (email, slug ngẫu nhiên) trong cùng một DB đã migrate, nên chạy theo thứ tự nào cũng được. Các file chạy tuần tự. Bao gồm: attempt và guest claim, nội dung và import, phần thưởng, streak và timezone, rate limit, worker (phục hồi sau khi giết process giữa chừng), mail qua server SMTP giả, backup và restore drill (cần `mariadb-dump`/`mariadb`), đăng ký đồng thời.
 
+`.env.local` được nạp tự động; CI truyền biến môi trường trực tiếp.
 
-## Benchmark độc lập A02
+## Trình duyệt (Playwright)
 
-`python tests/performance_local.py` tạo fresh DB riêng và chạy CGI local cổng 8089, 5 warmup + 50 phiên nộp đầu tiên. Không chạy đồng thời với suite dùng cùng cổng. Lưu runtime/CPU/timestamp và p95/error trong `artifacts/performance.json`; assert không có request lỗi, không đồng nghĩa mục tiêu 800 ms đã đạt. Xem [báo cáo A02](performance-a02.md) để so trước/sau và giới hạn. `tests/performance_profile.php` nhận một session fixture qua stdin, chỉ chạy CLI/DB test, dùng MariaDB session profiling và chỉ xuất timings/counts; không ghi SQL hoặc session vào report.
+- Chạy ở 4 độ rộng: 360, 390, 768, 1440 px. Các test luồng dài chỉ chạy ở 1440.
+- Playwright tự chạy `pnpm start`, nên cần build trước. Đặt `E2E_BASE_URL` để chạy với server khác.
+- Mỗi test gửi một IP giả riêng qua `X-Forwarded-For`, nên rate limit theo IP không cộng dồn giữa các test. `global-setup.ts` xóa bảng `rate_limits` trước mỗi lượt và từ chối chạy khi `APP_ENV=production`.
+- `a11y.spec.ts`: bàn phím, skip link, menu, focus. Không thay cho kiểm tra thủ công bằng screen reader.
+- `fixes.spec.ts`, `player.spec.ts`: outbox khi mất mạng, tìm kiếm, cache header…
 
+Đã biết: `public.spec.ts` › finds lessons, words and articles có thể lỗi trên DB dev dùng lâu (nhiều bài test chứa "Hello" chiếm hết 60 kết quả). Chạy `pnpm db:reset` và seed lại.
 
-`python tests/performance_local.py --apache` thêm lựa chọn Windows/Apache riêng (mặc định C:/xampp/apache/bin/httpd.exe, có thể đặt APACHE_HTTPD), PHP FastCGI 8.3–8.5 từ PATH, private config/ini, cổng localhost 8090/8091. Không sửa XAMPP đang chạy hoặc config database ứng dụng. Kiểm runtime/persistence thật, smoke public/private paths và CSRF/attempt denial trước tải; dừng processes riêng sau chạy. Không chạy song song runner CGI/Apache. Kết quả performance.json được ghi đè bởi lượt mới nhất, nên giữ bản có tên riêng khi so sánh runtime. Apache local không thay staging hoặc full regression qua Apache.
+## HTTP hộp đen
 
+`python3 tests/http/run_next.py` tạo DB riêng `mce_next_http_*` trên server trong `DATABASE_URL`, migrate, seed, build, chạy app ở cổng 3201 (`NEXT_HTTP_PORT`) và chạy 6 bộ: `site`, `auth`, `product`, `account`, `learning`, `timezone`. Fixture dùng CLI `scripts/fixture.ts`. Kết quả ghi vào `docs/artifacts/next-http-report.json`. DB bị xóa khi tất cả qua, giữ lại khi lỗi (`KEEP_TEST_DB=1` luôn giữ). `NEXT_HTTP_SKIP_BUILD=1` dùng lại bản build có sẵn.
 
-Chrome flashcard lesson: fixture một bài chỉ có thẻ tự đánh giá trong DB test, kiểm Enter/Space, first response sau reload, offline không giả flip thành công, reconnect outbox, test-mode HTML/API không lộ modelAnswer trước finish, và score/max/isCorrect null sau finish. Snapshot screenshot ở `artifacts/lesson-flashcard-360.png`; không phải nội dung khóa học thật. Hồi quy flashcard không chạy lại benchmark hoặc restore.
+## Hiệu năng (A02)
 
+`pnpm benchmark` tạo 55 user, 5 request làm nóng, rồi 50 user đã đăng nhập cùng nộp một câu trả lời. Mục tiêu p95 dưới 800 ms và dưới 1% lỗi. Kết quả local: `docs/artifacts/a02-next-local.json`. Đây là số đo máy local, không phải cam kết năng lực staging.
 
-A10 bổ sung Chrome/CDP: menu Enter/Escape + focus, skip link/main landmark, tên textbox ghi nhớ, mặt thẻ ẩn vắng trong accessibility tree, focus heading dưới sticky header và status static. Xem [accessibility-a10.md](accessibility-a10.md) cho kết quả/phạm vi/checklist thủ công. CDP không phát âm và không thay NVDA/VoiceOver; không suy diễn flags này thành WCAG pass toàn website.
+## Hồi quy cho các bug đã sửa
 
+Mỗi bug sửa trong lúc chuyển sang Next.js có một test tên `fix N: …`, viết để lỗi với hành vi cũ. Bảng đầy đủ: [migration/fix-tests.md](migration/fix-tests.md). Tìm nhanh: `grep -rn "fix 12" src tests`.
 
-## Container runtime A12 — bổ sung 22/10/2026
+## Chưa có
 
-`tests/container_smoke.py IMAGE` dùng Docker tạo network/MariaDB/web riêng và kiểm image đóng gói: runtime, migrations, admin stdin/hash/role, seed, HTTP public/Secure cookie/private path denial, worker/SQL backup và media restore hash không rỗng. Không phải login HTTPS hoặc full SQL restore trong container. Chỉ xóa tài nguyên nó tạo; report không chứa credentials. Workflow build image rồi chạy script và upload JSON; xóa report cũ trước test để tránh evidence stale. [Phạm vi, lệnh và giới hạn](container-a12.md).
-
-Local chưa có Docker nên chỉ qua Python syntax, PHP snippets lint, composer validate và kiểm đường lỗi thiếu Docker. Chưa có kết quả container hoặc CI từ xa, không thay report hồi quy local bằng kết quả giả.
-
-
-Bổ sung review isolation: product_http hoàn thành preview bằng skip rồi gọi trực tiếp review/concept, xác nhận 422 và số thẻ không đổi; đăng ký trong guest session chưa claim vẫn 422/queue rỗng; sau claim + finish thì thêm được, retry không trùng, account khác 404. Chrome hoàn thành preview có câu sai và kiểm không hiện nút thêm vào ôn; report có previewReviewIsolation. Không sửa/xóa các thẻ lịch sử trong database ứng dụng.
+- Kiểm thủ công bằng NVDA/VoiceOver.
+- Số đo trên staging, SMTP thật, GA4 thật.
+- Fix 20 (trang công khai cache được qua CDN): test đang để `test.fixme`.

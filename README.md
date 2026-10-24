@@ -1,22 +1,60 @@
-# Một chút English — Next.js app
+# Một Chút English
 
-Rewrite of the PHP app in Next.js 16 + TypeScript. Plan: [`docs/migration/nextjs-typescript-plan.md`](../docs/migration/nextjs-typescript-plan.md).
+Vietnamese English-learning site: lessons with graded exercises, spaced review, a vocabulary notebook, streaks and rewards, and a CMS for editors. Next.js 16 + TypeScript + MariaDB.
 
-Requires Node 24+ and pnpm.
+The PHP app it replaced is at git tag `php-final`. How the move happened: [`docs/migration/nextjs-typescript-plan.md`](docs/migration/nextjs-typescript-plan.md).
+
+## Local setup
+
+Needs Node 24+, pnpm, and a MariaDB (10.11 in CI) user that can create databases.
+
+Create `.env.local`:
+
+```sh
+APP_URL=http://localhost:3000
+DATABASE_URL=mysql://USER:PASSWORD@127.0.0.1:3306/mce_dev
+BETTER_AUTH_SECRET=at-least-32-random-characters
+MAIL_DRIVER=log
+```
+
+`src/env.ts` lists every variable and its default. A bad value stops the app at boot.
 
 ```sh
 pnpm install
-pnpm dev          # http://localhost:3000
-pnpm check        # typecheck, lint, format check, unit tests
-pnpm build
-pnpm test:e2e     # Playwright at 360/390/768/1440 px (runs `pnpm start`, so build first)
+pnpm db:reset                              # drop + create the database, apply migrations (refuses in production)
+pnpm seed --publish-reviewed-samples       # sample catalog; plain `pnpm seed` leaves it as drafts
+pnpm admin create you@example.com "Name" --local   # admin; password written to writable/local-admin-*.txt
+pnpm dev                                   # http://localhost:3000
 ```
 
-The PHP black-box HTTP suites (`tests/*_http.py`) also run against this app: `python3 tests/run_next.py` (from the repo root) creates its own `mce_next_http_*` database, seeds it, builds, starts the app on port 3201 (`NEXT_HTTP_PORT`) and runs them with the TypeScript fixture CLI `scripts/fixture.ts`. `tests/http_target.py` explains how the suites switch between the two apps.
+Other admin commands: `pnpm admin set-role EMAIL admin|editor|learner`, `pnpm admin check`. Without `--local`, `pnpm admin create` reads the password from stdin. `--local` is refused unless the database is on `127.0.0.1`/`localhost`.
 
-`src/contracts/` holds the zod contract for every `/api/v1` route and form action the PHP app accepts. A unit test fails if `application/controllers/Product.php` and the contracts drift apart.
+## Checks and tests
 
-## Worker and operations
+```sh
+pnpm check        # typecheck, lint, format check, unit tests
+pnpm test:db      # database tests (needs DATABASE_URL on a migrated database)
+pnpm build
+pnpm test:e2e     # Playwright at 360/390/768/1440 px; starts `pnpm start`, so build first
+pnpm benchmark    # A02: 50 concurrent graded submits against a running build
+python3 tests/http/run_next.py   # black-box HTTP suites in their own database
+```
+
+Details: [`docs/testing.md`](docs/testing.md).
+
+## Where things are
+
+- `app/`: pages, `/api/v1/[...route]`, file routes (`/media`, `/du-lieu`).
+- `src/domain/`: business rules (assessment, study, content, review, motivation, identity, exports).
+- `src/contracts/`: zod contract for every API route; `pnpm docs:api` writes [`docs/api-v1.md`](docs/api-v1.md) from it.
+- `src/server/`, `src/actions/`: request handling for `/api/v1` and Server Actions.
+- `src/worker/`: background jobs and operations CLI.
+- `proxy.ts`: request id, redirects, same-origin check, sign-in redirect.
+- `drizzle/`: migrations. `seed/`, `templates/`: sample catalog and import templates.
+
+More: [`docs/architecture.md`](docs/architecture.md), [`docs/api.md`](docs/api.md), [`docs/data-model.md`](docs/data-model.md).
+
+## Worker
 
 Background jobs (email, reminders, exports, large imports, account deletion, analytics) run in a separate process, never inside a web request. Only one worker runs at a time; a second one exits with `{"busy":true}`.
 
@@ -38,4 +76,14 @@ Production runs the bundled copy (`pnpm build:worker` → `dist/worker.mjs`, no 
 30 3 * * *   node dist/worker.mjs backup
 ```
 
-Mail: `MAIL_DRIVER=log` writes each message as a private JSON file in `writable/mail` (development and test only). `MAIL_DRIVER=smtp` needs `MAIL_FROM`, `SMTP_HOST`, and STARTTLS or TLS. If the connection fails after the server started reading the message, the job is marked "delivery uncertain" and is never resent automatically; check the mail provider before retrying it by hand.
+## Mail
+
+- `MAIL_DRIVER=disabled` (default): features that need mail say it is unavailable.
+- `MAIL_DRIVER=log`: each message is a private JSON file in `writable/mail`. Development and test only; refused when `APP_ENV=production`.
+- `MAIL_DRIVER=smtp`: needs `MAIL_FROM`, `SMTP_HOST`, and STARTTLS or TLS (`SMTP_ENCRYPTION`).
+
+If the SMTP connection fails after the server started reading the message, the job is marked "delivery uncertain" and is never resent automatically. Check the mail provider before retrying it by hand.
+
+## Deployment
+
+See [`docs/operations.md`](docs/operations.md).
