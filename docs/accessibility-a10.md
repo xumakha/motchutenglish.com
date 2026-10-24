@@ -1,5 +1,7 @@
 # A10 — rà accessibility bổ sung, 22/10/2026
 
+> Ghi chú 24/10/2026: tài liệu này mô tả bản PHP (tag `php-final`), không phải app Next.js hiện tại. Kiểm tra tương đương hiện nay: `tests/e2e/a11y.spec.ts` (xem [testing.md](testing.md) và mục Phase 7 của [progress log trong kế hoạch chuyển đổi](migration/nextjs-typescript-plan.md#12-progress-log)).
+
 Phạm vi: điều hướng bàn phím, skip link, vùng focus của player/flashcard và một phần accessibility tree trong Chrome. Chưa nghiệm thu WCAG toàn website hoặc trải nghiệm phát âm thực bằng screen reader.
 
 ## Lỗi và thay đổi

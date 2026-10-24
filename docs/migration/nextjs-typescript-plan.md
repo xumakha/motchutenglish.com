@@ -552,7 +552,7 @@ Changes from the plan:
 
 Built:
 
-- **One handler per contract route** (`web/src/server/handlers.ts`, type-checked against all 69 routes) and one runner (`run-route.ts`: auth level → rate limit → zod input → handler).
+- **One handler per contract route** (`web/src/server/handlers.ts`, type-checked against all 58 routes; an earlier version of this log said 69) and one runner (`run-route.ts`: auth level → rate limit → zod input → handler).
 - **`/api/v1/*`** (`app/api/v1/[...route]`): every route, same paths, envelope, error codes, 1 MB/depth-64 JSON rules, scalar-field rule and `currentAttempt` on attempt 409s.
 - **Server Actions** for every form route (`src/actions/routes.ts`, coverage-tested): flash message or redirect, `updateTag('catalog')` after content changes, `refresh()` for fresh page data, field errors echoed without secrets.
 - **Actor from the request** (`server/actor.ts`): session, guest cookie (sha256 stored), guest marketing cookie.
@@ -632,3 +632,21 @@ Changes from the plan:
 | —                   | `/api/v1` content edits visible a few ms after the response | Next.js expires cache tags after a route handler responds; CMS forms (Server Actions) are immediate                                       |
 
 Open (owner decision): **fix 20**. Public pages still send `private, no-store`, because the header shows the signed-in nav on every page. The data underneath is cached on the server. Making public HTML CDN-cacheable means rendering the signed-in nav in the browser on every page. There is no CDN in the target hosting, so this can wait until one is added.
+
+### Phase 8 (done on `migration/phase-8`, staging gate open)
+
+Built:
+- **Cutover**: the Next.js app is the repo root. The PHP app, its assets, config, scripts and PHP-only tests are removed; tag `php-final` (commit `92be2b9`) keeps the last runnable PHP version for rollback. Seed data moved to `seed/`, media backup to `ops/`, HTTP suites to `tests/http` (PHP target removed).
+- **Production image** (`Dockerfile`): node:24-slim, standalone server, bundled CLIs (`dist/worker.mjs`, `db.mjs`, `admin.mjs`, `seed.mjs`), non-root, `writable/` volume, mariadb-client + python3. `compose.yaml`: `db`, one-off `migrate`, `web`, `worker` (`ops/worker-loop.sh`: run every minute, tick every 5 minutes, nightly cleanup + SQL and media backup).
+- **Fresh-install smoke** (`tests/ops/container_smoke.sh`, CI job `container`): empty database → migrate, pages and statuses, admin + seed CLIs, worker commands, SQL backup + restore drill, media backup, non-root runtime. Green on the first CI run.
+- **Docs** rewritten for the Node app: `README.md`, `docs/architecture.md`, `docs/operations.md`, `docs/testing.md`, `docs/api.md` (short guide; the route list is generated in `docs/api-v1.md`). Dated PHP reports carry a note pointing to their current equivalent.
+- CI: one workflow (`ci.yml`) with `check` (types, lint, format, unit, DB, build, e2e, benchmark, HTTP suites) and `container`.
+
+Changes from the plan:
+| Plan said | Now | Why |
+|---|---|---|
+| Worker via cron loop or supercronic | Shell loop in the worker container | No extra binary; same schedule |
+| `install_smoke.py` against the TS scripts | `tests/ops/container_smoke.sh` | The compose stack on an empty database is the real fresh install |
+| `APP_URL` at runtime only | Also a Docker build argument | Prerendered pages carry absolute canonical and Open Graph URLs |
+
+Open (needs the owner's hosting): **the gate**. A staging deploy with real HTTPS, SMTP and the worker schedule must pass the full suite and the spec's §27–29 acceptance items. Also open from Phase 7: fix 20 (CDN-cacheable public pages) and the manual screen-reader audit.

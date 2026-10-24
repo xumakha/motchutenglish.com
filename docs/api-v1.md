@@ -1,6 +1,6 @@
 # API v1 reference
 
-Generated from `web/src/contracts/routes.ts` by `pnpm docs:api`; do not edit by hand.
+Generated from `src/contracts/routes.ts` by `pnpm docs:api`; do not edit by hand.
 Every route is `/api/v1/<path>`; `{id}` is a 32-hex attempt or import id. Fields marked `?` are
 optional. Transport `action` means HTML forms use a Server Action; the route is still reachable
 over `/api/v1`.

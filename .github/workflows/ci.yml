@@ -1,0 +1,101 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-isolated-only
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      APP_ENV: test
+      APP_URL: http://127.0.0.1:3000
+      DATABASE_URL: mysql://root:ci-isolated-only@127.0.0.1:3306/mce_ci
+      BETTER_AUTH_SECRET: ci-only-secret-0123456789abcdef0123456789abcdef
+      MAIL_DRIVER: log
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install MariaDB client (backup and restore drill tests)
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Format
+        run: pnpm format:check
+      - name: Unit tests (includes PHP route contract coverage)
+        run: pnpm test
+      - name: Create database and apply migrations
+        run: pnpm db:reset
+      - name: Database tests
+        run: pnpm test:db
+      - name: Admin CLI health check
+        run: pnpm admin check
+      - name: Seed sample catalog (validates every sample lesson)
+        run: |
+          pnpm admin create ci-admin@example.test "CI" --local
+          pnpm seed --publish-reviewed-samples
+      - name: Build
+        run: pnpm build
+      - name: Build and smoke-test the bundled worker
+        run: |
+          pnpm build:worker
+          node dist/worker.mjs tick
+          node dist/worker.mjs run 50
+          node dist/worker.mjs cleanup
+          node dist/worker.mjs reconcile
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: pnpm test:e2e
+      - name: Benchmark (A02, 50 concurrent graded submits; reported, not a staging claim)
+        run: |
+          PORT=3000 HOSTNAME=127.0.0.1 pnpm start > /tmp/next.log 2>&1 &
+          # pnpm start runs node as a child process; stop that server when this step ends.
+          trap 'pkill -f .next/standalone/server.js || true' EXIT
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/health >/dev/null && break; sleep 1; done
+          pnpm benchmark http://127.0.0.1:3000
+      - name: PHP black-box HTTP suites against Next.js (own database, build and server)
+        run: python3 tests/http/run_next.py
+      - name: Upload HTTP suite logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-http-logs
+          path: |
+            writable/http-tests/*/*.log
+            docs/artifacts/next-http-report.json
+          if-no-files-found: ignore
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+
+  container:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fresh compose install and operations smoke test
+        run: bash tests/ops/container_smoke.sh
