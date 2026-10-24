@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   output: "standalone",
   poweredByHeader: false,
+  // Import templates are read from disk at runtime; make sure the standalone build ships them.
+  outputFileTracingIncludes: { "/du-lieu/[file]": ["./templates/**"] },
   experimental: {
     serverActions: {
       // Content imports are capped at 1 MB of payload; leave headroom for form encoding.

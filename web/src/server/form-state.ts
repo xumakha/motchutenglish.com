@@ -11,6 +11,8 @@ export interface FormState {
   fieldErrors?: FieldErrors;
   values?: Record<string, string>;
   requestId?: string;
+  /** Extra result a form shows inline (e.g. an import preview). */
+  data?: unknown;
 }
 
 export const idleState: FormState = { status: "idle" };
