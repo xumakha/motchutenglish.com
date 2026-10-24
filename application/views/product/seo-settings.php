@@ -1,8 +1,0 @@
-<section class="panel"><h2>SEO trang public</h2><p>Dùng cho trang chủ (/), catalog, chiến dịch, giới thiệu, liên hệ, điều khoản và các trang public cũ. URL bắt đầu bằng /, không có domain, query hoặc fragment. Tên thương hiệu được nối sau tiêu đề như hiện tại. Để trống để dùng giá trị tự sinh; để trống cả hai để xóa tùy chỉnh.</p>
-<p>SEO riêng của lộ trình, nghĩa từ, bộ từ, bài viết nằm trong form nội dung (seo_title/seo_description) và phải qua duyệt. Bài học dùng seo.title/description trong document phiên bản.</p>
-<?php $seoEdit=mce_one('SELECT * FROM mce_page_seo WHERE path=?',[is_string($_GET['seoPath']??null)?$_GET['seoPath']:'/'])??['path'=>'/','title'=>'','description'=>''];if(($pending['command']??'')==='admin/seo')$seoEdit=array_replace($seoEdit,$pending); ?>
-<form method="post" class="auth-form"><input type="hidden" name="csrf" value="<?=h($_SESSION['csrf'])?>"><input type="hidden" name="command" value="admin/seo">
-<label>URL public<input name="path" required maxlength="255" value="<?=h($seoEdit['path'])?>" placeholder="/lo-trinh"></label>
-<label>Tiêu đề SEO (tối đa 160 ký tự)<input name="title" maxlength="160" value="<?=h($seoEdit['title'])?>"></label>
-<label>Mô tả SEO (tối đa 320 ký tự)<input name="description" maxlength="320" value="<?=h($seoEdit['description'])?>"></label><button class="button">Lưu SEO</button></form>
-<?php foreach(mce_all('SELECT * FROM mce_page_seo ORDER BY path') as $seoRow): ?><p><a href="?seoPath=<?=h(rawurlencode($seoRow['path']))?>"><?=h($seoRow['path'])?></a> — <?=h($seoRow['title'])?> — <?=h($seoRow['description'])?></p><?php endforeach ?></section>
