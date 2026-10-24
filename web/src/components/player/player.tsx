@@ -71,7 +71,8 @@ export function Player({ initial, account }: { initial: PublicAttempt; account: 
           }
           if (action === "finish") storage.clearDrafts();
           if (action === "submit" || action === "skip") focusAfter.current = "feedback";
-          if (action === "navigate") focusAfter.current = "exercise";
+          // No focus move when the server confirms "navigate": move() already focused the new
+          // question, and the learner may have moved on (e.g. into an order exercise) since.
           if (action === "finish") focusAfter.current = "result";
         } catch (error) {
           if (!(error instanceof ApiError) || error.status === 0) {

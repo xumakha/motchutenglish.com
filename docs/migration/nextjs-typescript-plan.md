@@ -620,7 +620,7 @@ Built:
 - **Performance A02**: `pnpm benchmark`, 50 concurrent signed-in graded submits. Local p95 166–182 ms over 3 rounds, 0 errors (target 800 ms; PHP FastCGI was 608–642 ms). Report in `docs/artifacts/a02-next-local.json`; CI runs it too.
 - **Security** (`docs/migration/security-checklist.md`): safe error logging (no SQL, parameters or quoted values), SRI on script files, Permissions-Policy and COOP headers, real 403/404 for refused private pages (proxy pre-check), export ownership test.
 - **Accessibility**: Playwright ports of the A10 and redesign checks (`tests/e2e/a11y.spec.ts`). The manual screen-reader audit stays open.
-- App bugs found by the suites and fixed: sign-up didn't attach a consenting guest's campaign journey; `/api/v1` edits served stale catalog once; `attempts/{id}/view` wrongly required `position`; 3 legacy asset aliases missing; the mobile menu kept a reference to the replaced placeholder nav, so Escape could stop working.
+- App bugs found by the suites and fixed: sign-up didn't attach a consenting guest's campaign journey; `/api/v1` edits served stale catalog once; `attempts/{id}/view` wrongly required `position`; 3 legacy asset aliases missing; the mobile menu kept a reference to the replaced placeholder nav, so Escape could stop working; the lesson player pulled keyboard focus back to the question heading when the server confirmed a move, so a keyboard user lost their place on the first answer.
 - Totals: 358 unit, 87 DB, 152 e2e, six HTTP suites.
 
 Changes from the plan:

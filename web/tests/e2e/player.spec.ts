@@ -60,13 +60,18 @@ test.describe("flows", () => {
 
     // order, with the keyboard only
     await page.getByRole("button", { name: "Câu sau" }).click();
-    for (const word of ["My", "name", "is", "Linh."]) {
+    for (const [i, word] of ["My", "name", "is", "Linh."].entries()) {
       await page.getByRole("button", { name: `Thêm ${word}` }).focus();
       await page.keyboard.press("Enter");
+      await expect(
+        page.getByRole("status").filter({ hasText: `Đã thêm ${word} ở vị trí ${i + 1}` }),
+      ).toBeVisible();
+      // Focus follows the placed word and stays there, even when the server confirms the
+      // earlier move to this question.
+      await expect(page.getByRole("button", { name: `Bỏ ${word}` })).toBeFocused();
     }
-    await expect(
-      page.getByRole("status").filter({ hasText: "Đã thêm Linh. ở vị trí 4" }),
-    ).toBeVisible();
+    await page.waitForTimeout(500);
+    await expect(page.getByRole("button", { name: "Bỏ Linh." })).toBeFocused();
     await page.getByRole("button", { name: "Nộp câu trả lời" }).click();
     await expect(page.locator("[data-feedback-heading]")).toHaveText("✓ Chính xác");
 
